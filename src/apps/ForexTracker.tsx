@@ -123,10 +123,10 @@ export default function ForexTracker() {
   const [type, setType] = useState<'buy' | 'sell' | 'deposit'>('buy');
   const [lots, setLots] = useState('0.10');
   const [profit, setProfit] = useState('');
-  const [date] = useState(new Date().toISOString().slice(0, 16).replace('T', ' '));
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
 
   useEffect(() => {
-    localStorage.setItem('fxmark_v2_mobile', JSON.stringify(records));
+    localStorage.setItem('fxmark_v7_mobile', JSON.stringify(records));
   }, [records]);
 
   const stats = useMemo(() => {
@@ -170,18 +170,30 @@ export default function ForexTracker() {
     };
   }, [records]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleDuplicate = (r: TradeRecord) => {
+    setType(r.type);
+    if(r.symbol !== 'DEPOSIT') setSymbol(r.symbol);
+    if(r.lots) setLots(r.lots.toString());
+    setProfit(Math.abs(r.profit).toString());
+    setDate(r.date.slice(0, 16).replace(' ', 'T'));
+    setShowAddModal(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent | React.MouseEvent, keepOpen: boolean = false) => {
     e.preventDefault();
-    if (!profit) return;
+    if (!profit || !date) return;
+    const formattedDate = date.includes('T') ? date.replace('T', ' ') + ':00' : date;
+    const isLoss = type !== 'deposit' && Number(profit) < 0;
     setRecords([...records, {
       id: crypto.randomUUID(),
       symbol: type === 'deposit' ? 'DEPOSIT' : symbol,
       type,
       lots: type === 'deposit' ? undefined : Number(lots),
-      profit: Number(profit),
-      date
+      profit: type === 'deposit' ? Number(profit) : (isLoss ? Number(profit) : Number(profit)), // Supports both typing -10 or positive numbers
+      date: formattedDate
     }]);
-    setProfit(''); setShowAddModal(false);
+    setProfit('');
+    if (!keepOpen) setShowAddModal(false);
   };
 
   const [calMonth, setCalMonth] = useState(new Date().getMonth());
@@ -335,6 +347,9 @@ export default function ForexTracker() {
                           <div className="flex items-center gap-2">
                              <span className={`w-1.5 h-1.5 rounded-full ${r.type === 'buy' ? 'bg-emerald-500' : 'bg-red-500'}`}/>
                              <span className="text-xs font-black uppercase">{r.symbol}</span>
+                             <button onClick={() => handleDuplicate(r)} className="ml-2 p-1 bg-white/5 rounded text-zinc-400 hover:text-white transition-colors" title="Duplicate this trade">
+                                <Lucide.Copy size={12}/>
+                             </button>
                           </div>
                        </div>
                        <div className="text-right">
@@ -390,7 +405,13 @@ export default function ForexTracker() {
                      <input type="number" step="0.01" value={lots} onChange={(e) => setLots(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Lots" />
                      <input type="number" step="0.01" value={profit} onChange={(e) => setProfit(e.target.value)} required className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Profit $" />
                   </div>
-                  <button type="submit" className="w-full bg-emerald-500 text-black rounded-xl font-black uppercase tracking-widest p-4 text-xs">Commit Trade</button>
+                  <div className="w-full">
+                     <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required className="w-full bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none text-white dark:[color-scheme:dark]" />
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                     <button type="button" onClick={(e) => handleSubmit(e, true)} className="flex-1 bg-zinc-800 text-white rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all hover:bg-zinc-700">Add Bulk</button>
+                     <button type="button" onClick={(e) => handleSubmit(e, false)} className="flex-1 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all shadow-lg shadow-emerald-500/20">Commit</button>
+                  </div>
                </form>
             </div>
          </div>
