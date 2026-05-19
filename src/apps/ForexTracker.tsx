@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import * as Lucide from 'lucide-react';
-import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface TradeRecord {
   id: string;
@@ -104,7 +104,7 @@ const INITIAL_DATA: TradeRecord[] = [
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
-export default function ForexTracker({ onBack }: { onBack: () => void }) {
+export default function ForexTracker() {
   // Enforce Dark Mode
   useEffect(() => {
     document.documentElement.classList.add('dark');
@@ -112,17 +112,18 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
 
   const [records, setRecords] = useState<TradeRecord[]>(() => {
     try {
-      const saved = localStorage.getItem('fxmark_v2_mobile');
+      const saved = localStorage.getItem('fxmark_v7_mobile');
       return saved && JSON.parse(saved).length > 0 ? JSON.parse(saved) : INITIAL_DATA;
     } catch { return INITIAL_DATA; }
   });
 
+  const [activeView] = useState<'dashboard' | 'calendar' | 'history' | 'holdings'>('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
   const [symbol, setSymbol] = useState('XAUUSD.c');
   const [type, setType] = useState<'buy' | 'sell' | 'deposit'>('buy');
   const [lots, setLots] = useState('0.10');
   const [profit, setProfit] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 16).replace('T', ' '));
+  const [date] = useState(new Date().toISOString().slice(0, 16).replace('T', ' '));
 
   useEffect(() => {
     localStorage.setItem('fxmark_v2_mobile', JSON.stringify(records));
@@ -135,7 +136,6 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
     const balance = tDeposit + tProfit;
     
     const wTrades = tradesOnly.filter(r => r.profit > 0);
-    const lTrades = tradesOnly.filter(r => r.profit < 0);
     const wRate = tradesOnly.length > 0 ? (wTrades.length / tradesOnly.length) * 100 : 0;
     
     const sorted = [...records].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
