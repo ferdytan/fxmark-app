@@ -290,7 +290,7 @@ export default function ForexTracker() {
         )}
 
         {activeView === 'calendar' && (
-          <div className="flex flex-col h-[calc(100vh-140px)] animate-in fade-in pb-4">
+          <div className="flex flex-col h-[65dvh] min-h-[400px] animate-in fade-in pb-4">
             {/* Calendar View */}
             <div className="flex justify-between items-center pl-2 mb-4 shrink-0">
                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Calendar Grid</h3>
