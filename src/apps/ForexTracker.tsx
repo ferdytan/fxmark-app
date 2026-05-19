@@ -332,35 +332,37 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
                   </div>
                </div>
 
-               <div className="grid grid-cols-7 gap-px bg-slate-200 dark:bg-white/5 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
-                  {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
-                    <div key={day} className="bg-slate-50 dark:bg-[#0A0A0A] py-4 text-center text-[9px] font-black text-slate-400 dark:text-zinc-600 tracking-widest uppercase border-b border-slate-200 dark:border-white/5">{day}</div>
-                  ))}
-                  {calendarDays.map((d, i) => (
-                    <div key={i} className={`min-h-[140px] p-4 bg-white dark:bg-[#050505] transition-all hover:z-10 hover:scale-[1.02] hover:shadow-2xl group relative ${!d ? 'opacity-20' : ''}`}>
-                      {d && (
-                        <>
-                          <span className="text-[10px] font-black opacity-30 group-hover:opacity-100 transition-opacity">{d.day}</span>
-                          {d.data && (
-                            <div className="mt-4 flex flex-col gap-2">
-                              <div className={`p-3 rounded-xl border ${d.data.profit >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
-                                <p className="text-xs font-black tracking-tighter">${d.data.profit.toLocaleString()}</p>
-                                <div className="flex justify-between items-center mt-2">
-                                  <span className="text-[8px] font-bold uppercase opacity-60">{d.data.trades} Trades</span>
-                                  <span className="text-[8px] font-black uppercase">{((d.data.wins / d.data.trades) * 100).toFixed(0)}%</span>
+               <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
+                 <div className="min-w-[600px] md:min-w-full grid grid-cols-7 gap-px bg-slate-200 dark:bg-white/5 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
+                    {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
+                      <div key={day} className="bg-slate-50 dark:bg-[#0A0A0A] py-4 text-center text-[9px] font-black text-slate-400 dark:text-zinc-600 tracking-widest uppercase border-b border-slate-200 dark:border-white/5">{day}</div>
+                    ))}
+                    {calendarDays.map((d, i) => (
+                      <div key={i} className={`min-h-[140px] p-4 bg-white dark:bg-[#050505] transition-all hover:z-10 hover:scale-[1.02] hover:shadow-2xl group relative ${!d ? 'opacity-20' : ''}`}>
+                        {d && (
+                          <>
+                            <span className="text-[10px] font-black opacity-30 group-hover:opacity-100 transition-opacity">{d.day}</span>
+                            {d.data && (
+                              <div className="mt-4 flex flex-col gap-2">
+                                <div className={`p-3 rounded-xl border ${d.data.profit >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
+                                  <p className="text-xs font-black tracking-tighter">${d.data.profit.toLocaleString()}</p>
+                                  <div className="flex justify-between items-center mt-2">
+                                    <span className="text-[8px] font-bold uppercase opacity-60">{d.data.trades} Trades</span>
+                                    <span className="text-[8px] font-black uppercase">{((d.data.wins / d.data.trades) * 100).toFixed(0)}%</span>
+                                  </div>
+                                </div>
+                                <div className="flex gap-1 mt-1">
+                                  {Array.from({ length: d.data.trades }).map((_, idx) => (
+                                    <div key={idx} className={`w-1 h-1 rounded-full ${idx < d.data.wins ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                  ))}
                                 </div>
                               </div>
-                              <div className="flex gap-1 mt-1">
-                                {Array.from({ length: d.data.trades }).map((_, idx) => (
-                                  <div key={idx} className={`w-1 h-1 rounded-full ${idx < d.data.wins ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  ))}
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                 </div>
                </div>
 
                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -693,8 +695,8 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
                </section>
 
                {/* Transaction Ledger */}
-               <div className="bg-white dark:bg-zinc-900/20 rounded-xl border border-slate-200 dark:border-white/5 overflow-hidden shadow-sm transition-colors">
-                  <table className="w-full text-left">
+               <div className="bg-white dark:bg-zinc-900/20 rounded-xl border border-slate-200 dark:border-white/5 overflow-x-auto shadow-sm transition-colors custom-scrollbar">
+                  <table className="w-full min-w-[600px] text-left">
                     <thead className="bg-slate-50 dark:bg-white/5 text-[9px] font-black text-slate-400 dark:text-zinc-500 uppercase">
                       <tr>
                         <th className="px-10 py-6 tracking-widest">Timestamp</th>
