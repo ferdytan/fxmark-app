@@ -246,9 +246,9 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#050505] text-slate-900 dark:text-zinc-100 font-sans transition-colors duration-500 overflow-hidden">
-      {/* Sidebar - Pro Monochrome Style */}
-      <aside className="w-64 bg-slate-50 dark:bg-[#0A0A0A] border-r border-slate-200 dark:border-white/5 flex flex-col flex-shrink-0 transition-all">
+    <div className="flex min-h-screen bg-white dark:bg-[#050505] text-slate-900 dark:text-zinc-100 font-sans transition-colors duration-500 overflow-x-hidden md:overflow-hidden pb-20 md:pb-0">
+      {/* Sidebar - Hidden on mobile, visible on desktop */}
+      <aside className="hidden md:flex w-64 bg-slate-50 dark:bg-[#0A0A0A] border-r border-slate-200 dark:border-white/5 flex-col flex-shrink-0 transition-all z-20">
         <div className="p-8 border-b border-slate-200 dark:border-white/5">
           <div className="flex items-center gap-3">
             <span className="font-black text-xl tracking-tight uppercase">FXMARK</span>
@@ -288,19 +288,25 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Portfolio Header - Monochrome */}
-        <header className="h-24 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 flex items-center justify-between px-12 z-50">
-          <div className="flex flex-col">
-            <h2 className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.4em] mb-1">Institutional Intelligence</h2>
-            <div className="flex items-center gap-4">
-              <span className="text-2xl font-black uppercase tracking-tight">Portfolio <span className="text-zinc-400">Analyzer</span></span>
-              <div className="h-4 w-[1px] bg-slate-200 dark:bg-white/10" />
+      <main className="flex-1 flex flex-col h-full md:h-screen w-full md:overflow-hidden relative z-10">
+        {/* Portfolio Header - Mobile padding adjusted */}
+        <header className="h-auto md:h-24 py-4 md:py-0 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-2xl border-b border-slate-200 dark:border-white/5 flex flex-col md:flex-row items-start md:items-center justify-between px-6 md:px-12 z-50 gap-4 md:gap-0 sticky top-0 md:static">
+          <div className="flex flex-col w-full md:w-auto">
+            <div className="flex justify-between items-center w-full mb-1">
+               <h2 className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-[0.4em]">Institutional Intelligence</h2>
+               <div className="md:hidden flex items-center gap-2">
+                  <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Risk Level</span>
+                  <span className="text-[10px] font-black text-emerald-500 uppercase">Conservative</span>
+               </div>
+            </div>
+            <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+              <span className="text-xl md:text-2xl font-black uppercase tracking-tight">Portfolio <span className="text-zinc-400">Analyzer</span></span>
+              <div className="hidden md:block h-4 w-[1px] bg-slate-200 dark:bg-white/10" />
               <span className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase">AUM: ${stats.currentBalance.toLocaleString()}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-6">
              <div className="flex flex-col text-right">
                 <span className="text-[10px] font-black text-slate-400 dark:text-zinc-500 uppercase tracking-widest">Risk Level</span>
                 <span className="text-xs font-black text-emerald-500 uppercase">Conservative</span>
@@ -309,7 +315,7 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-12 space-y-12 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-12 space-y-8 md:space-y-12 custom-scrollbar pb-24 md:pb-12 w-full">
           {activeView === 'calendar' ? (
             <div className="space-y-12 animate-in fade-in duration-700">
                <div className="flex justify-between items-center">
@@ -723,6 +729,27 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
           )}
         </div>
       </main>
+
+      {/* Mobile Bottom Navigation - Visible only on small screens */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#0A0A0A] border-t border-slate-200 dark:border-white/5 pb-safe">
+         <div className="flex items-center justify-between p-2">
+            {[
+              { id: 'dashboard', icon: Lucide.LayoutDashboard, label: 'Overview' },
+              { id: 'calendar', icon: Lucide.Calendar, label: 'Calendar' },
+              { id: 'holdings', icon: Lucide.Layers, label: 'Holdings' },
+              { id: 'history', icon: Lucide.Activity, label: 'Activity' }
+            ].map((item) => (
+              <button 
+                key={item.id}
+                onClick={() => setActiveView(item.id as any)}
+                className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all ${activeView === item.id ? 'text-blue-600 dark:text-white' : 'text-slate-400 dark:text-zinc-600 hover:text-slate-900 dark:hover:text-zinc-400'}`}
+              >
+                <item.icon size={20} strokeWidth={activeView === item.id ? 2.5 : 2} />
+                <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
+              </button>
+            ))}
+         </div>
+      </nav>
 
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
