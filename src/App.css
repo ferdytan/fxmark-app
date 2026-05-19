@@ -1,0 +1,196 @@
+:root {
+  --google-green: #6aa84f;
+  --google-blue: #3c78d8;
+  --google-dark-blue: #1155cc;
+  --google-light-green: #93c47d;
+  --border-black: #000000;
+  --bg-dashboard: #f1f3f4;
+}
+
+body {
+  background-color: var(--bg-dashboard);
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  color: #202124;
+}
+
+.app-container {
+  padding: 20px 40px;
+}
+
+/* Dashboard Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.subtitle {
+  margin: 5px 0 0;
+  color: #5f6368;
+}
+
+.year-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(60,64,67,.3);
+}
+
+.year-selector select {
+  padding: 5px 10px;
+  font-size: 16px;
+  border-radius: 4px;
+}
+
+/* Input Card */
+.input-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(60,64,67,.3);
+  margin-bottom: 30px;
+}
+
+.card-title {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 16px;
+  color: #3c4043;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.input-group input, .input-group select {
+  padding: 10px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  flex: 1;
+  min-width: 150px;
+}
+
+.btn-submit {
+  padding: 10px 30px;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-add { background-color: var(--google-blue); }
+.btn-edit { background-color: #f4b400; }
+.btn-cancel { background: #5f6368; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;}
+
+/* Year Summary Banner */
+.year-summary-banner {
+  background: #ffffff;
+  padding: 15px 25px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 6px solid var(--google-green);
+  box-shadow: 0 1px 2px rgba(60,64,67,.3);
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.total-val { color: var(--google-green); }
+
+/* Month Grid */
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 25px;
+}
+
+.month-card {
+  background: white;
+  border: 1px solid var(--border-black);
+}
+
+.month-header {
+  background: #fff;
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 20px;
+  border-bottom: 1px solid var(--border-black);
+}
+
+.income-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.income-table th, .income-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.total-row {
+  background: var(--google-green);
+  color: white;
+  font-weight: bold;
+}
+
+.sub-header th {
+  background: #f8f9fa;
+  color: #666;
+  text-align: left;
+  font-size: 11px;
+}
+
+.data-row { cursor: pointer; transition: background 0.2s; }
+.data-row:hover { background: #e8f0fe; }
+
+.amount-cell {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.row-delete {
+  background: none;
+  border: none;
+  color: #d93025;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 5px;
+  opacity: 0;
+}
+
+.data-row:hover .row-delete { opacity: 1; }
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.badge-salary { background: var(--google-green); }
+.badge-profit { background: var(--google-blue); }
+.badge-fee { background: var(--google-dark-blue); }
+.badge-comm { background: var(--google-light-green); }
+
+.text-right { text-align: right; }
+.empty-row td { height: 35px; }
