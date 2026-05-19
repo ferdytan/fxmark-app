@@ -302,18 +302,18 @@ export default function ForexTracker() {
                   </div>
                </div>
                
-               <div className="w-[100vw] -mx-4 px-4 overflow-x-auto custom-scrollbar pb-2">
-                  <div className="min-w-[500px] grid grid-cols-7 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/5">
+               <div className="w-full">
+                  <div className="w-full grid grid-cols-7 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/5">
                      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
                        <div key={day} className="bg-zinc-900 py-2 text-center text-[8px] font-black text-zinc-600">{day}</div>
                      ))}
                      {calDays.map((d, i) => (
-                       <div key={i} className={`min-h-[70px] p-1 bg-[#0A0A0A] flex flex-col items-center justify-center gap-1 ${!d ? 'opacity-20' : ''}`}>
+                       <div key={i} className={`min-h-[50px] p-1 bg-[#0A0A0A] flex flex-col items-center justify-center gap-1 ${!d ? 'opacity-20' : ''}`}>
                          {d && (
                            <>
                              <span className="text-[9px] font-bold opacity-30">{d.day}</span>
                              {d.data && <div className={`w-1.5 h-1.5 rounded-full ${d.data.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />}
-                             {d.data && <span className={`text-[8px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
+                             {d.data && <span className={`text-[7px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
                            </>
                          )}
                        </div>
