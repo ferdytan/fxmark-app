@@ -245,8 +245,13 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
     setCalendarYear(newYear);
   };
 
+  // Force Dark Mode
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
+
   return (
-    <div className="flex min-h-screen bg-[#050505] text-zinc-100 font-sans transition-colors duration-500 overflow-x-hidden md:overflow-hidden pb-20 md:pb-0 dark">
+    <div className="flex min-h-screen bg-white dark:bg-[#050505] text-slate-900 dark:text-zinc-100 font-sans transition-colors duration-500 overflow-x-hidden md:overflow-hidden pb-20 md:pb-0">
       {/* Sidebar - Hidden on mobile, visible on desktop */}
       <aside className="hidden md:flex w-64 bg-slate-50 dark:bg-[#0A0A0A] border-r border-slate-200 dark:border-white/5 flex-col flex-shrink-0 transition-all z-20">
         <div className="p-8 border-b border-slate-200 dark:border-white/5">
@@ -332,63 +337,34 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
                   </div>
                </div>
 
-               <div className="w-full pb-4">
-                 {/* Desktop Calendar Grid */}
-                 <div className="hidden md:grid min-w-[600px] md:min-w-full grid-cols-7 gap-px bg-slate-200 dark:bg-white/5 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
+               <div className="w-[100vw] -mx-6 px-6 md:w-full md:mx-0 md:px-0 overflow-x-auto pb-4 custom-scrollbar">
+                 <div className="min-w-[700px] grid grid-cols-7 gap-px bg-slate-200 dark:bg-white/5 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
                     {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
                       <div key={day} className="bg-slate-50 dark:bg-[#0A0A0A] py-4 text-center text-[9px] font-black text-slate-400 dark:text-zinc-600 tracking-widest uppercase border-b border-slate-200 dark:border-white/5">{day}</div>
                     ))}
                     {calendarDays.map((d, i) => (
-                      <div key={i} className={`min-h-[140px] p-4 bg-white dark:bg-[#050505] transition-all hover:z-10 hover:scale-[1.02] hover:shadow-2xl group relative ${!d ? 'opacity-20' : ''}`}>
+                      <div key={i} className={`min-h-[120px] p-2 md:p-4 bg-white dark:bg-[#050505] transition-all hover:z-10 hover:scale-[1.02] hover:shadow-2xl group relative ${!d ? 'opacity-20' : ''}`}>
                         {d && (
                           <>
                             <span className="text-[10px] font-black opacity-30 group-hover:opacity-100 transition-opacity">{d.day}</span>
                             {d.data && (
-                              <div className="mt-4 flex flex-col gap-2">
-                                <div className={`p-3 rounded-xl border ${d.data.profit >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
-                                  <p className="text-xs font-black tracking-tighter">${d.data.profit.toLocaleString()}</p>
-                                  <div className="flex justify-between items-center mt-2">
-                                    <span className="text-[8px] font-bold uppercase opacity-60">{d.data.trades} Trades</span>
-                                    <span className="text-[8px] font-black uppercase">{((d.data.wins / d.data.trades) * 100).toFixed(0)}%</span>
+                              <div className="mt-2 md:mt-4 flex flex-col gap-2">
+                                <div className={`p-2 md:p-3 rounded-xl border ${d.data.profit >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}>
+                                  <p className="text-[10px] md:text-xs font-black tracking-tighter">${d.data.profit.toLocaleString()}</p>
+                                  <div className="flex justify-between items-center mt-1 md:mt-2">
+                                    <span className="text-[7px] md:text-[8px] font-bold uppercase opacity-60">{d.data.trades} T</span>
+                                    <span className="text-[7px] md:text-[8px] font-black uppercase">{((d.data.wins / d.data.trades) * 100).toFixed(0)}%</span>
                                   </div>
                                 </div>
-                                <div className="flex gap-1 mt-1">
+                                <div className="flex flex-wrap gap-1 mt-1">
                                   {Array.from({ length: d.data.trades }).map((_, idx) => (
-                                    <div key={idx} className={`w-1 h-1 rounded-full ${idx < d.data.wins ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                    <div key={idx} className={`w-1 h-1 md:w-1.5 md:h-1.5 rounded-full ${idx < d.data.wins ? 'bg-emerald-500' : 'bg-red-500'}`} />
                                   ))}
                                 </div>
                               </div>
                             )}
                           </>
                         )}
-                      </div>
-                    ))}
-                 </div>
-
-                 {/* Mobile Vertical Calendar List */}
-                 <div className="md:hidden flex flex-col gap-3">
-                    {calendarDays.filter(d => d !== null).map((d, i) => (
-                      <div key={i} className="flex items-center justify-between p-5 bg-zinc-900/30 rounded-2xl border border-white/5">
-                         <div className="flex flex-col">
-                            <span className="text-[10px] font-black text-zinc-500 uppercase mb-1">
-                               {new Date(calendarYear, calendarMonth, d!.day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                            </span>
-                            <div className="flex items-center gap-3">
-                               <div className="flex gap-1 mt-1">
-                                 {d!.data ? Array.from({ length: d!.data.trades }).map((_, idx) => (
-                                   <div key={idx} className={`w-1.5 h-1.5 rounded-full ${idx < d!.data.wins ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                                 )) : <span className="text-[9px] font-bold text-zinc-700 uppercase">No Activity</span>}
-                               </div>
-                            </div>
-                         </div>
-                         <div className="text-right">
-                            <p className={`text-lg font-black tracking-tighter ${!d!.data ? 'text-zinc-600' : d!.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                               {!d!.data ? '-' : `${d!.data.profit >= 0 ? '+' : ''}$${Math.abs(d!.data.profit).toFixed(2)}`}
-                            </p>
-                            <p className="text-[9px] font-bold text-zinc-700 uppercase tracking-widest">
-                               {d!.data ? `${d!.data.trades} Trades (${((d!.data.wins / d!.data.trades) * 100).toFixed(0)}% WR)` : '0 Trades'}
-                            </p>
-                         </div>
                       </div>
                     ))}
                  </div>
