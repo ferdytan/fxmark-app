@@ -203,10 +203,10 @@ export default function ForexTracker() {
       {/* Top Navigation */}
       <header className="sticky top-0 z-40 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex justify-between items-center">
          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
-               <Lucide.TrendingUp size={16} className="text-black" />
+            <div className="h-6 w-24 flex items-center justify-start">
+               <img src="/logo.png" alt="FXMARK Logo" className="h-full object-contain" />
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col border-l border-white/10 pl-3">
                <h1 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Portfolio Analyzer</h1>
                <p className="text-sm font-black tracking-tight">AUM: ${stats.balance.toLocaleString()}</p>
             </div>
@@ -290,37 +290,35 @@ export default function ForexTracker() {
         )}
 
         {activeView === 'calendar' && (
-          <div className="space-y-6 animate-in fade-in">
+          <div className="flex flex-col h-[calc(100vh-140px)] animate-in fade-in pb-4">
             {/* Calendar View */}
-            <section className="space-y-3">
-               <div className="flex justify-between items-center pl-2">
-                  <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Calendar Grid</h3>
-                  <div className="flex gap-2 items-center bg-white/5 rounded-lg p-1">
-                     <button onClick={() => {let m=calMonth-1; let y=calYear; if(m<0){m=11;y--;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronLeft size={14}/></button>
-                     <span className="text-[9px] font-black">{MONTHS[calMonth]} {calYear}</span>
-                     <button onClick={() => {let m=calMonth+1; let y=calYear; if(m>11){m=0;y++;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronRight size={14}/></button>
-                  </div>
+            <div className="flex justify-between items-center pl-2 mb-4 shrink-0">
+               <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Calendar Grid</h3>
+               <div className="flex gap-2 items-center bg-white/5 rounded-lg p-1">
+                  <button onClick={() => {let m=calMonth-1; let y=calYear; if(m<0){m=11;y--;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronLeft size={14}/></button>
+                  <span className="text-[9px] font-black">{MONTHS[calMonth]} {calYear}</span>
+                  <button onClick={() => {let m=calMonth+1; let y=calYear; if(m>11){m=0;y++;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronRight size={14}/></button>
                </div>
-               
-               <div className="w-full">
-                  <div className="w-full grid grid-cols-7 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/5">
-                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-                       <div key={day} className="bg-zinc-900 py-2 text-center text-[8px] font-black text-zinc-600">{day}</div>
-                     ))}
-                     {calDays.map((d, i) => (
-                       <div key={i} className={`min-h-[50px] p-1 bg-[#0A0A0A] flex flex-col items-center justify-center gap-1 ${!d ? 'opacity-20' : ''}`}>
-                         {d && (
-                           <>
-                             <span className="text-[9px] font-bold opacity-30">{d.day}</span>
-                             {d.data && <div className={`w-1.5 h-1.5 rounded-full ${d.data.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />}
-                             {d.data && <span className={`text-[7px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
-                           </>
-                         )}
-                       </div>
-                     ))}
-                  </div>
+            </div>
+            
+            <div className="w-full flex-1 flex flex-col min-h-0">
+               <div className="w-full flex-1 grid grid-rows-[auto_1fr_1fr_1fr_1fr_1fr_1fr] grid-cols-7 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/5">
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+                    <div key={day} className="bg-zinc-900 py-2 text-center text-[8px] font-black text-zinc-600">{day}</div>
+                  ))}
+                  {calDays.map((d, i) => (
+                    <div key={i} className={`p-1 bg-[#0A0A0A] flex flex-col items-center justify-center gap-1 ${!d ? 'opacity-20' : ''}`}>
+                      {d && (
+                        <>
+                          <span className="text-[9px] font-bold opacity-30">{d.day}</span>
+                          {d.data && <div className={`w-1.5 h-1.5 rounded-full ${d.data.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />}
+                          {d.data && <span className={`text-[7px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
+                        </>
+                      )}
+                    </div>
+                  ))}
                </div>
-            </section>
+            </div>
           </div>
         )}
 
