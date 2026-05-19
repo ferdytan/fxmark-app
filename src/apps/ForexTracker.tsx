@@ -117,7 +117,7 @@ export default function ForexTracker() {
     } catch { return INITIAL_DATA; }
   });
 
-  const [activeView] = useState<'dashboard' | 'calendar' | 'history' | 'holdings'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history' | 'holdings'>('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
   const [symbol, setSymbol] = useState('XAUUSD.c');
   const [type, setType] = useState<'buy' | 'sell' | 'deposit'>('buy');
@@ -268,22 +268,22 @@ export default function ForexTracker() {
             {/* Monthly Returns */}
             <section className="space-y-3">
                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Monthly Returns</h3>
-               <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-4">
-                  {Object.keys(stats.matrix).sort().reverse().map(year => (
-                     <div key={year} className="mb-4 last:mb-0">
-                        <p className="text-[10px] font-black text-zinc-400 mb-2">{year}</p>
-                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+               <div className="w-[100vw] -mx-4 px-4 overflow-x-auto custom-scrollbar pb-2">
+                  <div className="flex gap-2 w-max">
+                     {Object.keys(stats.matrix).sort().reverse().map(year => (
+                        <div key={year} className="flex gap-2 items-center bg-zinc-900/40 border border-white/5 rounded-3xl p-3">
+                           <p className="text-[10px] font-black text-zinc-400 pr-2 border-r border-white/10">{year}</p>
                            {stats.matrix[year].map((val, i) => (
-                              <div key={i} className="flex flex-col items-center justify-center p-2 bg-black/40 rounded-xl border border-white/5">
+                              <div key={i} className="flex flex-col items-center justify-center p-3 w-16 bg-black/40 rounded-2xl border border-white/5 shrink-0">
                                  <span className="text-[8px] font-bold text-zinc-500 uppercase mb-1">{MONTHS[i]}</span>
-                                 <span className={`text-[10px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : 'text-zinc-600'}`}>
+                                 <span className={`text-[11px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : 'text-zinc-600'}`}>
                                     {val === 0 ? '-' : `${val > 0 ? '+' : ''}${((val/1000)*100).toFixed(1)}%`}
                                  </span>
                               </div>
                            ))}
                         </div>
-                     </div>
-                  ))}
+                     ))}
+                  </div>
                </div>
             </section>
           </div>
@@ -352,6 +352,26 @@ export default function ForexTracker() {
           </div>
         )}
       </main>
+
+      {/* Mobile Bottom Navigation - Visible only on small screens */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/10 pb-safe shadow-2xl">
+         <div className="flex items-center justify-between p-2">
+            {[
+              { id: 'dashboard', icon: Lucide.LayoutDashboard, label: 'Overview' },
+              { id: 'calendar', icon: Lucide.Calendar, label: 'Calendar' },
+              { id: 'history', icon: Lucide.Activity, label: 'Activity' }
+            ].map((item) => (
+              <button 
+                key={item.id}
+                onClick={() => setActiveView(item.id as any)}
+                className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all ${activeView === item.id ? 'text-emerald-500' : 'text-zinc-600 hover:text-zinc-400'}`}
+              >
+                <item.icon size={20} strokeWidth={activeView === item.id ? 2.5 : 2} />
+                <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
+              </button>
+            ))}
+         </div>
+      </nav>
 
       {/* Add Modal */}
       {showAddModal && (
