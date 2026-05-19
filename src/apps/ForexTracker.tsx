@@ -385,8 +385,4 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
       `}</style>
     </div>
   );
-}10px; }
-      `}</style>
-    </div>
-  );
 }
