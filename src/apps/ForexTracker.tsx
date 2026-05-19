@@ -203,7 +203,9 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
       {/* Top Navigation */}
       <header className="sticky top-0 z-40 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex justify-between items-center">
          <div className="flex items-center gap-3">
-            <button onClick={onBack} className="p-2 -ml-2 text-zinc-400 hover:text-white"><Lucide.ArrowLeft size={20}/></button>
+            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center">
+               <Lucide.TrendingUp size={16} className="text-black" />
+            </div>
             <div className="flex flex-col">
                <h1 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Portfolio Analyzer</h1>
                <p className="text-sm font-black tracking-tight">AUM: ${stats.balance.toLocaleString()}</p>
@@ -215,130 +217,140 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
       </header>
 
       <main className="p-4 space-y-6">
-        
-        {/* Core Metrics Dashboard */}
-        <section className="bg-zinc-900/50 border border-white/5 rounded-3xl p-5 space-y-6">
-           {/* Equity Dynamic */}
-           <div className="border-b border-white/5 pb-4">
-              <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2">Equity Dynamics</p>
-              <div className="flex items-baseline gap-2">
-                 <h2 className="text-4xl font-black tracking-tighter">${stats.totalProfit.toLocaleString()}</h2>
-                 <span className="text-[10px] font-black text-emerald-500">+{((stats.totalProfit/1000)*100).toFixed(1)}% ROI</span>
-              </div>
-              <p className="text-[9px] font-bold text-zinc-600 uppercase mt-1">Cumulative Net P&L</p>
-           </div>
-           
-           {/* Risk & Win Rate Grid */}
-           <div className="grid grid-cols-2 gap-4">
-              <div>
-                 <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Win Rate</p>
-                 <h3 className="text-2xl font-black text-emerald-500">{stats.wRate.toFixed(1)}%</h3>
-                 <p className="text-[9px] font-bold text-zinc-600 uppercase mt-1">{stats.tradeCount} Trades</p>
-              </div>
-              <div>
-                 <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Risk / DD</p>
-                 <h3 className="text-2xl font-black text-red-500">{stats.maxDrawdown}%</h3>
-                 <p className="text-[9px] font-bold text-zinc-600 uppercase mt-1">Conservative</p>
-              </div>
-           </div>
-        </section>
+        {activeView === 'dashboard' && (
+          <div className="space-y-6 animate-in fade-in">
+            {/* Core Metrics Dashboard */}
+            <section className="bg-zinc-900/50 border border-white/5 rounded-3xl p-5 space-y-6">
+               {/* Equity Dynamic */}
+               <div className="border-b border-white/5 pb-4">
+                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2">Equity Dynamics</p>
+                  <div className="flex items-baseline gap-2">
+                     <h2 className="text-4xl font-black tracking-tighter">${stats.totalProfit.toLocaleString()}</h2>
+                     <span className="text-[10px] font-black text-emerald-500">+{((stats.totalProfit/1000)*100).toFixed(1)}% ROI</span>
+                  </div>
+                  <p className="text-[9px] font-bold text-zinc-600 uppercase mt-1">Cumulative Net P&L</p>
+               </div>
+               
+               {/* Risk & Win Rate Grid */}
+               <div className="grid grid-cols-2 gap-4">
+                  <div>
+                     <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Win Rate</p>
+                     <h3 className="text-2xl font-black text-emerald-500">{stats.wRate.toFixed(1)}%</h3>
+                     <p className="text-[9px] font-bold text-zinc-600 uppercase mt-1">{stats.tradeCount} Trades</p>
+                  </div>
+                  <div>
+                     <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Risk / DD</p>
+                     <h3 className="text-2xl font-black text-red-500">{stats.maxDrawdown}%</h3>
+                     <p className="text-[9px] font-bold text-zinc-600 uppercase mt-1">Conservative</p>
+                  </div>
+               </div>
+            </section>
 
-        {/* Equity Curve */}
-        <section className="space-y-3">
-           <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Growth Timeline</h3>
-           <div className="bg-zinc-900/30 rounded-3xl border border-white/5 p-4 h-48">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={stats.eData}>
-                  <defs>
-                    <linearGradient id="curveColor" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <Area type="monotone" dataKey="balance" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#curveColor)" />
-                  <Tooltip contentStyle={{ backgroundColor: '#111', border: 'none', borderRadius: '8px', fontSize: '10px' }} itemStyle={{ color: '#10b981' }} formatter={(v: any) => [`$${v}`, 'Balance']}/>
-                </AreaChart>
-              </ResponsiveContainer>
-           </div>
-        </section>
+            {/* Equity Curve */}
+            <section className="space-y-3">
+               <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Growth Timeline</h3>
+               <div className="bg-zinc-900/30 rounded-3xl border border-white/5 p-4 h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={stats.eData}>
+                      <defs>
+                        <linearGradient id="curveColor" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="balance" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#curveColor)" />
+                      <Tooltip contentStyle={{ backgroundColor: '#111', border: 'none', borderRadius: '8px', fontSize: '10px' }} itemStyle={{ color: '#10b981' }} formatter={(v: any) => [`$${v}`, 'Balance']}/>
+                    </AreaChart>
+                  </ResponsiveContainer>
+               </div>
+            </section>
 
-        {/* Monthly Returns */}
-        <section className="space-y-3">
-           <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Monthly Returns</h3>
-           <div className="w-[100vw] -mx-4 px-4 overflow-x-auto custom-scrollbar pb-2">
-              <div className="flex gap-2 min-w-max">
-                 {Object.keys(stats.matrix).sort().reverse().map(year => (
-                    <div key={year} className="bg-zinc-900/40 border border-white/5 rounded-2xl p-3 min-w-[120px]">
-                       <p className="text-[10px] font-black text-zinc-400 mb-2">{year}</p>
-                       <div className="space-y-1">
-                          {stats.matrix[year].map((val, i) => val !== 0 && (
-                             <div key={i} className="flex justify-between items-center text-[10px] font-bold">
-                                <span className="text-zinc-600">{MONTHS[i]}</span>
-                                <span className={val > 0 ? 'text-emerald-500' : 'text-red-500'}>{val > 0 ? '+' : ''}{((val/1000)*100).toFixed(1)}%</span>
-                             </div>
-                          ))}
+            {/* Monthly Returns */}
+            <section className="space-y-3">
+               <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Monthly Returns</h3>
+               <div className="bg-zinc-900/40 border border-white/5 rounded-3xl p-4">
+                  {Object.keys(stats.matrix).sort().reverse().map(year => (
+                     <div key={year} className="mb-4 last:mb-0">
+                        <p className="text-[10px] font-black text-zinc-400 mb-2">{year}</p>
+                        <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                           {stats.matrix[year].map((val, i) => (
+                              <div key={i} className="flex flex-col items-center justify-center p-2 bg-black/40 rounded-xl border border-white/5">
+                                 <span className="text-[8px] font-bold text-zinc-500 uppercase mb-1">{MONTHS[i]}</span>
+                                 <span className={`text-[10px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : 'text-zinc-600'}`}>
+                                    {val === 0 ? '-' : `${val > 0 ? '+' : ''}${((val/1000)*100).toFixed(1)}%`}
+                                 </span>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                  ))}
+               </div>
+            </section>
+          </div>
+        )}
+
+        {activeView === 'calendar' && (
+          <div className="space-y-6 animate-in fade-in">
+            {/* Calendar View */}
+            <section className="space-y-3">
+               <div className="flex justify-between items-center pl-2">
+                  <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Calendar Grid</h3>
+                  <div className="flex gap-2 items-center bg-white/5 rounded-lg p-1">
+                     <button onClick={() => {let m=calMonth-1; let y=calYear; if(m<0){m=11;y--;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronLeft size={14}/></button>
+                     <span className="text-[9px] font-black">{MONTHS[calMonth]} {calYear}</span>
+                     <button onClick={() => {let m=calMonth+1; let y=calYear; if(m>11){m=0;y++;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronRight size={14}/></button>
+                  </div>
+               </div>
+               
+               <div className="w-[100vw] -mx-4 px-4 overflow-x-auto custom-scrollbar pb-2">
+                  <div className="min-w-[500px] grid grid-cols-7 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/5">
+                     {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+                       <div key={day} className="bg-zinc-900 py-2 text-center text-[8px] font-black text-zinc-600">{day}</div>
+                     ))}
+                     {calDays.map((d, i) => (
+                       <div key={i} className={`min-h-[70px] p-1 bg-[#0A0A0A] flex flex-col items-center justify-center gap-1 ${!d ? 'opacity-20' : ''}`}>
+                         {d && (
+                           <>
+                             <span className="text-[9px] font-bold opacity-30">{d.day}</span>
+                             {d.data && <div className={`w-1.5 h-1.5 rounded-full ${d.data.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />}
+                             {d.data && <span className={`text-[8px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
+                           </>
+                         )}
+                       </div>
+                     ))}
+                  </div>
+               </div>
+            </section>
+          </div>
+        )}
+
+        {activeView === 'history' && (
+          <div className="space-y-6 animate-in fade-in">
+            {/* Trade Ledger List */}
+            <section className="space-y-3">
+               <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Execution Log</h3>
+               <div className="space-y-2">
+                  {records.filter(r => r.type !== 'deposit').reverse().map((r, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 bg-zinc-900/30 rounded-2xl border border-white/5">
+                       <div className="flex flex-col">
+                          <span className="text-[9px] font-black text-zinc-600 mb-1">{r.date.split(' ')[0]}</span>
+                          <div className="flex items-center gap-2">
+                             <span className={`w-1.5 h-1.5 rounded-full ${r.type === 'buy' ? 'bg-emerald-500' : 'bg-red-500'}`}/>
+                             <span className="text-xs font-black uppercase">{r.symbol}</span>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <p className={`text-sm font-black ${r.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                             {r.profit >= 0 ? '+' : ''}${r.profit.toFixed(2)}
+                          </p>
+                          <p className="text-[9px] font-bold text-zinc-600">{r.lots} L</p>
                        </div>
                     </div>
-                 ))}
-              </div>
-           </div>
-        </section>
-
-        {/* Calendar View */}
-        <section className="space-y-3">
-           <div className="flex justify-between items-center pl-2">
-              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Calendar Grid</h3>
-              <div className="flex gap-2 items-center bg-white/5 rounded-lg p-1">
-                 <button onClick={() => {let m=calMonth-1; let y=calYear; if(m<0){m=11;y--;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronLeft size={14}/></button>
-                 <span className="text-[9px] font-black">{MONTHS[calMonth]} {calYear}</span>
-                 <button onClick={() => {let m=calMonth+1; let y=calYear; if(m>11){m=0;y++;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronRight size={14}/></button>
-              </div>
-           </div>
-           
-           <div className="w-[100vw] -mx-4 px-4 overflow-x-auto custom-scrollbar pb-2">
-              <div className="min-w-[500px] grid grid-cols-7 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/5">
-                 {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-                   <div key={day} className="bg-zinc-900 py-2 text-center text-[8px] font-black text-zinc-600">{day}</div>
-                 ))}
-                 {calDays.map((d, i) => (
-                   <div key={i} className={`min-h-[70px] p-1 bg-[#0A0A0A] flex flex-col items-center justify-center gap-1 ${!d ? 'opacity-20' : ''}`}>
-                     {d && (
-                       <>
-                         <span className="text-[9px] font-bold opacity-30">{d.day}</span>
-                         {d.data && <div className={`w-1.5 h-1.5 rounded-full ${d.data.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />}
-                         {d.data && <span className={`text-[8px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
-                       </>
-                     )}
-                   </div>
-                 ))}
-              </div>
-           </div>
-        </section>
-
-        {/* Trade Ledger List */}
-        <section className="space-y-3">
-           <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Recent Execution</h3>
-           <div className="space-y-2">
-              {records.filter(r => r.type !== 'deposit').reverse().slice(0, 10).map((r, i) => (
-                <div key={i} className="flex items-center justify-between p-4 bg-zinc-900/30 rounded-2xl border border-white/5">
-                   <div className="flex flex-col">
-                      <span className="text-[9px] font-black text-zinc-600 mb-1">{r.date.split(' ')[0]}</span>
-                      <div className="flex items-center gap-2">
-                         <span className={`w-1.5 h-1.5 rounded-full ${r.type === 'buy' ? 'bg-emerald-500' : 'bg-red-500'}`}/>
-                         <span className="text-xs font-black uppercase">{r.symbol}</span>
-                      </div>
-                   </div>
-                   <div className="text-right">
-                      <p className={`text-sm font-black ${r.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                         {r.profit >= 0 ? '+' : ''}${r.profit.toFixed(2)}
-                      </p>
-                      <p className="text-[9px] font-bold text-zinc-600">{r.lots} L</p>
-                   </div>
-                </div>
-              ))}
-           </div>
-        </section>
-
+                  ))}
+               </div>
+            </section>
+          </div>
+        )}
       </main>
 
       {/* Add Modal */}
@@ -370,6 +382,10 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
         .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+      `}</style>
+    </div>
+  );
+}10px; }
       `}</style>
     </div>
   );
