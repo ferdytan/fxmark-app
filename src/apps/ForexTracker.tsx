@@ -246,7 +246,7 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-white dark:bg-[#050505] text-slate-900 dark:text-zinc-100 font-sans transition-colors duration-500 overflow-x-hidden md:overflow-hidden pb-20 md:pb-0">
+    <div className="flex min-h-screen bg-[#050505] text-zinc-100 font-sans transition-colors duration-500 overflow-x-hidden md:overflow-hidden pb-20 md:pb-0 dark">
       {/* Sidebar - Hidden on mobile, visible on desktop */}
       <aside className="hidden md:flex w-64 bg-slate-50 dark:bg-[#0A0A0A] border-r border-slate-200 dark:border-white/5 flex-col flex-shrink-0 transition-all z-20">
         <div className="p-8 border-b border-slate-200 dark:border-white/5">
@@ -332,8 +332,9 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
                   </div>
                </div>
 
-               <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
-                 <div className="min-w-[600px] md:min-w-full grid grid-cols-7 gap-px bg-slate-200 dark:bg-white/5 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
+               <div className="w-full pb-4">
+                 {/* Desktop Calendar Grid */}
+                 <div className="hidden md:grid min-w-[600px] md:min-w-full grid-cols-7 gap-px bg-slate-200 dark:bg-white/5 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/5 shadow-2xl">
                     {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(day => (
                       <div key={day} className="bg-slate-50 dark:bg-[#0A0A0A] py-4 text-center text-[9px] font-black text-slate-400 dark:text-zinc-600 tracking-widest uppercase border-b border-slate-200 dark:border-white/5">{day}</div>
                     ))}
@@ -360,6 +361,34 @@ export default function ForexTracker({ onBack }: { onBack: () => void }) {
                             )}
                           </>
                         )}
+                      </div>
+                    ))}
+                 </div>
+
+                 {/* Mobile Vertical Calendar List */}
+                 <div className="md:hidden flex flex-col gap-3">
+                    {calendarDays.filter(d => d !== null).map((d, i) => (
+                      <div key={i} className="flex items-center justify-between p-5 bg-zinc-900/30 rounded-2xl border border-white/5">
+                         <div className="flex flex-col">
+                            <span className="text-[10px] font-black text-zinc-500 uppercase mb-1">
+                               {new Date(calendarYear, calendarMonth, d!.day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                            </span>
+                            <div className="flex items-center gap-3">
+                               <div className="flex gap-1 mt-1">
+                                 {d!.data ? Array.from({ length: d!.data.trades }).map((_, idx) => (
+                                   <div key={idx} className={`w-1.5 h-1.5 rounded-full ${idx < d!.data.wins ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                 )) : <span className="text-[9px] font-bold text-zinc-700 uppercase">No Activity</span>}
+                               </div>
+                            </div>
+                         </div>
+                         <div className="text-right">
+                            <p className={`text-lg font-black tracking-tighter ${!d!.data ? 'text-zinc-600' : d!.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                               {!d!.data ? '-' : `${d!.data.profit >= 0 ? '+' : ''}$${Math.abs(d!.data.profit).toFixed(2)}`}
+                            </p>
+                            <p className="text-[9px] font-bold text-zinc-700 uppercase tracking-widest">
+                               {d!.data ? `${d!.data.trades} Trades (${((d!.data.wins / d!.data.trades) * 100).toFixed(0)}% WR)` : '0 Trades'}
+                            </p>
+                         </div>
                       </div>
                     ))}
                  </div>
