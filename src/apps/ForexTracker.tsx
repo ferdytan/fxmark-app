@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import * as Lucide from 'lucide-react';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
+import { supabase } from '../supabaseClient';
 
 interface TradeRecord {
   id: string;
@@ -104,6 +105,13 @@ const INITIAL_DATA: TradeRecord[] = [
 
 const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 
+const mergeRecords = (local: TradeRecord[], remote: TradeRecord[]): TradeRecord[] => {
+  const map = new Map<string, TradeRecord>();
+  local.forEach(r => map.set(r.id, r));
+  remote.forEach(r => map.set(r.id, r));
+  return Array.from(map.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+};
+
 export default function ForexTracker() {
   // Enforce Dark Mode
   useEffect(() => {
@@ -116,6 +124,8 @@ export default function ForexTracker() {
       return saved && JSON.parse(saved).length > 0 ? JSON.parse(saved) : INITIAL_DATA;
     } catch { return INITIAL_DATA; }
   });
+
+  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
 
   const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history' | 'holdings'>('dashboard');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -210,6 +220,85 @@ export default function ForexTracker() {
     localStorage.setItem('fxmark_v7_mobile', JSON.stringify(records));
   }, [records]);
 
+  const syncData = async () => {
+    setSyncStatus('syncing');
+    try {
+      const { data: remoteData, error } = await supabase
+        .from('trades')
+        .select('*');
+
+      if (error) throw error;
+
+      const formattedRemote: TradeRecord[] = (remoteData || []).map(r => ({
+        id: r.id,
+        symbol: r.symbol,
+        type: r.type as any,
+        lots: r.lots ?? undefined,
+        openPrice: r.open_price ?? undefined,
+        closePrice: r.close_price ?? undefined,
+        profit: r.profit,
+        date: r.date
+      }));
+
+      const currentSaved = localStorage.getItem('fxmark_v7_mobile');
+      const localRecords: TradeRecord[] = currentSaved ? JSON.parse(currentSaved) : INITIAL_DATA;
+
+      const merged = mergeRecords(localRecords, formattedRemote);
+
+      const remoteIds = new Set(formattedRemote.map(r => r.id));
+      const toUpload = merged.filter(r => !remoteIds.has(r.id));
+
+      if (toUpload.length > 0) {
+        const dbUpload = toUpload.map(r => ({
+          id: r.id,
+          symbol: r.symbol,
+          type: r.type,
+          lots: r.lots ?? null,
+          open_price: r.openPrice ?? null,
+          close_price: r.closePrice ?? null,
+          profit: r.profit,
+          date: r.date
+        }));
+
+        const { error: uploadError } = await supabase
+          .from('trades')
+          .upsert(dbUpload);
+
+        if (uploadError) throw uploadError;
+      }
+
+      setRecords(merged);
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 2000);
+    } catch (err) {
+      console.error("Sync error:", err);
+      setSyncStatus('error');
+    }
+  };
+
+  useEffect(() => {
+    syncData();
+
+    window.addEventListener('focus', syncData);
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'fxmark_v7_mobile') {
+        try {
+          const latestData = e.newValue ? JSON.parse(e.newValue) : INITIAL_DATA;
+          setRecords(latestData);
+        } catch (err) {
+          console.error("Gagal sinkronisasi data antar tab:", err);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('focus', syncData);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const stats = useMemo(() => {
     const tradesOnly = records.filter(r => r.type !== 'deposit');
     const tProfit = tradesOnly.reduce((sum, r) => sum + r.profit, 0);
@@ -260,7 +349,7 @@ export default function ForexTracker() {
     setShowAddModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent | React.MouseEvent, keepOpen: boolean = false) => {
+  const handleSubmit = async (e: React.FormEvent | React.MouseEvent, keepOpen: boolean = false) => {
     e.preventDefault();
 
     const form = (e.currentTarget as HTMLElement).closest('form');
@@ -271,17 +360,40 @@ export default function ForexTracker() {
 
     if (!profit || !date) return;
     const formattedDate = date.includes('T') ? date.replace('T', ' ') + ':00' : date;
-    const isLoss = type !== 'deposit' && Number(profit) < 0;
-    setRecords([...records, {
-      id: generateUUID(),
+    const newId = generateUUID();
+    const newRecord: TradeRecord = {
+      id: newId,
       symbol: type === 'deposit' ? 'DEPOSIT' : symbol,
       type,
       lots: type === 'deposit' ? undefined : Number(lots),
-      profit: type === 'deposit' ? Number(profit) : (isLoss ? Number(profit) : Number(profit)), // Supports both typing -10 or positive numbers
+      profit: Number(profit),
       date: formattedDate
-    }]);
+    };
+
+    setRecords(prev => [...prev, newRecord]);
     setProfit('');
     if (!keepOpen) handleCloseModal();
+
+    setSyncStatus('syncing');
+    try {
+      const { error } = await supabase.from('trades').insert({
+        id: newRecord.id,
+        symbol: newRecord.symbol,
+        type: newRecord.type,
+        lots: newRecord.lots ?? null,
+        open_price: newRecord.openPrice ?? null,
+        close_price: newRecord.closePrice ?? null,
+        profit: newRecord.profit,
+        date: newRecord.date
+      });
+
+      if (error) throw error;
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 2000);
+    } catch (err) {
+      console.error("Gagal menyimpan ke cloud:", err);
+      setSyncStatus('error');
+    }
   };
 
   const [calMonth, setCalMonth] = useState(new Date().getMonth());
@@ -308,7 +420,23 @@ export default function ForexTracker() {
             </div>
             <div className="flex flex-col border-l border-white/10 pl-3">
                <h1 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Portfolio Analyzer</h1>
-               <p className="text-sm font-black tracking-tight">AUM: ${stats.balance.toLocaleString()}</p>
+               <div className="flex items-center gap-2">
+                  <p className="text-sm font-black tracking-tight">AUM: ${stats.balance.toLocaleString()}</p>
+                  <div className="flex items-center gap-1" title={syncStatus === 'syncing' ? 'Syncing with Supabase...' : syncStatus === 'success' ? 'Cloud Synced' : syncStatus === 'error' ? 'Cloud Sync Failed' : 'Cloud Connected'}>
+                     {syncStatus === 'syncing' && (
+                        <Lucide.RefreshCw size={11} className="text-emerald-500 animate-spin" />
+                     )}
+                     {syncStatus === 'success' && (
+                        <Lucide.Cloud size={12} className="text-emerald-500 animate-pulse" />
+                     )}
+                     {syncStatus === 'error' && (
+                        <Lucide.CloudOff size={12} className="text-red-500 animate-bounce" />
+                     )}
+                     {syncStatus === 'idle' && (
+                        <Lucide.Cloud size={12} className="text-zinc-600" />
+                     )}
+                  </div>
+               </div>
             </div>
          </div>
          <button onClick={() => setShowAddModal(true)} className="w-8 h-8 bg-emerald-500 text-black rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
