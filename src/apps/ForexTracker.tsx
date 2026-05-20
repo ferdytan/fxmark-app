@@ -125,6 +125,87 @@ export default function ForexTracker() {
   const [profit, setProfit] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
 
+  const [isPinVerified, setIsPinVerified] = useState(false);
+  const [enteredPin, setEnteredPin] = useState('');
+  const [pinError, setPinError] = useState(false);
+
+  const generateUUID = () => {
+    if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+      return window.crypto.randomUUID();
+    }
+    return 'tr-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 9);
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    setIsPinVerified(false);
+    setEnteredPin('');
+    setPinError(false);
+  };
+
+  const handleKeypadPress = (val: string) => {
+    if (enteredPin.length < 4 && !pinError) {
+      const newPin = enteredPin + val;
+      setEnteredPin(newPin);
+      if (newPin.length === 4) {
+        if (newPin === '1213') {
+          setTimeout(() => setIsPinVerified(true), 300);
+        } else {
+          setPinError(true);
+          setTimeout(() => {
+            setEnteredPin('');
+            setPinError(false);
+          }, 600);
+        }
+      }
+    }
+  };
+
+  const handleKeypadBackspace = () => {
+    if (enteredPin.length > 0 && !pinError) {
+      setEnteredPin(enteredPin.slice(0, -1));
+    }
+  };
+
+  const handleKeypadClear = () => {
+    if (!pinError) {
+      setEnteredPin('');
+    }
+  };
+
+  useEffect(() => {
+    if (!showAddModal || isPinVerified) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key >= '0' && e.key <= '9') {
+        if (enteredPin.length < 4 && !pinError) {
+          const newPin = enteredPin + e.key;
+          setEnteredPin(newPin);
+          if (newPin.length === 4) {
+            if (newPin === '1213') {
+              setTimeout(() => setIsPinVerified(true), 300);
+            } else {
+              setPinError(true);
+              setTimeout(() => {
+                setEnteredPin('');
+                setPinError(false);
+              }, 600);
+            }
+          }
+        }
+      } else if (e.key === 'Backspace') {
+        if (enteredPin.length > 0 && !pinError) {
+          setEnteredPin(enteredPin.slice(0, -1));
+        }
+      } else if (e.key === 'Escape') {
+        handleCloseModal();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showAddModal, isPinVerified, enteredPin, pinError]);
+
   useEffect(() => {
     localStorage.setItem('fxmark_v7_mobile', JSON.stringify(records));
   }, [records]);
@@ -181,11 +262,18 @@ export default function ForexTracker() {
 
   const handleSubmit = (e: React.FormEvent | React.MouseEvent, keepOpen: boolean = false) => {
     e.preventDefault();
+
+    const form = (e.currentTarget as HTMLElement).closest('form');
+    if (form && !form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
     if (!profit || !date) return;
     const formattedDate = date.includes('T') ? date.replace('T', ' ') + ':00' : date;
     const isLoss = type !== 'deposit' && Number(profit) < 0;
     setRecords([...records, {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       symbol: type === 'deposit' ? 'DEPOSIT' : symbol,
       type,
       lots: type === 'deposit' ? undefined : Number(lots),
@@ -193,7 +281,7 @@ export default function ForexTracker() {
       date: formattedDate
     }]);
     setProfit('');
-    if (!keepOpen) setShowAddModal(false);
+    if (!keepOpen) handleCloseModal();
   };
 
   const [calMonth, setCalMonth] = useState(new Date().getMonth());
@@ -391,28 +479,95 @@ export default function ForexTracker() {
          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
             <div className="bg-[#111] w-full max-w-sm rounded-[2rem] p-6 border border-white/10 animate-in slide-in-from-bottom-8">
                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-sm font-black uppercase tracking-widest">New Execution</h3>
-                  <button onClick={() => setShowAddModal(false)} className="p-2 text-zinc-500"><Lucide.X size={20}/></button>
+                  <h3 className="text-sm font-black uppercase tracking-widest">
+                     {isPinVerified ? 'New Execution' : 'Security Verification'}
+                  </h3>
+                  <button onClick={handleCloseModal} className="p-2 text-zinc-500"><Lucide.X size={20}/></button>
                </div>
-               <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                     <select value={type} onChange={(e) => setType(e.target.value as any)} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none">
-                        <option value="buy">BUY</option><option value="sell">SELL</option><option value="deposit">DEPOSIT</option>
-                     </select>
-                     <input type="text" value={symbol} onChange={(e) => setSymbol(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Symbol" />
+
+               {!isPinVerified ? (
+                  <div className="flex flex-col items-center justify-center py-4 text-center animate-in fade-in duration-200">
+                     <div className="w-12 h-12 bg-zinc-900 border border-white/10 rounded-full flex items-center justify-center text-emerald-500 mb-4 shadow-lg shadow-emerald-500/5">
+                        <Lucide.Lock size={20} strokeWidth={2.5} />
+                     </div>
+                     <h4 className="text-xs font-black uppercase tracking-widest text-zinc-200">Security Gate</h4>
+                     <p className="text-[10px] font-bold text-zinc-500 mt-1 mb-6">Enter PIN to access New Execution</p>
+
+                     {/* PIN Dots */}
+                     <div className={`flex gap-4 justify-center mb-8 ${pinError ? 'shake' : ''}`}>
+                        {[0, 1, 2, 3].map((index) => {
+                           const isFilled = enteredPin.length > index;
+                           return (
+                              <div
+                                 key={index}
+                                 className={`w-3.5 h-3.5 rounded-full border transition-all duration-200 ${
+                                    pinError
+                                       ? 'border-red-500 bg-red-500 shadow-lg shadow-red-500/30'
+                                       : isFilled
+                                       ? 'border-emerald-500 bg-emerald-500 shadow-lg shadow-emerald-500/30 scale-110'
+                                       : 'border-zinc-700 bg-zinc-900/50'
+                                 }`}
+                              />
+                           );
+                        })}
+                     </div>
+
+                     {/* Keypad Grid */}
+                     <div className="grid grid-cols-3 gap-3 w-full max-w-[260px] mx-auto">
+                        {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((num) => (
+                           <button
+                              key={num}
+                              type="button"
+                              onClick={() => handleKeypadPress(num)}
+                              className="h-12 bg-zinc-900 hover:bg-zinc-800 active:scale-95 border border-white/5 text-base font-black rounded-2xl flex items-center justify-center transition-all duration-100"
+                           >
+                              {num}
+                           </button>
+                        ))}
+                        <button
+                           type="button"
+                           onClick={handleKeypadClear}
+                           className="h-12 bg-zinc-950/40 hover:bg-zinc-900 active:scale-95 text-[10px] font-black uppercase tracking-wider text-zinc-500 rounded-2xl flex items-center justify-center transition-all duration-100"
+                        >
+                           Clear
+                        </button>
+                        <button
+                           type="button"
+                           onClick={() => handleKeypadPress('0')}
+                           className="h-12 bg-zinc-900 hover:bg-zinc-800 active:scale-95 border border-white/5 text-base font-black rounded-2xl flex items-center justify-center transition-all duration-100"
+                        >
+                           0
+                        </button>
+                        <button
+                           type="button"
+                           onClick={handleKeypadBackspace}
+                           className="h-12 bg-zinc-950/40 hover:bg-zinc-900 active:scale-95 text-zinc-500 rounded-2xl flex items-center justify-center transition-all duration-100"
+                        >
+                           <Lucide.Delete size={18} />
+                        </button>
+                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                     <input type="number" step="0.01" value={lots} onChange={(e) => setLots(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Lots" />
-                     <input type="number" step="0.01" value={profit} onChange={(e) => setProfit(e.target.value)} required className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Profit $" />
-                  </div>
-                  <div className="w-full">
-                     <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required className="w-full bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none text-white dark:[color-scheme:dark]" />
-                  </div>
-                  <div className="flex gap-3 pt-2">
-                     <button type="button" onClick={(e) => handleSubmit(e, true)} className="flex-1 bg-zinc-800 text-white rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all hover:bg-zinc-700">Add Bulk</button>
-                     <button type="button" onClick={(e) => handleSubmit(e, false)} className="flex-1 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all shadow-lg shadow-emerald-500/20">Commit</button>
-                  </div>
-               </form>
+               ) : (
+                  <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in duration-300">
+                     <div className="grid grid-cols-2 gap-3">
+                        <select value={type} onChange={(e) => setType(e.target.value as any)} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none">
+                           <option value="buy">BUY</option><option value="sell">SELL</option><option value="deposit">DEPOSIT</option>
+                        </select>
+                        <input type="text" value={symbol} onChange={(e) => setSymbol(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Symbol" />
+                     </div>
+                     <div className="grid grid-cols-2 gap-3">
+                        <input type="number" step="0.01" value={lots} onChange={(e) => setLots(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Lots" />
+                        <input type="number" step="0.01" value={profit} onChange={(e) => setProfit(e.target.value)} required className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Profit $" />
+                     </div>
+                     <div className="w-full">
+                        <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required className="w-full bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none text-white dark:[color-scheme:dark]" />
+                     </div>
+                     <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={(e) => handleSubmit(e, true)} className="flex-1 bg-zinc-800 text-white rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all hover:bg-zinc-700">Add Bulk</button>
+                        <button type="button" onClick={(e) => handleSubmit(e, false)} className="flex-1 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all shadow-lg shadow-emerald-500/20">Commit</button>
+                     </div>
+                  </form>
+               )}
             </div>
          </div>
       )}
@@ -421,6 +576,15 @@ export default function ForexTracker() {
         .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-6px); }
+          40%, 80% { transform: translateX(6px); }
+        }
+        .shake {
+          animation: shake 0.4s ease-in-out;
+        }
       `}</style>
     </div>
   );
