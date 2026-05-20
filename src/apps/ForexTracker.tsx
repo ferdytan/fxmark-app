@@ -112,6 +112,30 @@ const mergeRecords = (local: TradeRecord[], remote: TradeRecord[]): TradeRecord[
   return Array.from(map.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
+const formatTradeDate = (dateStr: string) => {
+  try {
+    const normalized = dateStr.includes(' ') && !dateStr.includes('T')
+      ? dateStr.replace(' ', 'T')
+      : dateStr;
+    const d = new Date(normalized);
+    if (isNaN(d.getTime())) return dateStr;
+
+    const day = d.getDate();
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const month = months[d.getMonth()];
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+
+    return `${day} ${month} ${year}  -  ${hours}:${minutes}`;
+  } catch {
+    return dateStr;
+  }
+};
+
 export default function ForexTracker() {
   // Enforce Dark Mode
   useEffect(() => {
@@ -240,34 +264,9 @@ export default function ForexTracker() {
         date: r.date
       }));
 
-      const currentSaved = localStorage.getItem('fxmark_v7_mobile');
-      const localRecords: TradeRecord[] = currentSaved ? JSON.parse(currentSaved) : INITIAL_DATA;
-
-      const merged = mergeRecords(localRecords, formattedRemote);
-
-      const remoteIds = new Set(formattedRemote.map(r => r.id));
-      const toUpload = merged.filter(r => !remoteIds.has(r.id));
-
-      if (toUpload.length > 0) {
-        const dbUpload = toUpload.map(r => ({
-          id: r.id,
-          symbol: r.symbol,
-          type: r.type,
-          lots: r.lots ?? null,
-          open_price: r.openPrice ?? null,
-          close_price: r.closePrice ?? null,
-          profit: r.profit,
-          date: r.date
-        }));
-
-        const { error: uploadError } = await supabase
-          .from('trades')
-          .upsert(dbUpload);
-
-        if (uploadError) throw uploadError;
-      }
-
-      setRecords(merged);
+      // Remote is absolute source of truth
+      const sortedRemote = formattedRemote.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      setRecords(sortedRemote);
       setSyncStatus('success');
       setTimeout(() => setSyncStatus('idle'), 2000);
     } catch (err) {
@@ -299,6 +298,83 @@ export default function ForexTracker() {
     };
   }, []);
 
+  const handleExport = () => {
+    const dataStr = JSON.stringify(records, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = `fxmark_trades_${new Date().toISOString().substring(0, 10)}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    if (e.target.files && e.target.files[0]) {
+      fileReader.readAsText(e.target.files[0], "UTF-8");
+      fileReader.onload = async (event) => {
+        try {
+          const parsed = JSON.parse(event.target?.result as string);
+          if (Array.isArray(parsed)) {
+            const merged = mergeRecords(records, parsed);
+            setRecords(merged);
+            localStorage.setItem('fxmark_v7_mobile', JSON.stringify(merged));
+            
+            setSyncStatus('syncing');
+            const dbUpload = merged.map(r => ({
+              id: r.id,
+              symbol: r.symbol,
+              type: r.type,
+              lots: r.lots ?? null,
+              open_price: r.openPrice ?? null,
+              close_price: r.closePrice ?? null,
+              profit: r.profit,
+              date: r.date
+            }));
+
+            const { error } = await supabase
+              .from('trades')
+              .upsert(dbUpload);
+
+            if (error) throw error;
+            
+            alert(`Berhasil mengimpor ${parsed.length} transaksi! Semua data terunggah ke cloud.`);
+            setSyncStatus('success');
+            setTimeout(() => setSyncStatus('idle'), 2000);
+          } else {
+            alert("Format file tidak valid. Harus berupa JSON Array.");
+          }
+        } catch (err) {
+          alert("Gagal membaca file backup.");
+        }
+      };
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) return;
+    
+    const updated = records.filter(r => r.id !== id);
+    setRecords(updated);
+    localStorage.setItem('fxmark_v7_mobile', JSON.stringify(updated));
+
+    setSyncStatus('syncing');
+    try {
+      const { error } = await supabase
+        .from('trades')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 2000);
+    } catch (err) {
+      console.error("Gagal menghapus dari cloud:", err);
+      setSyncStatus('error');
+    }
+  };
+
   const stats = useMemo(() => {
     const tradesOnly = records.filter(r => r.type !== 'deposit');
     const tProfit = tradesOnly.reduce((sum, r) => sum + r.profit, 0);
@@ -313,7 +389,7 @@ export default function ForexTracker() {
     let accBalance = 0;
     for (const r of sorted) {
       accBalance += r.profit;
-      eData.push({ date: r.date.split(' ')[0], balance: accBalance });
+      eData.push({ date: r.date.substring(0, 10), balance: accBalance });
     }
 
     const matrix: Record<string, number[]> = {};
@@ -326,7 +402,7 @@ export default function ForexTracker() {
 
     const calendarData: Record<string, { profit: number; trades: number; wins: number }> = {};
     tradesOnly.forEach(t => {
-      const d = t.date.split(' ')[0];
+      const d = t.date.substring(0, 10);
       if (!calendarData[d]) calendarData[d] = { profit: 0, trades: 0, wins: 0 };
       calendarData[d].profit += t.profit;
       calendarData[d].trades += 1;
@@ -554,17 +630,31 @@ export default function ForexTracker() {
           <div className="space-y-6 animate-in fade-in">
             {/* Trade Ledger List */}
             <section className="space-y-3">
-               <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Execution Log</h3>
+               <div className="flex justify-between items-center pl-2 pr-1">
+                  <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Execution Log</h3>
+                  <div className="flex items-center gap-2">
+                     <button onClick={handleExport} className="flex items-center gap-1 px-2 py-1 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg text-[9px] font-black uppercase text-zinc-400 hover:text-white transition-all cursor-pointer">
+                        <Lucide.Download size={10} /> Export
+                     </button>
+                     <label className="flex items-center gap-1 px-2 py-1 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg text-[9px] font-black uppercase text-zinc-400 hover:text-white cursor-pointer transition-all">
+                        <Lucide.Upload size={10} /> Import
+                        <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+                     </label>
+                  </div>
+               </div>
                <div className="space-y-2">
                   {records.filter(r => r.type !== 'deposit').reverse().map((r, i) => (
                     <div key={i} className="flex items-center justify-between p-4 bg-zinc-900/30 rounded-2xl border border-white/5">
                        <div className="flex flex-col">
-                          <span className="text-[9px] font-black text-zinc-600 mb-1">{r.date.split(' ')[0]}</span>
+                          <span className="text-[9px] font-black text-zinc-500 mb-1">{formatTradeDate(r.date)}</span>
                           <div className="flex items-center gap-2">
                              <span className={`w-1.5 h-1.5 rounded-full ${r.type === 'buy' ? 'bg-emerald-500' : 'bg-red-500'}`}/>
                              <span className="text-xs font-black uppercase">{r.symbol}</span>
-                             <button onClick={() => handleDuplicate(r)} className="ml-2 p-1 bg-white/5 rounded text-zinc-400 hover:text-white transition-colors" title="Duplicate this trade">
+                             <button onClick={() => handleDuplicate(r)} className="ml-2 p-1 bg-white/5 rounded text-zinc-400 hover:text-white transition-colors cursor-pointer" title="Duplicate this trade">
                                 <Lucide.Copy size={12}/>
+                             </button>
+                             <button onClick={() => handleDelete(r.id)} className="p-1 bg-white/5 rounded text-red-400 hover:text-red-600 transition-colors cursor-pointer" title="Delete this trade">
+                                <Lucide.Trash2 size={12}/>
                              </button>
                           </div>
                        </div>
