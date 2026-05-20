@@ -498,7 +498,7 @@ export default function ForexTracker() {
   }, [calMonth, calYear, stats.calendarData]);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white font-sans overflow-x-hidden pb-24">
+    <div className="h-screen overflow-y-auto bg-[#0A0A0A] text-white font-sans overflow-x-hidden pb-24">
       {/* Top Navigation */}
       <header className="sticky top-0 z-40 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex justify-between items-center">
          <div className="flex items-center gap-3">
