@@ -158,6 +158,8 @@ export default function ForexTracker() {
   const [lots, setLots] = useState('0.10');
   const [profit, setProfit] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
+  const [openPrice, setOpenPrice] = useState('');
+  const [closePrice, setClosePrice] = useState('');
 
   const [isPinVerified, setIsPinVerified] = useState(false);
   const [enteredPin, setEnteredPin] = useState('');
@@ -175,6 +177,8 @@ export default function ForexTracker() {
     setIsPinVerified(false);
     setEnteredPin('');
     setPinError(false);
+    setOpenPrice('');
+    setClosePrice('');
   };
 
   const handleKeypadPress = (val: string) => {
@@ -421,6 +425,10 @@ export default function ForexTracker() {
     if(r.lots) setLots(r.lots.toString());
     setProfit(Math.abs(r.profit).toString());
     setDate(r.date.slice(0, 16).replace(' ', 'T'));
+    if(r.openPrice) setOpenPrice(r.openPrice.toString());
+    else setOpenPrice('');
+    if(r.closePrice) setClosePrice(r.closePrice.toString());
+    else setClosePrice('');
     setShowAddModal(true);
   };
 
@@ -441,12 +449,16 @@ export default function ForexTracker() {
       symbol: type === 'deposit' ? 'DEPOSIT' : symbol,
       type,
       lots: type === 'deposit' ? undefined : Number(lots),
+      openPrice: (type !== 'deposit' && openPrice) ? Number(openPrice) : undefined,
+      closePrice: (type !== 'deposit' && closePrice) ? Number(closePrice) : undefined,
       profit: Number(profit),
       date: formattedDate
     };
 
     setRecords(prev => [...prev, newRecord]);
     setProfit('');
+    setOpenPrice('');
+    setClosePrice('');
     if (!keepOpen) handleCloseModal();
 
     setSyncStatus('syncing');
@@ -784,9 +796,15 @@ export default function ForexTracker() {
                         <input type="text" value={symbol} onChange={(e) => setSymbol(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Symbol" />
                      </div>
                      <div className="grid grid-cols-2 gap-3">
-                        <input type="number" step="0.01" value={lots} onChange={(e) => setLots(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Lots" />
-                        <input type="number" step="0.01" value={profit} onChange={(e) => setProfit(e.target.value)} required className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Profit $" />
+                        <input type="number" step="any" value={lots} onChange={(e) => setLots(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Lots" />
+                        <input type="number" step="any" value={profit} onChange={(e) => setProfit(e.target.value)} required className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Profit $" />
                      </div>
+                     {type !== 'deposit' && (
+                        <div className="grid grid-cols-2 gap-3">
+                           <input type="number" step="any" value={openPrice} onChange={(e) => setOpenPrice(e.target.value)} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Open Price (Opt)" />
+                           <input type="number" step="any" value={closePrice} onChange={(e) => setClosePrice(e.target.value)} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Close Price (Opt)" />
+                        </div>
+                     )}
                      <div className="w-full">
                         <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required className="w-full bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none text-white dark:[color-scheme:dark]" />
                      </div>
