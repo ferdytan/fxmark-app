@@ -164,6 +164,9 @@ export default function ForexTracker() {
   const [isPinVerified, setIsPinVerified] = useState(false);
   const [enteredPin, setEnteredPin] = useState('');
   const [pinError, setPinError] = useState(false);
+  
+  const [pinAction, setPinAction] = useState<'add' | 'delete' | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const generateUUID = () => {
     if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
@@ -179,6 +182,30 @@ export default function ForexTracker() {
     setPinError(false);
     setOpenPrice('');
     setClosePrice('');
+    setPinAction(null);
+    setPendingDeleteId(null);
+  };
+
+  const handlePinSuccess = (newPin: string) => {
+    if (newPin === '1213') {
+      setTimeout(() => {
+        if (pinAction === 'delete') {
+          const targetId = pendingDeleteId;
+          handleCloseModal();
+          if (targetId) {
+            executeDelete(targetId);
+          }
+        } else {
+          setIsPinVerified(true);
+        }
+      }, 300);
+    } else {
+      setPinError(true);
+      setTimeout(() => {
+        setEnteredPin('');
+        setPinError(false);
+      }, 600);
+    }
   };
 
   const handleKeypadPress = (val: string) => {
@@ -186,15 +213,7 @@ export default function ForexTracker() {
       const newPin = enteredPin + val;
       setEnteredPin(newPin);
       if (newPin.length === 4) {
-        if (newPin === '1213') {
-          setTimeout(() => setIsPinVerified(true), 300);
-        } else {
-          setPinError(true);
-          setTimeout(() => {
-            setEnteredPin('');
-            setPinError(false);
-          }, 600);
-        }
+        handlePinSuccess(newPin);
       }
     }
   };
@@ -220,15 +239,7 @@ export default function ForexTracker() {
           const newPin = enteredPin + e.key;
           setEnteredPin(newPin);
           if (newPin.length === 4) {
-            if (newPin === '1213') {
-              setTimeout(() => setIsPinVerified(true), 300);
-            } else {
-              setPinError(true);
-              setTimeout(() => {
-                setEnteredPin('');
-                setPinError(false);
-              }, 600);
-            }
+            handlePinSuccess(newPin);
           }
         }
       } else if (e.key === 'Backspace') {
@@ -242,7 +253,7 @@ export default function ForexTracker() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showAddModal, isPinVerified, enteredPin, pinError]);
+  }, [showAddModal, isPinVerified, enteredPin, pinError, pinAction, pendingDeleteId]);
 
   useEffect(() => {
     localStorage.setItem('fxmark_v7_mobile', JSON.stringify(records));
@@ -356,7 +367,7 @@ export default function ForexTracker() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const executeDelete = async (id: string) => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) return;
     
     const updated = records.filter(r => r.id !== id);
@@ -377,6 +388,15 @@ export default function ForexTracker() {
       console.error("Gagal menghapus dari cloud:", err);
       setSyncStatus('error');
     }
+  };
+
+  const handleDelete = (id: string) => {
+    setPendingDeleteId(id);
+    setPinAction('delete');
+    setIsPinVerified(false);
+    setEnteredPin('');
+    setPinError(false);
+    setShowAddModal(true);
   };
 
   const stats = useMemo(() => {
@@ -429,6 +449,7 @@ export default function ForexTracker() {
     else setOpenPrice('');
     if(r.closePrice) setClosePrice(r.closePrice.toString());
     else setClosePrice('');
+    setPinAction('add');
     setShowAddModal(true);
   };
 
@@ -526,7 +547,7 @@ export default function ForexTracker() {
                </div>
             </div>
          </div>
-         <button onClick={() => setShowAddModal(true)} className="w-8 h-8 bg-emerald-500 text-black rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
+         <button onClick={() => { setPinAction('add'); setShowAddModal(true); }} className="w-8 h-8 bg-emerald-500 text-black rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
             <Lucide.Plus size={18} strokeWidth={3} />
          </button>
       </header>
@@ -720,7 +741,7 @@ export default function ForexTracker() {
             <div className="bg-[#111] w-full max-w-sm rounded-[2rem] p-6 border border-white/10 animate-in slide-in-from-bottom-8">
                <div className="flex justify-between items-center mb-6">
                   <h3 className="text-sm font-black uppercase tracking-widest">
-                     {isPinVerified ? 'New Execution' : 'Security Verification'}
+                     {isPinVerified ? 'New Execution' : pinAction === 'delete' ? 'Delete Verification' : 'Security Verification'}
                   </h3>
                   <button onClick={handleCloseModal} className="p-2 text-zinc-500"><Lucide.X size={20}/></button>
                </div>
@@ -728,10 +749,18 @@ export default function ForexTracker() {
                {!isPinVerified ? (
                   <div className="flex flex-col items-center justify-center py-4 text-center animate-in fade-in duration-200">
                      <div className="w-12 h-12 bg-zinc-900 border border-white/10 rounded-full flex items-center justify-center text-emerald-500 mb-4 shadow-lg shadow-emerald-500/5">
-                        <Lucide.Lock size={20} strokeWidth={2.5} />
+                        {pinAction === 'delete' ? (
+                           <Lucide.Trash2 size={20} className="text-red-500 animate-pulse" />
+                        ) : (
+                           <Lucide.Lock size={20} strokeWidth={2.5} />
+                        )}
                      </div>
-                     <h4 className="text-xs font-black uppercase tracking-widest text-zinc-200">Security Gate</h4>
-                     <p className="text-[10px] font-bold text-zinc-500 mt-1 mb-6">Enter PIN to access New Execution</p>
+                     <h4 className="text-xs font-black uppercase tracking-widest text-zinc-200">
+                        {pinAction === 'delete' ? 'Delete Verification' : 'Security Gate'}
+                     </h4>
+                     <p className="text-[10px] font-bold text-zinc-500 mt-1 mb-6">
+                        {pinAction === 'delete' ? 'Enter PIN to delete trade execution' : 'Enter PIN to access New Execution'}
+                     </p>
 
                      {/* PIN Dots */}
                      <div className={`flex gap-4 justify-center mb-8 ${pinError ? 'shake' : ''}`}>
