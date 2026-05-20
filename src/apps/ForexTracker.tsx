@@ -400,13 +400,12 @@ export default function ForexTracker() {
       matrix[year][month] += t.profit;
     });
 
-    const calendarData: Record<string, { profit: number; trades: number; wins: number }> = {};
+    const calendarData: Record<string, { profit: number; tradesList: { profit: number }[] }> = {};
     tradesOnly.forEach(t => {
       const d = t.date.substring(0, 10);
-      if (!calendarData[d]) calendarData[d] = { profit: 0, trades: 0, wins: 0 };
+      if (!calendarData[d]) calendarData[d] = { profit: 0, tradesList: [] };
       calendarData[d].profit += t.profit;
-      calendarData[d].trades += 1;
-      if (t.profit > 0) calendarData[d].wins += 1;
+      calendarData[d].tradesList.push({ profit: t.profit });
     });
 
     return { 
@@ -572,19 +571,21 @@ export default function ForexTracker() {
             {/* Monthly Returns */}
             <section className="space-y-3">
                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Monthly Returns</h3>
-               <div className="w-[100vw] -mx-4 px-4 overflow-x-auto custom-scrollbar pb-2">
-                  <div className="flex gap-2 w-max">
+               <div className="w-full overflow-x-auto custom-scrollbar pb-2">
+                  <div className="flex flex-col gap-3 w-full">
                      {Object.keys(stats.matrix).sort().reverse().map(year => (
-                        <div key={year} className="flex gap-2 items-center bg-zinc-900/40 border border-white/5 rounded-3xl p-3">
-                           <p className="text-[10px] font-black text-zinc-400 pr-2 border-r border-white/10">{year}</p>
-                           {stats.matrix[year].map((val, i) => (
-                              <div key={i} className="flex flex-col items-center justify-center p-3 w-16 bg-black/40 rounded-2xl border border-white/5 shrink-0">
-                                 <span className="text-[8px] font-bold text-zinc-500 uppercase mb-1">{MONTHS[i]}</span>
-                                 <span className={`text-[11px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : 'text-zinc-600'}`}>
-                                    {val === 0 ? '-' : `${val > 0 ? '+' : ''}${((val/1000)*100).toFixed(1)}%`}
-                                 </span>
-                              </div>
-                           ))}
+                        <div key={year} className="flex gap-2 items-center bg-zinc-900/40 border border-white/5 rounded-3xl p-3 w-full">
+                           <p className="text-[10px] font-black text-zinc-400 pr-2 border-r border-white/10 shrink-0">{year}</p>
+                           <div className="flex gap-2 flex-1 justify-between min-w-0 overflow-x-auto custom-scrollbar">
+                              {stats.matrix[year].map((val, i) => (
+                                 <div key={i} className="flex flex-col items-center justify-center p-3 bg-black/40 rounded-2xl border border-white/5 min-w-[56px] flex-1 shrink-0 md:shrink">
+                                    <span className="text-[8px] font-bold text-zinc-500 uppercase mb-1">{MONTHS[i]}</span>
+                                    <span className={`text-[11px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : 'text-zinc-600'}`}>
+                                       {val === 0 ? '-' : `${val > 0 ? '+' : ''}${((val/1000)*100).toFixed(1)}%`}
+                                    </span>
+                                 </div>
+                              ))}
+                           </div>
                         </div>
                      ))}
                   </div>
@@ -615,8 +616,17 @@ export default function ForexTracker() {
                       {d && (
                         <>
                           <span className="text-[9px] font-bold opacity-30">{d.day}</span>
-                          {d.data && <div className={`w-1.5 h-1.5 rounded-full ${d.data.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />}
-                          {d.data && <span className={`text-[7px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
+                          {d.data && (
+                            <div className="flex gap-0.5 justify-center flex-wrap max-w-full">
+                              {d.data.tradesList.map((trade: any, idx: number) => (
+                                <span
+                                  key={idx}
+                                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${trade.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
+                                />
+                              ))}
+                            </div>
+                          )}
+                          {d.data && <span className={`text-[10px] md:text-[11px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
                         </>
                       )}
                     </div>
@@ -672,8 +682,8 @@ export default function ForexTracker() {
         )}
       </main>
 
-      {/* Mobile Bottom Navigation - Visible only on small screens */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/10 pb-safe shadow-2xl">
+      {/* Bottom Navigation - Visible on both Mobile and Desktop */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/10 pb-safe shadow-2xl">
          <div className="flex items-center justify-between p-2">
             {[
               { id: 'dashboard', icon: Lucide.LayoutDashboard, label: 'Overview' },
