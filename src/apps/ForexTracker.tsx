@@ -256,18 +256,7 @@ export default function ForexTracker() {
     } catch { return INITIAL_DATA; }
   });
 
-  const [calendarStyle, setCalendarStyle] = useState<'outline' | 'original'>(() => {
-    try {
-      const saved = localStorage.getItem('fxmark_calendar_style');
-      return saved === 'original' ? 'original' : 'outline';
-    } catch {
-      return 'outline';
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('fxmark_calendar_style', calendarStyle);
-  }, [calendarStyle]);
+  const [calendarStyle, setCalendarStyle] = useState<'outline' | 'original'>('original');
 
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
 
@@ -1400,15 +1389,7 @@ export default function ForexTracker() {
                                 <span className={`text-[7px] font-bold uppercase tracking-wider opacity-60 leading-none ${isLight ? 'text-zinc-500' : 'text-zinc-450'}`}>
                                   {d.data.tradesList.length} trade{d.data.tradesList.length > 1 ? 's' : ''}
                                 </span>
-                                {d.data.tradesList.length > 0 && (() => {
-                                  const winCount = d.data.tradesList.filter((t: any) => t.profit > 0).length;
-                                  const wr = (winCount / d.data.tradesList.length) * 100;
-                                  return (
-                                    <span className={`text-[7px] font-bold opacity-65 leading-none ${isLight ? 'text-zinc-500' : 'text-zinc-450'}`}>
-                                      {wr.toFixed(0)}%
-                                    </span>
-                                  );
-                                })()}
+
                               </div>
                             )}
                             
