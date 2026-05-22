@@ -136,6 +136,24 @@ const formatTradeDate = (dateStr: string) => {
   }
 };
 
+const PRO_TIPS = [
+  "Plan your trade and trade your plan. Consistency is built on discipline, not luck.",
+  "Risk management is the key to longevity. Never risk more than 1-2% per trade.",
+  "Let your winners run and cut your losses quickly. The math of trading is in your favor.",
+  "The market is a device for transferring money from the impatient to the patient.",
+  "Don't overtrade. Sometimes the best position is no position at all.",
+  "Keep an emotional journal. Your state of mind is as important as your technical analysis."
+];
+
+const WISDOM_QUOTES = [
+  { quote: "The goal of a successful trader is to make the best trades. Money is secondary.", author: "Alexander Elder" },
+  { quote: "Do not anticipate and move without market confirmation. Being a little late is your insurance.", author: "Jesse Livermore" },
+  { quote: "It’s not whether you’re right or wrong that’s important, but how much money you make when you’re right and how much you lose when you’re wrong.", author: "George Soros" },
+  { quote: "You never know what kind of setup the market will present to you, your objective should be to find an opportunity where risk-reward ratio is best.", author: "Paul Tudor Jones" },
+  { quote: "Every day I assume every position I have is wrong.", author: "Paul Tudor Jones" },
+  { quote: "Amateurs think about how much money they can make. Professionals think about how much money they can lose.", author: "Jack Schwager" }
+];
+
 export default function ForexTracker() {
   // Enforce Dark Mode
   useEffect(() => {
@@ -164,7 +182,163 @@ export default function ForexTracker() {
 
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
 
-  const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history' | 'holdings'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history' | 'holdings' | 'rewards'>('dashboard');
+  
+  // Gamification & Dashboard 2 states
+  const [tradingPoints, setTradingPoints] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('fxmark_trading_points');
+      return saved ? parseInt(saved, 10) : 3240;
+    } catch { return 3240; }
+  });
+
+  const [checkInStreak, setCheckInStreak] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('fxmark_checkin_streak');
+      return saved ? parseInt(saved, 10) : 2; // Default to 2 days checked for nice initial visualization
+    } catch { return 2; }
+  });
+
+  const [lastCheckInDate, setLastCheckInDate] = useState<string>(() => {
+    try {
+      return localStorage.getItem('fxmark_last_checkin_date') || '';
+    } catch { return ''; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('fxmark_trading_points', tradingPoints.toString());
+  }, [tradingPoints]);
+
+  useEffect(() => {
+    localStorage.setItem('fxmark_checkin_streak', checkInStreak.toString());
+  }, [checkInStreak]);
+
+  // Lot Size Calculator states
+  const [showCalcModal, setShowCalcModal] = useState(false);
+  const [calcAccountSize, setCalcAccountSize] = useState('5000');
+  const [calcRiskPercent, setCalcRiskPercent] = useState('1');
+  const [calcStopLossPips, setCalcStopLossPips] = useState('30');
+  const [calcResultLots, setCalcResultLots] = useState('0.16');
+
+  useEffect(() => {
+    const size = parseFloat(calcAccountSize) || 0;
+    const risk = parseFloat(calcRiskPercent) || 0;
+    const sl = parseFloat(calcStopLossPips) || 0;
+    if (size > 0 && risk > 0 && sl > 0) {
+      const riskAmount = size * (risk / 100);
+      const lotsResult = riskAmount / (sl * 10);
+      setCalcResultLots(lotsResult.toFixed(2));
+    } else {
+      setCalcResultLots('0.00');
+    }
+  }, [calcAccountSize, calcRiskPercent, calcStopLossPips]);
+
+  const [activeTipIndex, setActiveTipIndex] = useState(0);
+  const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
+  const [showWisdomModal, setShowWisdomModal] = useState(false);
+  const [selectedQuote, setSelectedQuote] = useState({ quote: '', author: '' });
+  const [showClaimsModal, setShowClaimsModal] = useState(false);
+
+  // Pro tip cycling effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTipIndex(prev => (prev + 1) % PRO_TIPS.length);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const triggerToast = (message: string) => {
+    setToast({ show: true, message });
+    setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
+  };
+
+  const handleCheckIn = () => {
+    const todayStr = new Date().toISOString().substring(0, 10);
+    
+    // Calculate yesterday's date string in local time
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().substring(0, 10);
+
+    if (lastCheckInDate === todayStr) {
+      triggerToast("Already checked in today! Come back tomorrow.");
+      return;
+    }
+
+    let newStreak = 1;
+    if (lastCheckInDate === yesterdayStr || lastCheckInDate === '') {
+      newStreak = checkInStreak >= 7 ? 1 : checkInStreak + 1;
+    } else {
+      newStreak = 1;
+    }
+
+    const isMilestone = newStreak === 3 || newStreak === 7;
+    const pointsEarned = isMilestone ? 40 : 20;
+
+    setTradingPoints(prev => prev + pointsEarned);
+    setCheckInStreak(newStreak);
+    setLastCheckInDate(todayStr);
+    localStorage.setItem('fxmark_last_checkin_date', todayStr);
+
+    triggerToast(`Check-in Day ${newStreak}! +${pointsEarned} PTS awarded.`);
+  };
+
+  const handleRedeemRebate = async () => {
+    if (tradingPoints < 1000) {
+      triggerToast("Minimum redemption is 1,000 Points.");
+      return;
+    }
+
+    if (!window.confirm("Redeem 1,000 Points for a $10.00 cash deposit? This will credit your account balance directly.")) {
+      return;
+    }
+
+    const newId = generateUUID();
+    const formattedDate = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const newRecord: TradeRecord = {
+      id: newId,
+      symbol: 'DEPOSIT',
+      type: 'deposit',
+      profit: 10.00,
+      date: formattedDate
+    };
+
+    setTradingPoints(prev => prev - 1000);
+    setRecords(prev => [...prev, newRecord]);
+    
+    triggerToast("Success! $10.00 Cash Rebate deposited.");
+
+    setSyncStatus('syncing');
+    try {
+      const { error } = await supabase.from('trades').insert({
+        id: newRecord.id,
+        symbol: newRecord.symbol,
+        type: newRecord.type,
+        lots: null,
+        open_price: null,
+        close_price: null,
+        profit: newRecord.profit,
+        date: newRecord.date
+      });
+
+      if (error) throw error;
+      setSyncStatus('success');
+      setTimeout(() => setSyncStatus('idle'), 2000);
+    } catch (err) {
+      console.error("Gagal menyimpan ke cloud:", err);
+      setSyncStatus('error');
+    }
+  };
+
+  const handleApplyLotSize = () => {
+    setLots(calcResultLots);
+    setShowCalcModal(false);
+    triggerToast(`Applied ${calcResultLots} lots to execution form!`);
+    
+    setPinAction('add');
+    setShowAddModal(true);
+  };
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [symbol, setSymbol] = useState('XAUUSD.c');
   const [type, setType] = useState<'buy' | 'sell' | 'deposit'>('buy');
@@ -764,6 +938,280 @@ export default function ForexTracker() {
             </section>
           </div>
         )}
+
+        {activeView === 'rewards' && (
+          <div className="space-y-6 animate-in fade-in duration-300">
+            {/* available balance card (premium titan titanium layout) */}
+            <section className="relative overflow-hidden bg-gradient-to-br from-zinc-900 to-black border border-white/10 rounded-3xl p-6 shadow-2xl">
+              {/* glassmorphic reflective sweep */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-transparent pointer-events-none" />
+              
+              {/* card glow */}
+              <div className="absolute -top-16 -right-16 w-36 h-36 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-16 -left-16 w-36 h-36 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <p className="text-[9px] font-black tracking-[0.2em] text-amber-500 uppercase">FXMARK TITANIUM</p>
+                  <p className="text-[8px] font-bold text-zinc-500 uppercase mt-0.5">DISCIPLINE ACCOUNT</p>
+                </div>
+                {/* premium microchip visual */}
+                <div className="w-9 h-7 rounded-md bg-gradient-to-br from-amber-400 to-amber-600 border border-amber-300/30 p-1 flex flex-col justify-between shadow-inner">
+                  <div className="flex justify-between">
+                    <div className="w-1.5 h-1.5 bg-black/20 rounded-sm" />
+                    <div className="w-1.5 h-1.5 bg-black/20 rounded-sm" />
+                  </div>
+                  <div className="w-full h-0.5 bg-black/20 rounded-sm" />
+                  <div className="flex justify-between">
+                    <div className="w-1.5 h-1.5 bg-black/20 rounded-sm" />
+                    <div className="w-1.5 h-1.5 bg-black/20 rounded-sm" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Available Balance</p>
+                <div className="flex items-baseline gap-2">
+                  <h2 className="text-3xl font-black tracking-tighter">${stats.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+                  <span className="text-[10px] font-black text-emerald-500">
+                    +{((stats.totalProfit / 1000) * 100).toFixed(1)}% ROI
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-end mt-8 border-t border-white/5 pt-4">
+                <div>
+                  <p className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">Account Tier</p>
+                  <p className="text-[10px] font-black text-amber-500 flex items-center gap-1 mt-0.5">
+                    <Lucide.Trophy size={11} className="text-amber-500 animate-bounce" /> 
+                    {tradingPoints >= 5000 ? 'Forex Legend' : tradingPoints >= 3000 ? 'Master Disciplined' : tradingPoints >= 1000 ? 'Consistent Trader' : 'Novice Trader'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">MEMBER SINCE</p>
+                  <p className="text-[9px] font-black text-zinc-300 mt-0.5">MAY 2026</p>
+                </div>
+              </div>
+            </section>
+
+            {/* daily discipline tracker check-in system */}
+            <section className="bg-zinc-900/50 border border-white/5 rounded-3xl p-5 space-y-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-zinc-200">Discipline Check-In</h3>
+                  <p className="text-[9px] font-bold text-zinc-500 mt-0.5">Claim trading points daily for consistency</p>
+                </div>
+                <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full text-emerald-400">
+                  <Lucide.Flame size={12} className="animate-pulse fill-emerald-400" />
+                  <span className="text-[10px] font-black tracking-tight">{checkInStreak} Day Streak</span>
+                </div>
+              </div>
+
+              {/* paperclip style checklist grid */}
+              <div className="grid grid-cols-7 gap-1.5">
+                {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+                  const todayStr = new Date().toISOString().substring(0, 10);
+                  const isCheckedToday = lastCheckInDate === todayStr;
+                  const isClaimed = day < checkInStreak || (day === checkInStreak && isCheckedToday);
+                  
+                  let isActive = false;
+                  if (!isCheckedToday) {
+                    const activeIndex = checkInStreak >= 7 ? 1 : checkInStreak + 1;
+                    isActive = day === activeIndex;
+                  }
+                  
+                  const isMilestone = day === 3 || day === 7;
+                  
+                  return (
+                    <button
+                      key={day}
+                      onClick={isActive ? handleCheckIn : undefined}
+                      disabled={!isActive}
+                      className={`relative flex flex-col items-center justify-between p-2 rounded-2xl border transition-all duration-300 min-h-[92px] ${
+                        isClaimed
+                          ? 'bg-emerald-500/[0.08] border-emerald-500/40 text-emerald-400'
+                          : isActive
+                          ? 'bg-zinc-900 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.15)] animate-pulse cursor-pointer'
+                          : 'bg-zinc-950/40 border-white/5 text-zinc-600'
+                      }`}
+                    >
+                      <span className="text-[8px] font-black tracking-widest uppercase">D{day}</span>
+                      
+                      <div className="my-1.5">
+                        {isClaimed ? (
+                          <Lucide.CheckCircle size={18} strokeWidth={2.5} className="text-emerald-500 fill-emerald-500/10" />
+                        ) : isActive ? (
+                          <div className="relative">
+                            <Lucide.Gift size={18} strokeWidth={2.5} className="text-emerald-400 fill-emerald-400/10 animate-bounce" />
+                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping" />
+                          </div>
+                        ) : isMilestone ? (
+                          <Lucide.Trophy size={16} className="text-zinc-600" />
+                        ) : (
+                          <Lucide.Lock size={14} className="text-zinc-700" />
+                        )}
+                      </div>
+
+                      <span className={`text-[8px] font-black ${isClaimed ? 'text-emerald-500' : isActive ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                        +{isMilestone ? '40' : '20'}
+                      </span>
+
+                      {isMilestone && (
+                        <span className={`absolute -top-1 -right-1 px-1 rounded bg-gradient-to-r ${isClaimed ? 'from-emerald-500 to-teal-500' : isActive ? 'from-emerald-400 to-teal-400' : 'from-zinc-800 to-zinc-700'} text-[6px] font-black text-black scale-90`}>
+                          GIFT
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* claim button */}
+              {!(lastCheckInDate === new Date().toISOString().substring(0, 10)) ? (
+                <button
+                  onClick={handleCheckIn}
+                  className="w-full bg-emerald-500 text-black font-black uppercase tracking-widest py-3.5 rounded-2xl text-[10px] transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Lucide.Check size={14} strokeWidth={2.5} />
+                  Claim Today's Reward (+{ (checkInStreak >= 7 ? 1 : checkInStreak + 1) === 3 || (checkInStreak >= 7 ? 1 : checkInStreak + 1) === 7 ? '40' : '20' } PTS)
+                </button>
+              ) : (
+                <div className="w-full bg-zinc-900 border border-white/5 text-zinc-500 font-black uppercase tracking-widest py-3.5 rounded-2xl text-[9px] text-center flex items-center justify-center gap-2">
+                  <Lucide.Check size={14} strokeWidth={3} className="text-emerald-500" />
+                  Checked In for Today • Come Back Tomorrow
+                </div>
+              )}
+            </section>
+
+            {/* Twin cards grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Saving Target / Account Goal Card */}
+              <div className="bg-gradient-to-br from-amber-500/[0.06] to-orange-600/[0.06] border border-orange-500/20 rounded-3xl p-4 flex flex-col justify-between h-[155px]">
+                <div className="flex justify-between items-start">
+                  <div className="p-2 bg-orange-500/10 rounded-xl border border-orange-500/20 text-orange-400">
+                    <Lucide.Target size={16} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[8px] font-black uppercase text-orange-400 tracking-wider">Account Goal</span>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-[9px] font-bold text-zinc-500 uppercase">Target Balance</p>
+                  <h4 className="text-lg font-black tracking-tight text-zinc-100">$10,000.00</h4>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[8px] font-bold text-zinc-400 uppercase">
+                    <span>{Math.min(100, Math.max(0, (stats.balance / 10000) * 100)).toFixed(1)}% Completed</span>
+                    <span>Remaining: ${Math.max(0, 10000 - stats.balance).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]" 
+                      style={{ width: `${Math.min(100, (stats.balance / 10000) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Points & Rebate card */}
+              <div className="bg-gradient-to-br from-emerald-500/[0.06] to-teal-600/[0.06] border border-emerald-500/20 rounded-3xl p-4 flex flex-col justify-between h-[155px]">
+                <div className="flex justify-between items-start">
+                  <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
+                    <Lucide.Coins size={16} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[8px] font-black uppercase text-emerald-400 tracking-wider">Point Rebates</span>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-[9px] font-bold text-zinc-500 uppercase">Current Points</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <h4 className="text-lg font-black tracking-tight text-zinc-100">{tradingPoints} <span className="text-[9px] font-bold text-emerald-500">PTS</span></h4>
+                  </div>
+                  <p className="text-[9px] font-bold text-zinc-400 uppercase mt-0.5">Value: ${(tradingPoints * 0.01).toFixed(2)} USD</p>
+                </div>
+
+                <button
+                  onClick={handleRedeemRebate}
+                  disabled={tradingPoints < 1000}
+                  className={`w-full text-center py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
+                    tradingPoints >= 1000
+                      ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/15 cursor-pointer hover:scale-[1.02] active:scale-[0.98]'
+                      : 'bg-zinc-800 border border-white/5 text-zinc-500'
+                  }`}
+                >
+                  {tradingPoints >= 1000 ? 'Redeem $10 Rebate' : 'Min 1,000 PTS'}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Actions Grid */}
+            <section className="space-y-3">
+              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Hub Quick Actions</h3>
+              <div className="grid grid-cols-4 gap-3">
+                <button 
+                  onClick={() => setShowCalcModal(true)} 
+                  className="bg-zinc-900/50 hover:bg-zinc-800/50 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer"
+                >
+                  <div className="p-2 bg-amber-500/10 rounded-xl group-hover:scale-110 transition-transform">
+                    <Lucide.Calculator size={16} className="text-amber-500" />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">Calc</span>
+                </button>
+                <button 
+                  onClick={() => setActiveView('history')} 
+                  className="bg-zinc-900/50 hover:bg-zinc-800/50 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer"
+                >
+                  <div className="p-2 bg-emerald-500/10 rounded-xl group-hover:scale-110 transition-transform">
+                    <Lucide.Activity size={16} className="text-emerald-500" />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">Journal</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    const randomIdx = Math.floor(Math.random() * WISDOM_QUOTES.length);
+                    setSelectedQuote(WISDOM_QUOTES[randomIdx]);
+                    setShowWisdomModal(true);
+                  }} 
+                  className="bg-zinc-900/50 hover:bg-zinc-800/50 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer"
+                >
+                  <div className="p-2 bg-teal-500/10 rounded-xl group-hover:scale-110 transition-transform">
+                    <Lucide.Sparkles size={16} className="text-teal-400" />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">Wisdom</span>
+                </button>
+                <button 
+                  onClick={() => setShowClaimsModal(true)} 
+                  className="bg-zinc-900/50 hover:bg-zinc-800/50 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer"
+                >
+                  <div className="p-2 bg-indigo-500/10 rounded-xl group-hover:scale-110 transition-transform">
+                    <Lucide.Trophy size={16} className="text-indigo-400" />
+                  </div>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">Rank</span>
+                </button>
+              </div>
+            </section>
+
+            {/* Daily revolving pro tip banner */}
+            <section className="bg-zinc-900/40 border border-white/5 rounded-3xl p-4 flex gap-3 items-center relative overflow-hidden group">
+              <div className="absolute -top-12 -left-12 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="p-2.5 bg-amber-500/10 rounded-2xl text-amber-400 animate-pulse shrink-0">
+                <Lucide.Lightbulb size={18} strokeWidth={2.5} className="fill-amber-400/10" />
+              </div>
+              <div className="flex-1 min-w-0 pr-2">
+                <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Daily Pro Tip</span>
+                <p className="text-[10px] font-bold text-zinc-300 leading-snug mt-0.5 line-clamp-2 transition-all duration-300">
+                  "{PRO_TIPS[activeTipIndex]}"
+                </p>
+              </div>
+              <button 
+                onClick={() => setActiveTipIndex(prev => (prev + 1) % PRO_TIPS.length)}
+                className="p-1 bg-white/5 rounded-lg text-zinc-500 hover:text-white transition-colors cursor-pointer shrink-0"
+              >
+                <Lucide.ChevronRight size={14} />
+              </button>
+            </section>
+          </div>
+        )}
       </main>
 
       {/* Bottom Navigation - Visible on both Mobile and Desktop */}
@@ -772,7 +1220,8 @@ export default function ForexTracker() {
             {[
               { id: 'dashboard', icon: Lucide.LayoutDashboard, label: 'Overview' },
               { id: 'calendar', icon: Lucide.Calendar, label: 'Calendar' },
-              { id: 'history', icon: Lucide.Activity, label: 'Activity' }
+              { id: 'history', icon: Lucide.Activity, label: 'Activity' },
+              { id: 'rewards', icon: Lucide.Gift, label: 'Rewards' }
             ].map((item) => (
               <button 
                 key={item.id}
@@ -917,7 +1366,189 @@ export default function ForexTracker() {
          </div>
       )}
 
-      <style>{`
+      {/* Lot Size Calculator Modal */}
+      {showCalcModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-[#111] w-full max-w-sm rounded-[2rem] p-6 border border-white/10 animate-in slide-in-from-bottom-8">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-2 text-amber-500">
+                <Lucide.Calculator size={18} strokeWidth={2.5} />
+                <h3 className="text-sm font-black uppercase tracking-widest">Lot Size Calculator</h3>
+              </div>
+              <button onClick={() => setShowCalcModal(false)} className="p-2 text-zinc-500 hover:text-white cursor-pointer"><Lucide.X size={20}/></button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Account Size ($)</label>
+                <input 
+                  type="number" 
+                  value={calcAccountSize} 
+                  onChange={(e) => setCalcAccountSize(e.target.value)} 
+                  className="w-full bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none text-white" 
+                  placeholder="5000" 
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between items-center">
+                  <label className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Risk Amount (%)</label>
+                  <span className="text-[10px] font-black text-amber-500">{calcRiskPercent}%</span>
+                </div>
+                <div className="flex gap-3 items-center">
+                  <input 
+                    type="range" 
+                    min="0.5" 
+                    max="5" 
+                    step="0.5" 
+                    value={calcRiskPercent} 
+                    onChange={(e) => setCalcRiskPercent(e.target.value)} 
+                    className="flex-1 accent-amber-500 h-1 bg-zinc-800 rounded-lg cursor-pointer"
+                  />
+                  <input 
+                    type="number" 
+                    step="any"
+                    value={calcRiskPercent} 
+                    onChange={(e) => setCalcRiskPercent(e.target.value)} 
+                    className="w-16 bg-zinc-900 border border-white/5 rounded-xl p-2 text-xs font-bold text-center outline-none text-white" 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Stop Loss (Pips)</label>
+                <input 
+                  type="number" 
+                  value={calcStopLossPips} 
+                  onChange={(e) => setCalcStopLossPips(e.target.value)} 
+                  className="w-full bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none text-white" 
+                  placeholder="30" 
+                />
+              </div>
+
+              {/* results container */}
+              <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 space-y-3 mt-2">
+                <div className="flex justify-between items-center text-[10px] font-bold text-zinc-400">
+                  <span>RISK EXPOSURE</span>
+                  <span className="text-red-400 font-black">${((parseFloat(calcAccountSize) || 0) * (parseFloat(calcRiskPercent) || 0) / 100).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center border-t border-white/5 pt-2">
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">RECOMMENDED LOTS</span>
+                  <span className="text-xl font-black text-emerald-400 tracking-tighter">{calcResultLots} Lot</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(calcResultLots);
+                    triggerToast(`Copied ${calcResultLots} lots!`);
+                  }}
+                  className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-black uppercase tracking-widest p-3.5 text-[9px] transition-all cursor-pointer"
+                >
+                  Copy Lots
+                </button>
+                <button 
+                  type="button" 
+                  onClick={handleApplyLotSize}
+                  className="flex-1 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-widest p-3.5 text-[9px] transition-all shadow-lg shadow-emerald-500/20 cursor-pointer"
+                >
+                  Apply to Form
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Wisdom Modal */}
+      {showWisdomModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-[#111] w-full max-w-sm rounded-[2rem] p-6 border border-white/10 animate-in scale-in duration-200 text-center space-y-6">
+            <div className="w-12 h-12 bg-teal-500/10 border border-teal-500/20 rounded-full flex items-center justify-center text-teal-400 mx-auto animate-pulse">
+              <Lucide.Sparkles size={22} strokeWidth={2.5} />
+            </div>
+            
+            <div className="space-y-3">
+              <p className="text-sm font-black text-zinc-100 italic leading-relaxed">
+                "{selectedQuote.quote}"
+              </p>
+              <p className="text-[10px] font-black text-teal-400 uppercase tracking-widest">
+                — {selectedQuote.author}
+              </p>
+            </div>
+
+            <button 
+              onClick={() => setShowWisdomModal(false)}
+              className="w-full bg-zinc-900 border border-white/5 hover:bg-zinc-800 text-zinc-300 font-black uppercase tracking-widest py-3.5 rounded-2xl text-[9px] transition-all cursor-pointer"
+            >
+              Acknowledge
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Claims/Rank Modal */}
+      {showClaimsModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="bg-[#111] w-full max-w-sm rounded-[2rem] p-6 border border-white/10 animate-in scale-in duration-200 text-center space-y-6">
+            <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400 mx-auto">
+              <Lucide.Trophy size={22} strokeWidth={2.5} />
+            </div>
+            
+            <div className="space-y-1">
+              <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">CONSISTENCY TIER</span>
+              <h3 className="text-xl font-black text-zinc-100 tracking-tight">
+                {tradingPoints >= 5000 ? 'Forex Legend' : tradingPoints >= 3000 ? 'Master Disciplined' : tradingPoints >= 1000 ? 'Consistent Trader' : 'Novice Trader'}
+              </h3>
+              <p className="text-[10px] font-bold text-zinc-500 mt-1">Total Points Balance: {tradingPoints} PTS</p>
+            </div>
+
+            <div className="bg-zinc-950/60 border border-white/5 rounded-2xl p-4 text-left space-y-3.5">
+              <h4 className="text-[9px] font-black text-zinc-400 uppercase tracking-wider border-b border-white/5 pb-2">Tiers Progress</h4>
+              
+              <div className="flex justify-between items-center text-[10px]">
+                <span className={`font-bold ${tradingPoints < 1000 ? 'text-indigo-400 font-black' : 'text-zinc-500'}`}>Novice (&lt; 1k PTS)</span>
+                {tradingPoints >= 1000 ? <Lucide.Check size={12} className="text-emerald-500" /> : <span>Active</span>}
+              </div>
+              <div className="flex justify-between items-center text-[10px]">
+                <span className={`font-bold ${tradingPoints >= 1000 && tradingPoints < 3000 ? 'text-indigo-400 font-black' : 'text-zinc-500'}`}>Consistent Trader (1k - 3k PTS)</span>
+                {tradingPoints >= 3000 ? <Lucide.Check size={12} className="text-emerald-500" /> : tradingPoints >= 1000 ? <span>Active</span> : <Lucide.Lock size={10} />}
+              </div>
+              <div className="flex justify-between items-center text-[10px]">
+                <span className={`font-bold ${tradingPoints >= 3000 && tradingPoints < 5000 ? 'text-indigo-400 font-black' : 'text-zinc-500'}`}>Master Disciplined (3k - 5k PTS)</span>
+                {tradingPoints >= 5000 ? <Lucide.Check size={12} className="text-emerald-500" /> : tradingPoints >= 3000 ? <span>Active</span> : <Lucide.Lock size={10} />}
+              </div>
+              <div className="flex justify-between items-center text-[10px]">
+                <span className={`font-bold ${tradingPoints >= 5000 ? 'text-indigo-400 font-black' : 'text-zinc-500'}`}>Forex Legend (5k+ PTS)</span>
+                {tradingPoints >= 5000 ? <span>Active</span> : <Lucide.Lock size={10} />}
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setShowClaimsModal(false)}
+              className="w-full bg-zinc-900 border border-white/5 hover:bg-zinc-800 text-zinc-300 font-black uppercase tracking-widest py-3.5 rounded-2xl text-[9px] transition-all cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Premium Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-20 left-4 right-4 z-50 flex justify-center animate-in slide-in-from-top-6 duration-300 pointer-events-none">
+          <div className="bg-zinc-900/95 backdrop-blur-md border border-emerald-500/30 text-white px-5 py-3 rounded-2xl shadow-xl shadow-emerald-500/5 max-w-sm flex items-center gap-3">
+            <div className="p-1 bg-emerald-500/20 border border-emerald-500/30 rounded-lg text-emerald-400 shrink-0">
+              <Lucide.Sparkles size={14} />
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-wider text-zinc-200">{toast.message}</p>
+          </div>
+        </div>
+      )}
+
+       <style>{`
         .custom-scrollbar::-webkit-scrollbar { height: 4px; width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
