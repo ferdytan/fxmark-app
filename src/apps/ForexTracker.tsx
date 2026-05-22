@@ -169,7 +169,7 @@ export default function ForexTracker() {
   const [symbol, setSymbol] = useState('XAUUSD.c');
   const [type, setType] = useState<'buy' | 'sell' | 'deposit'>('buy');
   const [lots, setLots] = useState('0.10');
-  const [profit, setProfit] = useState('');
+  const [profit, setProfit] = useState('10');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
   const [openPrice, setOpenPrice] = useState('');
   const [closePrice, setClosePrice] = useState('');
@@ -195,6 +195,7 @@ export default function ForexTracker() {
     setPinError(false);
     setOpenPrice('');
     setClosePrice('');
+    setProfit('10');
     setPinAction(null);
     setPendingDeleteId(null);
   };
@@ -490,7 +491,7 @@ export default function ForexTracker() {
     };
 
     setRecords(prev => [...prev, newRecord]);
-    setProfit('');
+    setProfit('10');
     setOpenPrice('');
     setClosePrice('');
     if (!keepOpen) handleCloseModal();
@@ -880,7 +881,26 @@ export default function ForexTracker() {
                      </div>
                      {type !== 'deposit' && (
                         <div className="grid grid-cols-2 gap-3">
-                           <input type="number" step="any" value={openPrice} onChange={(e) => setOpenPrice(e.target.value)} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Open Price (Opt)" />
+                           <input 
+                              type="number" 
+                              step="any" 
+                              value={openPrice} 
+                              onChange={(e) => {
+                                 const val = e.target.value;
+                                 setOpenPrice(val);
+                                 if (val) {
+                                    const num = Number(val);
+                                    if (!isNaN(num)) {
+                                       const decimals = val.includes('.') ? val.split('.')[1].length : 0;
+                                       setClosePrice(decimals > 0 ? (num - 1).toFixed(decimals) : (num - 1).toString());
+                                    }
+                                 } else {
+                                    setClosePrice('');
+                                 }
+                              }} 
+                              className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" 
+                              placeholder="Open Price (Opt)" 
+                            />
                            <input type="number" step="any" value={closePrice} onChange={(e) => setClosePrice(e.target.value)} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Close Price (Opt)" />
                         </div>
                      )}
