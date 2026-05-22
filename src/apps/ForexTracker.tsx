@@ -256,8 +256,6 @@ export default function ForexTracker() {
     } catch { return INITIAL_DATA; }
   });
 
-  const [calendarStyle, setCalendarStyle] = useState<'outline' | 'original'>('original');
-
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
 
   const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history'>('dashboard');
@@ -1305,20 +1303,6 @@ export default function ForexTracker() {
             <div className="flex justify-between items-center pl-2 mb-4 shrink-0">
                <div className="flex items-center gap-3">
                   <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Calendar Grid</h3>
-                  <div className={`flex border rounded-lg p-0.5 text-[8px] font-black tracking-wider uppercase transition-all duration-300 ${isLight ? 'bg-zinc-200 border-zinc-300' : 'bg-zinc-900 border-white/5'}`}>
-                     <button 
-                        onClick={() => setCalendarStyle('outline')}
-                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${calendarStyle === 'outline' ? (isLight ? 'bg-white text-zinc-900 shadow-sm font-black' : 'bg-emerald-500 text-black font-black') : (isLight ? 'text-zinc-500 hover:text-zinc-800' : 'text-zinc-500 hover:text-white')}`}
-                     >
-                        Outlines
-                     </button>
-                     <button 
-                        onClick={() => setCalendarStyle('original')}
-                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${calendarStyle === 'original' ? (isLight ? 'bg-white text-zinc-900 shadow-sm' : 'bg-zinc-800 text-white') : (isLight ? 'text-zinc-500 hover:text-zinc-800' : 'text-zinc-500 hover:text-white')}`}
-                     >
-                        Original
-                     </button>
-                  </div>
                </div>
                <div className={`flex gap-2 items-center rounded-lg p-1 transition-all duration-300 ${isLight ? 'bg-zinc-200 border border-zinc-300/80 shadow-sm' : 'bg-white/5'}`}>
                   <button onClick={() => {let m=calMonth-1; let y=calYear; if(m<0){m=11;y--;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronLeft size={14}/></button>
@@ -1335,30 +1319,14 @@ export default function ForexTracker() {
                   {calDays.map((d, i) => {
                     let cellStyle = isLight ? "border border-zinc-150 bg-white text-zinc-800" : "border border-white/[0.03] bg-[#0A0A0A] text-white";
                     if (d && d.data) {
-                      if (calendarStyle === 'outline') {
-                        if (d.data.profit > 0) {
-                          cellStyle = isLight 
-                            ? "border-2 border-emerald-250 bg-emerald-50/50 text-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.06)]" 
-                            : "border-2 border-emerald-200/90 bg-emerald-950/30 text-emerald-400 shadow-[0_0_12px_rgba(167,243,208,0.18)]";
-                        } else if (d.data.profit < 0) {
-                          cellStyle = isLight 
-                            ? "border-2 border-red-250 bg-red-50/50 text-red-600 shadow-[0_2px_8px_rgba(239,68,68,0.06)]" 
-                            : "border-2 border-red-200/90 bg-red-950/30 text-red-400 shadow-[0_0_12px_rgba(254,202,202,0.18)]";
-                        } else {
-                          cellStyle = isLight 
-                            ? "border border-zinc-200 bg-zinc-50/50 text-zinc-400" 
-                            : "border border-zinc-800/80 bg-zinc-900/10 text-zinc-500";
-                        }
-                      } else {
-                        if (d.data.profit > 0) {
-                          cellStyle = isLight 
-                            ? "bg-emerald-100/70 text-emerald-800 border border-emerald-100 shadow-sm" 
-                            : "bg-emerald-500/20 text-emerald-450 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.1)]";
-                        } else if (d.data.profit < 0) {
-                          cellStyle = isLight 
-                            ? "bg-red-100/70 text-red-800 border border-red-100 shadow-sm" 
-                            : "bg-red-500/20 text-red-450 border border-red-500/30 shadow-[0_0_8px_rgba(239,68,68,0.1)]";
-                        }
+                      if (d.data.profit > 0) {
+                        cellStyle = isLight 
+                          ? "bg-emerald-100/70 text-emerald-800 border border-emerald-100 shadow-sm" 
+                          : "bg-emerald-500/20 text-emerald-450 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.1)]";
+                      } else if (d.data.profit < 0) {
+                        cellStyle = isLight 
+                          ? "bg-red-100/70 text-red-800 border border-red-100 shadow-sm" 
+                          : "bg-red-500/20 text-red-450 border border-red-500/30 shadow-[0_0_8px_rgba(239,68,68,0.1)]";
                       }
                     }
                     
@@ -1393,9 +1361,16 @@ export default function ForexTracker() {
                               </div>
                             )}
                             
-                            {/* Single indicator dot in bottom-right corner */}
+                            {/* Horizontal circle indicators (e.g. 3 circles for 3 trades) */}
                             {d.data && d.data.tradesList.length > 0 && (
-                              <span className={`w-1 h-1 rounded-full absolute bottom-1 right-1.5 ${d.data.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                              <div className="flex gap-1 justify-center absolute bottom-1.5 left-1/2 -translate-x-1/2">
+                                {d.data.tradesList.map((t, idx) => (
+                                  <span 
+                                    key={idx} 
+                                    className={`w-1 h-1 rounded-full ${t.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} 
+                                  />
+                                ))}
+                              </div>
                             )}
                           </>
                         )}
