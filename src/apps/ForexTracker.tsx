@@ -688,8 +688,8 @@ export default function ForexTracker() {
                       <div key={i} className={`relative p-1.5 min-h-[50px] flex flex-col items-center justify-center ${cellStyle} ${!d ? 'opacity-20' : ''}`}>
                         {d && (
                           <>
-                            {/* Day Number in top-left */}
-                            <span className="absolute top-1 left-1.5 text-[9px] font-bold opacity-30">{d.day}</span>
+                            {/* Day Number in top-right */}
+                            <span className="absolute top-1 right-1.5 text-[9px] font-bold opacity-30">{d.day}</span>
                             
                             {/* Profit/Loss Amount perfectly centered */}
                             {d.data && (
