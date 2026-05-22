@@ -1,7 +1,65 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import * as Lucide from 'lucide-react';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '../supabaseClient';
+
+interface TransparentImageProps {
+  src: string;
+  className?: string;
+}
+
+const TransparentImage: React.FC<TransparentImageProps> = ({ src, className }) => {
+  const [processedSrc, setProcessedSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = src;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(img, 0, 0);
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+      
+      // Loop through all pixels and make white/near-white pixels transparent
+      // Also strip the outer 6 pixels at the borders to remove any border outline from the asset
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          const i = (y * canvas.width + x) * 4;
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          
+          const isWhite = r > 240 && g > 240 && b > 240;
+          const isEdge = x < 6 || x >= canvas.width - 6 || y < 6 || y >= canvas.height - 6;
+          
+          if (isWhite || isEdge) {
+            data[i + 3] = 0; // Set alpha to 0
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+      setProcessedSrc(canvas.toDataURL('image/png'));
+    };
+  }, [src]);
+
+  if (!processedSrc) {
+    return <div className={`animate-pulse bg-zinc-700/10 rounded-2xl ${className}`} />;
+  }
+
+  return (
+    <img 
+      src={processedSrc} 
+      className={className} 
+      alt="3D Cash Stack with Gold Coin"
+      style={{ mixBlendMode: 'normal' }}
+    />
+  );
+};
 
 interface TradeRecord {
   id: string;
@@ -213,7 +271,7 @@ export default function ForexTracker() {
 
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
 
-  const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history' | 'holdings' | 'rewards'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history'>('dashboard');
   
   // Gamification & Dashboard 2 states
   const [tradingPoints] = useState<number>(() => {
@@ -226,6 +284,7 @@ export default function ForexTracker() {
   useEffect(() => {
     localStorage.setItem('fxmark_trading_points', tradingPoints.toString());
   }, [tradingPoints]);
+
 
   // Lot Size Calculator states
   const [showCalcModal, setShowCalcModal] = useState(false);
@@ -583,8 +642,6 @@ export default function ForexTracker() {
       { key: 'Wed', label: 'Wed', dayIndex: 3 },
       { key: 'Thu', label: 'Thu', dayIndex: 4 },
       { key: 'Fri', label: 'Fri', dayIndex: 5 },
-      { key: 'Sat', label: 'Sat', dayIndex: 6 },
-      { key: 'Sun', label: 'Sun', dayIndex: 0 },
     ];
     
     return days.map(d => {
@@ -605,6 +662,19 @@ export default function ForexTracker() {
     const netProfit = weeklyStats.reduce((sum, d) => sum + d.profit, 0);
     return { netProfit };
   }, [weeklyStats]);
+
+  const avgWeeklyProfit = useMemo(() => {
+    const tradesOnly = records.filter(r => r.type !== 'deposit');
+    if (tradesOnly.length === 0) return 0;
+    const dates = tradesOnly.map(r => new Date(r.date.replace(' ', 'T')).getTime()).filter(t => !isNaN(t));
+    if (dates.length === 0) return 0;
+    const minDate = Math.min(...dates);
+    const maxDate = Math.max(...dates);
+    const durationMs = maxDate - minDate;
+    const msInWeek = 7 * 24 * 60 * 60 * 1000;
+    const numWeeks = Math.max(1, Math.ceil(durationMs / msInWeek));
+    return stats.totalProfit / numWeeks;
+  }, [records, stats.totalProfit]);
 
   const handleDuplicate = (r: TradeRecord) => {
     setType(r.type);
@@ -685,13 +755,34 @@ export default function ForexTracker() {
     return days;
   }, [calMonth, calYear, stats.calendarData]);
 
+
+
+  const [hoveredMonth, setHoveredMonth] = useState<number | null>(new Date().getMonth());
+
+  const latestYear = useMemo(() => {
+    const years = Object.keys(stats.matrix).sort().reverse();
+    return years[0] || new Date().getFullYear().toString();
+  }, [stats.matrix]);
+
+  const monthlyData = useMemo(() => {
+    return stats.matrix[latestYear] || Array(12).fill(0);
+  }, [stats.matrix, latestYear]);
+
+  const maxVal = useMemo(() => {
+    return Math.max(...monthlyData.map(Math.abs), 10);
+  }, [monthlyData]);
+
   return (
     <div className={`h-screen overflow-y-auto ${isLight ? 'bg-[#F3F4F6] text-zinc-900' : 'bg-[#0A0A0A] text-white'} font-sans overflow-x-hidden pb-24 transition-colors duration-300`}>
       {/* Top Navigation */}
       <header className={`sticky top-0 z-40 ${isLight ? 'bg-white/80 border-b border-zinc-200/80 text-zinc-900' : 'bg-[#0A0A0A]/90 border-b border-white/10 text-white'} backdrop-blur-md px-4 py-3 flex justify-between items-center transition-colors duration-300`}>
          <div className="flex items-center gap-3">
             <div className="h-6 w-24 flex items-center justify-start">
-               <img src="/logo.png" alt="FXMARK Logo" className="h-full object-contain" />
+               <img 
+                  src="/logo.png" 
+                  alt="FXMARK Logo" 
+                  className={`h-full object-contain transition-all duration-300 ${isLight ? 'brightness-0' : ''}`} 
+               />
             </div>
             <div className="flex flex-col border-l border-zinc-200/80 dark:border-white/10 pl-3">
                <h1 className={`text-[11px] font-black uppercase tracking-[0.2em] ${isLight ? 'text-zinc-500' : 'text-zinc-400'}`}>Portfolio Analyzer</h1>
@@ -735,37 +826,199 @@ export default function ForexTracker() {
       <main className="p-4 space-y-6">
         {activeView === 'dashboard' && (
           <div className="space-y-6 animate-in fade-in">
-            {/* Core Metrics Dashboard */}
-            <section className={`transition-all duration-300 rounded-3xl p-5 space-y-6 ${isLight ? 'bg-white border border-zinc-200/80 shadow-sm text-zinc-800' : 'bg-zinc-900/50 border border-white/5 text-white'}`}>
-               {/* Equity Dynamic */}
-               <div className={`border-b ${isLight ? 'border-zinc-100' : 'border-white/5'} pb-4`}>
-                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2">Equity Dynamics</p>
-                  <div className="flex items-baseline gap-2">
-                     <h2 className={`text-4xl font-black tracking-tighter ${isLight ? 'text-zinc-900' : 'text-white'}`}>${stats.totalProfit.toLocaleString()}</h2>
-                     <span className="text-[10px] font-black text-emerald-500">+{((stats.totalProfit/1000)*100).toFixed(1)}% ROI</span>
-                  </div>
-                  <p className={`text-[9px] font-bold ${isLight ? 'text-zinc-400' : 'text-zinc-600'} uppercase mt-1`}>Cumulative Net P&L</p>
-               </div>
-               
-               {/* Risk & Win Rate Grid */}
-               <div className="grid grid-cols-2 gap-4">
+            {/* premium titanium layout */}
+            <section className={`relative overflow-hidden border rounded-2xl p-6 shadow-2xl transition-all duration-300 ${
+              isLight 
+                ? 'bg-gradient-to-br from-zinc-50 via-zinc-100 to-zinc-200/80 border-zinc-300 text-zinc-800 shadow-zinc-200/50' 
+                : 'bg-gradient-to-br from-zinc-900 to-black border-white/10 text-white'
+            }`}>
+              {/* glassmorphic reflective sweep */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-transparent pointer-events-none" />
+              
+              {/* card glow */}
+              <div className="absolute -top-16 -right-16 w-36 h-36 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-16 -left-16 w-36 h-36 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="flex justify-between items-start mb-6">
+                {/* Left Side: Header & Profit */}
+                <div className="space-y-5">
                   <div>
-                     <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Win Rate</p>
-                     <h3 className="text-2xl font-black text-emerald-500">{stats.wRate.toFixed(1)}%</h3>
-                     <p className={`text-[9px] font-bold ${isLight ? 'text-zinc-400' : 'text-zinc-600'} uppercase mt-1`}>{stats.tradeCount} Trades</p>
+                    <span className={`text-[8px] font-black uppercase tracking-[0.25em] ${isLight ? 'text-amber-600' : 'text-amber-500'}`}>FXMARK HUB</span>
+                    <h4 className={`text-sm font-black uppercase mt-0.5 tracking-wider ${isLight ? 'text-zinc-800' : 'text-white'}`}>Portfolio Status</h4>
                   </div>
-                  <div>
-                     <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Risk / DD</p>
-                     <h3 className="text-2xl font-black text-red-500">{stats.maxDrawdown}%</h3>
-                     <p className={`text-[9px] font-bold ${isLight ? 'text-zinc-400' : 'text-zinc-600'} uppercase mt-1`}>Conservative</p>
+                  
+                  <div className="space-y-1">
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${isLight ? 'text-zinc-500' : 'text-zinc-400'}`}>Profit</p>
+                    <div className="flex items-baseline gap-2">
+                      <h2 className={`text-3xl font-black tracking-tighter ${stats.totalProfit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                        {stats.totalProfit >= 0 ? '+' : '-'}{Math.abs(stats.totalProfit).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}$
+                      </h2>
+                      <span className="text-[10px] font-black text-emerald-500">
+                        +{((stats.totalProfit / 1000) * 100).toFixed(1)}% ROI
+                      </span>
+                    </div>
                   </div>
-               </div>
+                </div>
+
+                {/* Right Side: Majestic 3D Cash Stack illustration with gold coin (transparent background, 2.5x larger) */}
+                <div className="relative group/coin cursor-pointer select-none -mt-4 -mr-2 shrink-0">
+                  {/* Ambient backglow */}
+                  <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl scale-125 opacity-70 group-hover/coin:scale-150 transition-all duration-500 pointer-events-none" />
+                  <TransparentImage 
+                    src="/money_3d.png" 
+                    className="w-40 h-40 object-contain relative z-10 transition-all duration-500 ease-out hover:scale-115 hover:-rotate-6 hover:-translate-y-1 filter drop-shadow-[0_12px_24px_rgba(16,185,129,0.35)]" 
+                  />
+                </div>
+              </div>
+
+              {/* elegant twin widgets for win rate & DD */}
+              <div className="grid grid-cols-2 gap-3.5 mt-6 pt-4 border-t border-white/5">
+                {/* Win Rate Card */}
+                <div className={`p-4 rounded-xl border transition-all duration-300 relative overflow-hidden group ${
+                  isLight 
+                    ? 'bg-gradient-to-br from-emerald-100/90 via-teal-50/70 to-emerald-50/90 border-emerald-300 shadow-md shadow-emerald-500/10 hover:border-emerald-400' 
+                    : 'bg-gradient-to-br from-emerald-500/[0.15] via-emerald-500/[0.03] to-black/40 border-emerald-500/30 shadow-lg shadow-emerald-500/[0.03] hover:border-emerald-400/50'
+                }`}>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-emerald-500/[0.08] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  <div className="flex justify-between items-center mb-1">
+                    <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-emerald-800' : 'text-emerald-450'}`}>Win Rate</span>
+                    <div className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping shrink-0" />
+                      <Lucide.Percent size={11} className={isLight ? 'text-emerald-700' : 'text-emerald-400'} />
+                    </div>
+                  </div>
+                  <div className="flex items-baseline gap-1 mt-1.5">
+                    <span className={`text-2xl font-black ${isLight ? 'text-emerald-900' : 'text-emerald-400'}`}>{stats.wRate.toFixed(1)}%</span>
+                    <span className={`text-[8px] font-bold uppercase ${isLight ? 'text-emerald-700' : 'text-emerald-400/80'}`}>Consistent</span>
+                  </div>
+                </div>
+
+                {/* Max Drawdown Card (Always Vibrant Red/Rose Warning) */}
+                <div className={`p-4 rounded-xl border transition-all duration-300 relative overflow-hidden group ${
+                  isLight
+                    ? 'bg-gradient-to-br from-red-100 via-rose-50 to-red-50 border-red-300 shadow-md shadow-red-500/10 hover:border-red-400'
+                    : 'bg-gradient-to-br from-red-500/[0.15] via-rose-500/[0.03] to-black/40 border-red-500/30 shadow-lg shadow-red-500/[0.03] hover:border-red-400/50'
+                }`}>
+                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-red-500/[0.08] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                  <div className="flex justify-between items-center mb-1">
+                    <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-red-800' : 'text-red-450'}`}>Max Drawdown</span>
+                    <Lucide.ShieldAlert size={12} className="text-red-500" />
+                  </div>
+                  <div className="flex items-baseline gap-1 mt-1.5">
+                    <span className="text-2xl font-black text-red-500">{stats.maxDrawdown.toFixed(1)}%</span>
+                    <span className={`text-[8px] font-bold uppercase ${isLight ? 'text-red-700/80' : 'text-red-400/80'}`}>/ 20% Limit</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Weekly Stats board resetting every Monday */}
+            <section className={`transition-all duration-300 rounded-2xl p-5 space-y-4 ${isLight ? 'bg-white border border-zinc-200 shadow-sm text-zinc-800' : 'bg-zinc-900/50 border border-white/5 text-white'}`}>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className={`text-xs font-black uppercase tracking-wider ${isLight ? 'text-zinc-800' : 'text-zinc-200'}`}>Weekly Stats</h3>
+                  <p className={`text-[9px] font-bold ${isLight ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>Activity tracker resetting every Monday</p>
+                </div>
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all duration-300 ${weeklySummary.netProfit >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                  <Lucide.Coins size={12} className="animate-pulse" />
+                  <span className="text-[10px] font-black tracking-tight">Week PnL: {weeklySummary.netProfit >= 0 ? '+' : ''}${weeklySummary.netProfit.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Monday to Friday Traded Grid (Discipline Check-In style capsules with Check Circle) */}
+              <div className="grid grid-cols-5 gap-3">
+                {weeklyStats.map((day) => {
+                  const today = new Date();
+                  const todayDayIndex = today.getDay(); // 0 Sunday, 1 Mon, 2 Tue, etc.
+                  
+                  // Map day index: Mon is 1, Tue is 2, Wed is 3, Thu is 4, Fri is 5
+                  const dayIndexMap = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5 };
+                  const isToday = dayIndexMap[day.key as keyof typeof dayIndexMap] === todayDayIndex;
+                  
+                  let capsuleClass = "";
+                  let labelClass = "";
+                  let profitClass = "";
+                  
+                  if (day.hasTraded) {
+                    capsuleClass = isLight
+                      ? "bg-emerald-50/70 border-2 border-emerald-300 text-emerald-700 shadow-sm shadow-emerald-500/5 hover:border-emerald-400"
+                      : "bg-emerald-500/[0.04] border-2 border-emerald-500/30 text-emerald-400 hover:border-emerald-500/45";
+                    labelClass = isLight ? "text-emerald-600 font-extrabold" : "text-emerald-400 font-extrabold";
+                    
+                    if (day.profit >= 0) {
+                      profitClass = isLight ? "text-emerald-700 font-black" : "text-emerald-400 font-black";
+                    } else {
+                      profitClass = isLight ? "text-red-600 font-black" : "text-red-400 font-black";
+                    }
+                  } else {
+                    capsuleClass = isLight
+                      ? "bg-zinc-50 border border-zinc-200 text-zinc-400 hover:border-zinc-300"
+                      : "bg-[#0B0B0E]/60 border border-white/[0.03] text-zinc-500 hover:border-white/10";
+                    labelClass = isLight ? "text-zinc-400 font-bold" : "text-zinc-500 font-bold";
+                    profitClass = isLight ? "text-zinc-400 font-medium" : "text-zinc-650 font-medium";
+                  }
+
+                  if (isToday) {
+                    capsuleClass += isLight 
+                      ? " ring-2 ring-amber-400/60 shadow-md shadow-amber-500/10 scale-[1.02] z-10" 
+                      : " ring-2 ring-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.15)] scale-[1.02] z-10";
+                  }
+                  
+                  return (
+                    <div
+                      key={day.key}
+                      className={`relative flex flex-col items-center justify-between py-5 px-1.5 rounded-[2rem] min-h-[140px] w-full text-center transition-all duration-300 group ${capsuleClass}`}
+                    >
+                      {/* Top: Day Label */}
+                      <span className={`text-[11px] uppercase tracking-wider leading-none font-extrabold ${labelClass}`}>
+                        {day.label}
+                      </span>
+                      
+                      {/* Middle: Icon */}
+                      <div className="flex items-center justify-center my-2">
+                        {day.hasTraded ? (
+                          <Lucide.CheckCircle2 
+                            size={28} 
+                            className="text-emerald-500 transition-transform duration-500 group-hover:scale-115" 
+                          />
+                        ) : (
+                          <Lucide.Lock 
+                            size={18} 
+                            className={isLight ? "text-zinc-300" : "text-zinc-700"} 
+                          />
+                        )}
+                      </div>
+
+                      {/* Bottom: Daily Profit/Loss Amount */}
+                      <span className={`text-[10px] leading-none font-bold ${profitClass}`}>
+                        {day.hasTraded ? (
+                          `${day.profit >= 0 ? '+' : '-'}$${Math.abs(day.profit).toFixed(0)}`
+                        ) : (
+                          `$0`
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Weekly motivational banner */}
+              <div className={`w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-center border transition-all duration-300 ${
+                weeklySummary.netProfit >= 0 
+                  ? isLight ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-emerald-500/[0.03] border-emerald-500/10 text-emerald-400' 
+                  : isLight ? 'bg-red-50 border-red-100 text-red-700' : 'bg-red-500/[0.03] border-red-500/10 text-red-400'
+              }`}>
+                {weeklySummary.netProfit >= 0 
+                  ? `🔥 Excellent trading week! Net positive of +$${weeklySummary.netProfit.toFixed(2)}` 
+                  : `⚠️ Remaining disciplined. Weekly drawdown stands at -$${Math.abs(weeklySummary.netProfit).toFixed(2)}`
+                }
+              </div>
             </section>
 
             {/* Equity Curve */}
             <section className="space-y-3">
                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Growth Timeline</h3>
-               <div className={`rounded-3xl p-4 h-48 transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm' : 'bg-zinc-900/30 border border-white/5'}`}>
+               <div className={`rounded-2xl p-4 h-48 transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm' : 'bg-zinc-900/30 border border-white/5'}`}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={stats.eData}>
                       <defs>
@@ -781,19 +1034,211 @@ export default function ForexTracker() {
                </div>
             </section>
 
+            {/* Twin Bagger Metrics cards grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Bagger Time Card (Orange/Purple Cosmic) */}
+              <div className={`border rounded-2xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${
+                isLight 
+                  ? 'from-indigo-50/80 via-purple-50/60 to-pink-50 border-purple-200/80 shadow-[0_4px_12px_rgba(168,85,247,0.05)] bg-gradient-to-br' 
+                  : 'from-purple-950/[0.12] via-fuchsia-950/[0.04] to-black/40 border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.05)] bg-gradient-to-br'
+              }`}>
+                <div className="flex justify-between items-start">
+                  <div className={`p-2 rounded-xl border transition-all duration-300 ${
+                    isLight 
+                      ? 'bg-purple-50 border-purple-200 text-purple-600' 
+                      : 'bg-purple-500/10 border border-purple-500/20 text-purple-400'
+                  }`}>
+                    <Lucide.TrendingUp size={16} strokeWidth={2.5} />
+                  </div>
+                  <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-purple-700' : 'text-purple-400'}`}>Bagger Time</span>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Current Level</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={`text-2.5xl font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>
+                      {(stats.totalProfit / 1000).toFixed(2)}x
+                    </span>
+                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-purple-600' : 'text-purple-400'}`}>Bagger</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[8px] font-bold text-zinc-400 uppercase">
+                    <span>{(((stats.totalProfit - (Math.floor(stats.totalProfit / 1000) * 1000)) / 1000) * 100).toFixed(1)}% to Next</span>
+                    <span>Next: ${(Math.floor(stats.totalProfit / 1000) * 1000 + 2000).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  </div>
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-zinc-150' : 'bg-white/5'}`}>
+                    <div 
+                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.5)] animate-pulse" 
+                      style={{ width: `${(((stats.totalProfit - (Math.floor(stats.totalProfit / 1000) * 1000)) / 1000) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Approx Bagger Time Card (Mint/Cyan-Blue Cyberpunk) */}
+              <div className={`border rounded-2xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${
+                isLight 
+                  ? 'from-cyan-50/80 via-blue-50/60 to-indigo-50 border-cyan-200/80 shadow-[0_4px_12px_rgba(6,182,212,0.05)] bg-gradient-to-br' 
+                  : 'from-cyan-950/[0.12] via-blue-950/[0.04] to-black/40 border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.05)] bg-gradient-to-br'
+              }`}>
+                <div className="flex justify-between items-start">
+                  <div className={`p-2 rounded-xl border transition-all duration-300 ${
+                    isLight 
+                      ? 'bg-cyan-50 border-cyan-200 text-cyan-650' 
+                      : 'bg-cyan-500/10 border border-cyan-500/20 text-cyan-400'
+                  }`}>
+                    <Lucide.Hourglass size={16} strokeWidth={2.5} />
+                  </div>
+                  <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-cyan-700' : 'text-cyan-400'}`}>Approx Bagger Time</span>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Est. Weeks to Level</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={`text-2.5xl font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>
+                      {avgWeeklyProfit > 0 ? (((Math.floor(stats.totalProfit / 1000) * 1000 + 1000) - stats.totalProfit) / avgWeeklyProfit).toFixed(1) : '--'}
+                    </span>
+                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}>Weeks</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="text-[8px] font-bold text-zinc-400 uppercase flex justify-between">
+                    <span>Weekly Avg Profit</span>
+                    <span className={`font-black ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}>
+                      ${avgWeeklyProfit.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-zinc-150' : 'bg-white/5'}`}>
+                    <div 
+                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.5)]" 
+                      style={{ width: `${Math.min(100, Math.max(0, 100 - (((Math.floor(stats.totalProfit / 1000) * 1000 + 1000) - stats.totalProfit) / 1000) * 100))}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Monthly Performance (Calories Burned Style Pill Bar Chart) */}
+            <section className="space-y-3">
+              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Monthly Performance</h3>
+              <div className={`rounded-3xl p-5 transition-all duration-300 relative ${isLight ? 'bg-white border border-zinc-200 shadow-sm text-zinc-800' : 'bg-zinc-900/30 border border-white/5 text-white'}`}>
+                <div className="flex justify-between items-start mb-6">
+                  <div className="flex items-center gap-4">
+                    <div>
+                      <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-400' : 'text-zinc-500'}`}>Total Profit</span>
+                      <h4 className={`text-xl font-black mt-0.5 ${stats.totalProfit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                        {stats.totalProfit >= 0 ? '+' : '-'}${Math.abs(stats.totalProfit).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </h4>
+                    </div>
+                    
+                    <div className={`h-8 w-px ${isLight ? 'bg-zinc-200' : 'bg-white/10'}`} />
+                    
+                    <div>
+                      <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-400' : 'text-zinc-500'}`}>Win Rate</span>
+                      <h4 className={`text-xl font-black mt-0.5 ${isLight ? 'text-zinc-800' : 'text-white'}`}>
+                        {stats.wRate.toFixed(1)}%
+                      </h4>
+                    </div>
+                  </div>
+                  
+                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full border ${isLight ? 'bg-zinc-100 border-zinc-200 text-zinc-650' : 'bg-white/5 border-white/10 text-zinc-400'}`}>
+                    Year {latestYear}
+                  </span>
+                </div>
+
+                {/* The Interactive Pill Bar Chart */}
+                <div className="h-44 flex items-end justify-between gap-1.5 md:gap-2 px-1 relative">
+                  {hoveredMonth !== null && monthlyData[hoveredMonth] !== 0 && (
+                    <div 
+                      className="absolute transition-all duration-300 ease-out pointer-events-none"
+                      style={{
+                        bottom: `${Math.min(95, Math.max(25, (Math.abs(monthlyData[hoveredMonth]) / maxVal) * 100 + 10))}%`,
+                        left: `${(hoveredMonth / 12) * 100 + 4}%`,
+                        transform: 'translateX(-50%)',
+                        zIndex: 10
+                      }}
+                    >
+                      <div className={`px-2 py-0.5 rounded-full text-[9px] font-black text-white shadow-lg ${
+                        monthlyData[hoveredMonth] >= 0 
+                          ? 'bg-emerald-500 shadow-emerald-500/20' 
+                          : 'bg-red-500 shadow-red-500/20'
+                      }`}>
+                        {monthlyData[hoveredMonth] >= 0 ? '+' : '-'}${Math.abs(monthlyData[hoveredMonth]).toFixed(0)}
+                      </div>
+                    </div>
+                  )}
+
+                  {monthlyData.map((val, i) => {
+                    const heightPercent = maxVal > 0 ? Math.min(100, Math.max(8, (Math.abs(val) / maxVal) * 100)) : 8;
+                    const isHovered = hoveredMonth === i;
+                    const hasProfit = val >= 0;
+                    
+                    return (
+                      <div 
+                        key={i} 
+                        className="flex-1 flex flex-col items-center group cursor-pointer"
+                        onMouseEnter={() => setHoveredMonth(i)}
+                        onMouseLeave={() => setHoveredMonth(new Date().getMonth())}
+                      >
+                        <div className={`w-full h-28 rounded-full flex flex-col justify-end p-0.5 relative overflow-hidden transition-all duration-300 ${
+                          isLight 
+                            ? isHovered ? 'bg-zinc-150 shadow-inner' : 'bg-zinc-100' 
+                            : isHovered ? 'bg-white/10 shadow-inner' : 'bg-white/[0.03]'
+                        }`}>
+                          {val !== 0 && (
+                            <div 
+                              className={`w-full rounded-full transition-all duration-500 ease-out ${
+                                isHovered 
+                                  ? hasProfit 
+                                    ? 'bg-gradient-to-t from-emerald-500 to-teal-400 shadow-[0_0_10px_rgba(16,185,129,0.4)]' 
+                                    : 'bg-gradient-to-t from-red-500 to-rose-400 shadow-[0_0_10px_rgba(239,68,68,0.4)]'
+                                  : hasProfit 
+                                    ? isLight ? 'bg-emerald-500/80' : 'bg-emerald-500/30' 
+                                    : isLight ? 'bg-red-500/80' : 'bg-red-500/30'
+                              }`}
+                              style={{ height: `${heightPercent}%` }}
+                            />
+                          )}
+                          
+                          <div className={`w-3.5 h-3.5 rounded-full absolute bottom-0.5 left-1/2 -translate-x-1/2 flex items-center justify-center transition-all duration-300 ${
+                            isHovered 
+                              ? 'bg-white text-zinc-900 scale-110 shadow-sm' 
+                              : isLight ? 'bg-white text-zinc-400 shadow-sm' : 'bg-[#18181B] text-zinc-600'
+                          }`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current" style={{ color: val !== 0 ? (hasProfit ? '#10b981' : '#ef4444') : '#71717a' }} />
+                          </div>
+                        </div>
+                        
+                        <span className={`text-[8px] font-black uppercase mt-2 tracking-wider transition-colors duration-300 ${
+                          isHovered 
+                            ? isLight ? 'text-zinc-850 font-black' : 'text-white font-black' 
+                            : isLight ? 'text-zinc-400' : 'text-zinc-650'
+                        }`}>
+                          {MONTHS[i].slice(0, 3)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+
             {/* Monthly Returns */}
             <section className="space-y-3">
                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Monthly Returns</h3>
                <div className="w-full overflow-x-auto custom-scrollbar pb-2">
                   <div className="flex flex-col gap-3 w-full">
                      {Object.keys(stats.matrix).sort().reverse().map(year => (
-                        <div key={year} className={`flex gap-2 items-center rounded-3xl p-3 w-full transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm text-zinc-800' : 'bg-zinc-900/40 border border-white/5 text-white'}`}>
+                        <div key={year} className={`flex gap-2 items-center rounded-2xl p-3 w-full transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm text-zinc-800' : 'bg-zinc-900/40 border border-white/5 text-white'}`}>
                            <p className={`text-[10px] font-black pr-2 border-r shrink-0 ${isLight ? 'text-zinc-400 border-zinc-150' : 'text-zinc-400 border-white/10'}`}>{year}</p>
                            <div className="flex gap-2 flex-1 justify-between min-w-0 overflow-x-auto custom-scrollbar">
                               {stats.matrix[year].map((val, i) => (
                                  <div key={i} className={`flex flex-col items-center justify-center p-3 rounded-2xl border min-w-[56px] flex-1 shrink-0 md:shrink transition-all duration-300 ${isLight ? 'bg-zinc-50 border-zinc-100/80 text-zinc-800' : 'bg-black/40 border-white/5 text-white'}`}>
                                     <span className={`text-[8px] font-bold uppercase mb-1 ${isLight ? 'text-zinc-400' : 'text-zinc-500'}`}>{MONTHS[i]}</span>
-                                    <span className={`text-[11px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : (isLight ? 'text-zinc-300' : 'text-zinc-600')}`}>
+                                    <span className={`text-[11px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : (isLight ? 'text-zinc-300' : 'text-zinc-650')}`}>
                                        {val === 0 ? '-' : `${val > 0 ? '+' : ''}${((val/1000)*100).toFixed(1)}%`}
                                     </span>
                                  </div>
@@ -803,6 +1248,64 @@ export default function ForexTracker() {
                      ))}
                   </div>
                </div>
+            </section>
+
+            {/* Quick Actions Grid */}
+            <section className="space-y-3">
+              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Hub Quick Actions</h3>
+              <div className="grid grid-cols-3 gap-3">
+                <button 
+                  onClick={() => setShowCalcModal(true)} 
+                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
+                >
+                  <div className="p-2 bg-amber-500/10 rounded-xl group-hover:scale-110 transition-transform">
+                    <Lucide.Calculator size={16} className="text-amber-500" />
+                  </div>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-605 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Calc</span>
+                </button>
+                <button 
+                  onClick={() => setActiveView('history')} 
+                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
+                >
+                  <div className="p-2 bg-emerald-500/10 rounded-xl group-hover:scale-110 transition-transform">
+                    <Lucide.Activity size={16} className="text-emerald-500" />
+                  </div>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-605 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Journal</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    const randomIdx = Math.floor(Math.random() * WISDOM_QUOTES.length);
+                    setSelectedQuote(WISDOM_QUOTES[randomIdx]);
+                    setShowWisdomModal(true);
+                  }} 
+                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
+                >
+                  <div className="p-2 bg-teal-500/10 rounded-xl group-hover:scale-110 transition-transform">
+                    <Lucide.Sparkles size={16} className="text-teal-400" />
+                  </div>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-605 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Wisdom</span>
+                </button>
+              </div>
+            </section>
+
+            {/* Daily revolving pro tip banner */}
+            <section className={`border rounded-2xl p-4 flex gap-3 items-center relative overflow-hidden group transition-all duration-300 ${isLight ? 'bg-white border-zinc-200 shadow-sm' : 'bg-zinc-900/40 border-white/5'}`}>
+              <div className="absolute -top-12 -left-12 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
+              <div className="p-2.5 bg-amber-500/10 rounded-2xl text-amber-400 animate-pulse shrink-0">
+                <Lucide.Lightbulb size={18} strokeWidth={2.5} className="fill-amber-400/10" />
+              </div>
+              <div className="flex-1 min-w-0 pr-2">
+                <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Daily Pro Tip</span>
+                <p className={`text-[10px] font-bold leading-snug mt-0.5 line-clamp-2 transition-all duration-300 ${isLight ? 'text-zinc-700' : 'text-zinc-300'}`}>
+                  "{PRO_TIPS[activeTipIndex]}"
+                </p>
+              </div>
+              <button 
+                onClick={() => setActiveTipIndex(prev => (prev + 1) % PRO_TIPS.length)}
+                className="p-1 bg-white/5 rounded-lg text-zinc-500 hover:text-white transition-colors cursor-pointer shrink-0"
+              >
+                <Lucide.ChevronRight size={14} />
+              </button>
             </section>
           </div>
         )}
@@ -841,58 +1344,77 @@ export default function ForexTracker() {
                     <div key={day} className={`py-2 text-center text-[8px] font-black transition-colors duration-300 ${isLight ? 'bg-zinc-100 text-zinc-400' : 'bg-zinc-900 text-zinc-600'}`}>{day}</div>
                   ))}
                   {calDays.map((d, i) => {
-                    let cellStyle = isLight ? "border border-transparent bg-white text-zinc-800" : "border border-transparent bg-[#0A0A0A] text-white";
+                    let cellStyle = isLight ? "border border-zinc-150 bg-white text-zinc-800" : "border border-white/[0.03] bg-[#0A0A0A] text-white";
                     if (d && d.data) {
                       if (calendarStyle === 'outline') {
                         if (d.data.profit > 0) {
                           cellStyle = isLight 
-                            ? "border border-emerald-400 bg-emerald-50/[0.3] text-emerald-600" 
-                            : "border border-emerald-500/40 bg-emerald-500/[0.04] text-emerald-400";
+                            ? "border-2 border-emerald-250 bg-emerald-50/50 text-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.06)]" 
+                            : "border-2 border-emerald-200/90 bg-emerald-950/30 text-emerald-400 shadow-[0_0_12px_rgba(167,243,208,0.18)]";
                         } else if (d.data.profit < 0) {
                           cellStyle = isLight 
-                            ? "border border-red-400 bg-red-50/[0.3] text-red-600" 
-                            : "border border-red-500/40 bg-red-500/[0.04] text-red-400";
+                            ? "border-2 border-red-250 bg-red-50/50 text-red-600 shadow-[0_2px_8px_rgba(239,68,68,0.06)]" 
+                            : "border-2 border-red-200/90 bg-red-950/30 text-red-400 shadow-[0_0_12px_rgba(254,202,202,0.18)]";
                         } else {
                           cellStyle = isLight 
                             ? "border border-zinc-200 bg-zinc-50/50 text-zinc-400" 
-                            : "border border-zinc-700/40 bg-zinc-900/10 text-zinc-500";
+                            : "border border-zinc-800/80 bg-zinc-900/10 text-zinc-500";
                         }
                       } else {
                         if (d.data.profit > 0) {
                           cellStyle = isLight 
-                            ? "bg-emerald-100/70 text-emerald-800 border border-emerald-100" 
-                            : "bg-emerald-500/20 text-emerald-400";
+                            ? "bg-emerald-100/70 text-emerald-800 border border-emerald-100 shadow-sm" 
+                            : "bg-emerald-500/20 text-emerald-450 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.1)]";
                         } else if (d.data.profit < 0) {
                           cellStyle = isLight 
-                            ? "bg-red-100/70 text-red-800 border border-red-100" 
-                            : "bg-red-500/20 text-red-400";
+                            ? "bg-red-100/70 text-red-800 border border-red-100 shadow-sm" 
+                            : "bg-red-500/20 text-red-450 border border-red-500/30 shadow-[0_0_8px_rgba(239,68,68,0.1)]";
                         }
                       }
                     }
+                    
+                    const today = new Date();
+                    const isToday = d && today.getDate() === d.day && today.getMonth() === calMonth && today.getFullYear() === calYear;
+
                     return (
-                      <div key={i} className={`relative p-1.5 min-h-[50px] flex flex-col items-center justify-center ${cellStyle} ${!d ? 'opacity-20' : ''}`}>
+                      <div key={i} className={`relative p-1.5 min-h-[56px] flex flex-col items-center justify-center transition-all duration-300 rounded-xl ${cellStyle} ${!d ? 'opacity-20' : ''}`}>
                         {d && (
                           <>
-                            {/* Day Number in top-right */}
-                            <span className="absolute top-1 right-1.5 text-[9px] font-bold opacity-30">{d.day}</span>
-                            
-                            {/* Profit/Loss Amount perfectly centered */}
-                            {d.data && (
-                              <span className={`text-[10px] md:text-[11px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                ${Math.abs(d.data.profit).toFixed(0)}
+                            {/* Day Number inside a circular badge if it is today */}
+                            {isToday ? (
+                              <span className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-full bg-violet-600 text-[8px] font-black text-white shadow-sm shadow-violet-500/30">
+                                {d.day}
+                              </span>
+                            ) : (
+                              <span className="absolute top-1 right-1.5 text-[8px] font-bold opacity-30">
+                                {d.day}
                               </span>
                             )}
                             
-                            {/* Trade Dots in bottom-right */}
+                            {/* Centered Profit/Loss and stats details */}
                             {d.data && (
-                              <div className="absolute bottom-1 right-1.5 flex gap-0.5 items-center justify-end max-w-[50%] flex-wrap">
-                                {d.data.tradesList.map((trade: any, idx: number) => (
-                                  <span
-                                    key={idx}
-                                    className={`w-1 h-1 rounded-full shrink-0 ${trade.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
-                                  />
-                                ))}
+                              <div className="flex flex-col items-center justify-center mt-1 space-y-0.5 w-full">
+                                <span className={`text-[9px] md:text-[10px] font-black leading-none ${d.data.profit >= 0 ? (isLight ? 'text-emerald-600' : 'text-emerald-400') : (isLight ? 'text-red-600' : 'text-red-400')}`}>
+                                  {d.data.profit >= 0 ? '+' : '-'}${Math.abs(d.data.profit).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </span>
+                                <span className={`text-[7px] font-bold uppercase tracking-wider opacity-60 leading-none ${isLight ? 'text-zinc-500' : 'text-zinc-450'}`}>
+                                  {d.data.tradesList.length} trade{d.data.tradesList.length > 1 ? 's' : ''}
+                                </span>
+                                {d.data.tradesList.length > 0 && (() => {
+                                  const winCount = d.data.tradesList.filter((t: any) => t.profit > 0).length;
+                                  const wr = (winCount / d.data.tradesList.length) * 100;
+                                  return (
+                                    <span className={`text-[7px] font-bold opacity-65 leading-none ${isLight ? 'text-zinc-500' : 'text-zinc-450'}`}>
+                                      {wr.toFixed(0)}%
+                                    </span>
+                                  );
+                                })()}
                               </div>
+                            )}
+                            
+                            {/* Single indicator dot in bottom-right corner */}
+                            {d.data && d.data.tradesList.length > 0 && (
+                              <span className={`w-1 h-1 rounded-full absolute bottom-1 right-1.5 ${d.data.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`} />
                             )}
                           </>
                         )}
@@ -946,303 +1468,7 @@ export default function ForexTracker() {
                   ))}
                </div>
             </section>
-          </div>
-        )}
-
-        {activeView === 'rewards' && (
-          <div className="space-y-6 animate-in fade-in duration-300">
-            {/* premium titanium layout */}
-            <section className="relative overflow-hidden bg-gradient-to-br from-zinc-900 to-black border border-white/10 rounded-3xl p-6 shadow-2xl">
-              {/* glassmorphic reflective sweep */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-transparent pointer-events-none" />
-              
-              {/* card glow */}
-              <div className="absolute -top-16 -right-16 w-36 h-36 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-16 -left-16 w-36 h-36 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <span className="text-[8px] font-black uppercase text-amber-500 tracking-[0.25em]">PRO TRADER HUB</span>
-                  <h4 className="text-sm font-black text-white uppercase mt-0.5 tracking-wider">Consistency Metrics</h4>
-                </div>
-                {/* glowing dollar badge instead of gold chip */}
-                <div className="p-2.5 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.25)] flex items-center justify-center animate-pulse">
-                  <Lucide.DollarSign size={16} strokeWidth={2.5} />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Available Balance</p>
-                <div className="flex items-baseline gap-2">
-                  <h2 className="text-3xl font-black tracking-tighter text-white">${stats.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
-                  <span className="text-[10px] font-black text-emerald-500">
-                    +{((stats.totalProfit / 1000) * 100).toFixed(1)}% ROI
-                  </span>
-                </div>
-              </div>
-
-              {/* sleek horizontal infographics for win rate & DD */}
-              <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-zinc-400">
-                    <span>Win Rate</span>
-                    <span className="text-emerald-400 font-bold">{stats.wRate.toFixed(1)}%</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)] transition-all duration-500" 
-                      style={{ width: `${stats.wRate}%` }}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-1">
-                  <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-zinc-400">
-                    <span>Max Drawdown</span>
-                    <span className="text-red-400 font-bold">{stats.maxDrawdown.toFixed(1)}% / 20.0% Limit</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)] transition-all duration-500" 
-                      style={{ width: `${Math.min(100, (stats.maxDrawdown / 20) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Weekly Stats board resetting every Monday */}
-            <section className={`transition-all duration-300 rounded-3xl p-5 space-y-4 ${isLight ? 'bg-white border border-zinc-200 shadow-sm text-zinc-800' : 'bg-zinc-900/50 border border-white/5 text-white'}`}>
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className={`text-xs font-black uppercase tracking-wider ${isLight ? 'text-zinc-800' : 'text-zinc-200'}`}>Weekly Stats</h3>
-                  <p className={`text-[9px] font-bold ${isLight ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>Activity tracker resetting every Monday</p>
-                </div>
-                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all duration-300 ${weeklySummary.netProfit >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-                  <Lucide.Coins size={12} className="animate-pulse" />
-                  <span className="text-[10px] font-black tracking-tight">Week PnL: {weeklySummary.netProfit >= 0 ? '+' : ''}${weeklySummary.netProfit.toFixed(2)}</span>
-                </div>
-              </div>
-
-              {/* Monday to Sunday Traded Grid */}
-              <div className="grid grid-cols-7 gap-1.5">
-                {weeklyStats.map((day) => (
-                  <div
-                    key={day.key}
-                    className={`relative flex flex-col items-center justify-between p-2 rounded-2xl border transition-all duration-300 min-h-[92px] ${
-                      day.hasTraded
-                        ? day.profit >= 0 
-                          ? isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-emerald-500/[0.08] border-emerald-500/30 text-emerald-400'
-                          : isLight ? 'bg-red-50 border-red-200 text-red-600' : 'bg-red-500/[0.08] border-red-500/30 text-red-400'
-                        : isLight ? 'bg-zinc-50 border-zinc-200/60 text-zinc-400' : 'bg-zinc-950/40 border-white/5 text-zinc-600'
-                    }`}
-                  >
-                    <span className="text-[8px] font-black tracking-widest uppercase">{day.label}</span>
-                    
-                    <div className="my-1.5">
-                      {day.hasTraded ? (
-                        <Lucide.CircleDollarSign size={18} strokeWidth={2.5} className={day.profit >= 0 ? 'text-emerald-500 fill-emerald-500/10' : 'text-red-500 fill-red-500/10'} />
-                      ) : (
-                        <div className={`w-[18px] h-[18px] rounded-full border-2 border-dashed ${isLight ? 'border-zinc-300' : 'border-zinc-700'} flex items-center justify-center`}>
-                          <span className={`text-[8px] font-bold ${isLight ? 'text-zinc-300' : 'text-zinc-700'}`}>$</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <span className={`text-[8px] font-black ${day.hasTraded ? (day.profit >= 0 ? 'text-emerald-500' : 'text-red-500') : 'text-zinc-500'}`}>
-                      {day.hasTraded ? `${day.profit >= 0 ? '+' : ''}$${day.profit.toFixed(0)}` : 'No Trade'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Weekly motivational banner */}
-              <div className={`w-full py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest text-center border transition-all duration-300 ${
-                weeklySummary.netProfit >= 0 
-                  ? isLight ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-emerald-500/[0.03] border-emerald-500/10 text-emerald-400' 
-                  : isLight ? 'bg-red-50 border-red-100 text-red-700' : 'bg-red-500/[0.03] border-red-500/10 text-red-400'
-              }`}>
-                {weeklySummary.netProfit >= 0 
-                  ? `🔥 Excellent trading week! Net positive of +$${weeklySummary.netProfit.toFixed(2)}` 
-                  : `⚠️ Remaining disciplined. Weekly drawdown stands at -$${Math.abs(weeklySummary.netProfit).toFixed(2)}`
-                }
-              </div>
-            </section>
-
-            {/* Twin Bagger Metrics cards grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Bagger Time Card (Orange) */}
-              <div className={`bg-gradient-to-br from-amber-500/[0.06] to-orange-600/[0.06] border rounded-3xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${isLight ? 'border-orange-200' : 'border-orange-500/20'}`}>
-                <div className="flex justify-between items-start">
-                  <div className="p-2 bg-orange-500/10 rounded-xl border border-orange-500/20 text-orange-400">
-                    <Lucide.TrendingUp size={16} strokeWidth={2.5} />
-                  </div>
-                  <span className="text-[8px] font-black uppercase text-orange-400 tracking-wider">Bagger Time</span>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className="text-[9px] font-bold text-zinc-500 uppercase">Current Level</p>
-                  <h4 className={`text-lg font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>{(stats.balance / 1000).toFixed(2)}x Bagger</h4>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[8px] font-bold text-zinc-400 uppercase">
-                    <span>{(((stats.balance - (Math.floor(stats.balance / 1000) * 1000)) / 1000) * 100).toFixed(1)}% to Next</span>
-                    <span>Next: ${(Math.floor(stats.balance / 1000) * 1000 + 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                  </div>
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)] animate-pulse" 
-                      style={{ width: `${(((stats.balance - (Math.floor(stats.balance / 1000) * 1000)) / 1000) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Approx Bagger Time Card (Mint) */}
-              <div className={`bg-gradient-to-br from-emerald-500/[0.06] to-teal-600/[0.06] border rounded-3xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${isLight ? 'border-emerald-200' : 'border-emerald-500/20'}`}>
-                <div className="flex justify-between items-start">
-                  <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
-                    <Lucide.Hourglass size={16} strokeWidth={2.5} />
-                  </div>
-                  <span className="text-[8px] font-black uppercase text-emerald-400 tracking-wider">Approx Bagger Time</span>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className="text-[9px] font-bold text-zinc-500 uppercase">Avg Profit / Trade</p>
-                  <h4 className={`text-lg font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>${(stats.tradeCount > 0 ? stats.totalProfit / stats.tradeCount : 10).toFixed(2)}</h4>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="text-[8px] font-bold text-zinc-400 uppercase flex justify-between">
-                    <span>Est. Trades to Next Level</span>
-                    <span className="text-emerald-500 font-black">
-                      { (stats.tradeCount > 0 ? stats.totalProfit / stats.tradeCount : 10) > 0 
-                        ? `${Math.ceil(((Math.floor(stats.balance / 1000) * 1000 + 1000) - stats.balance) / (stats.tradeCount > 0 ? stats.totalProfit / stats.tradeCount : 10))} Trades`
-                        : 'N/A'
-                      }
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" 
-                      style={{ width: `${Math.min(100, Math.max(0, 100 - (((Math.floor(stats.balance / 1000) * 1000 + 1000) - stats.balance) / 1000) * 100))}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Growth Timeline duplicated directly in Rewards Hub */}
-            <section className="space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Growth Timeline</h3>
-              <div className={`rounded-3xl p-4 h-48 transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm' : 'bg-zinc-900/30 border border-white/5'}`}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={stats.eData}>
-                    <defs>
-                      <linearGradient id="rewardsCurveColor" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <Area type="monotone" dataKey="balance" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#rewardsCurveColor)" />
-                    <Tooltip contentStyle={isLight ? { backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '10px', color: '#1f2937' } : { backgroundColor: '#111', border: 'none', borderRadius: '8px', fontSize: '10px' }} itemStyle={{ color: '#10b981' }} formatter={(v: any) => [`$${v}`, 'Balance']}/>
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
-
-            {/* Monthly Returns duplicated directly in Rewards Hub */}
-            <section className="space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Monthly Returns</h3>
-              <div className="w-full overflow-x-auto custom-scrollbar pb-2">
-                <div className="flex flex-col gap-3 w-full">
-                  {Object.keys(stats.matrix).sort().reverse().map(year => (
-                    <div key={year} className={`flex gap-2 items-center rounded-3xl p-3 w-full transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm text-zinc-800' : 'bg-zinc-900/40 border border-white/5 text-white'}`}>
-                      <p className={`text-[10px] font-black pr-2 border-r shrink-0 ${isLight ? 'text-zinc-400 border-zinc-150' : 'text-zinc-400 border-white/10'}`}>{year}</p>
-                      <div className="flex gap-2 flex-1 justify-between min-w-0 overflow-x-auto custom-scrollbar">
-                        {stats.matrix[year].map((val, i) => (
-                          <div key={i} className={`flex flex-col items-center justify-center p-3 rounded-2xl border min-w-[56px] flex-1 shrink-0 md:shrink transition-all duration-300 ${isLight ? 'bg-zinc-50 border-zinc-100/80 text-zinc-800' : 'bg-black/40 border-white/5 text-white'}`}>
-                            <span className={`text-[8px] font-bold uppercase mb-1 ${isLight ? 'text-zinc-400' : 'text-zinc-500'}`}>{MONTHS[i]}</span>
-                            <span className={`text-[11px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : (isLight ? 'text-zinc-300' : 'text-zinc-600')}`}>
-                              {val === 0 ? '-' : `${val > 0 ? '+' : ''}${((val/1000)*100).toFixed(1)}%`}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            {/* Quick Actions Grid */}
-            <section className="space-y-3">
-              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Hub Quick Actions</h3>
-              <div className="grid grid-cols-4 gap-3">
-                <button 
-                  onClick={() => setShowCalcModal(true)} 
-                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
-                >
-                  <div className="p-2 bg-amber-500/10 rounded-xl group-hover:scale-110 transition-transform">
-                    <Lucide.Calculator size={16} className="text-amber-500" />
-                  </div>
-                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-600 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Calc</span>
-                </button>
-                <button 
-                  onClick={() => setActiveView('history')} 
-                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
-                >
-                  <div className="p-2 bg-emerald-500/10 rounded-xl group-hover:scale-110 transition-transform">
-                    <Lucide.Activity size={16} className="text-emerald-500" />
-                  </div>
-                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-600 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Journal</span>
-                </button>
-                <button 
-                  onClick={() => {
-                    const randomIdx = Math.floor(Math.random() * WISDOM_QUOTES.length);
-                    setSelectedQuote(WISDOM_QUOTES[randomIdx]);
-                    setShowWisdomModal(true);
-                  }} 
-                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
-                >
-                  <div className="p-2 bg-teal-500/10 rounded-xl group-hover:scale-110 transition-transform">
-                    <Lucide.Sparkles size={16} className="text-teal-400" />
-                  </div>
-                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-600 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Wisdom</span>
-                </button>
-                <button 
-                  onClick={() => setShowClaimsModal(true)} 
-                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
-                >
-                  <div className="p-2 bg-indigo-500/10 rounded-xl group-hover:scale-110 transition-transform">
-                    <Lucide.Trophy size={16} className="text-indigo-400" />
-                  </div>
-                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-600 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Rank</span>
-                </button>
-              </div>
-            </section>
-
-            {/* Daily revolving pro tip banner */}
-            <section className={`border rounded-3xl p-4 flex gap-3 items-center relative overflow-hidden group transition-all duration-300 ${isLight ? 'bg-white border-zinc-200 shadow-sm' : 'bg-zinc-900/40 border-white/5'}`}>
-              <div className="absolute -top-12 -left-12 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-              <div className="p-2.5 bg-amber-500/10 rounded-2xl text-amber-400 animate-pulse shrink-0">
-                <Lucide.Lightbulb size={18} strokeWidth={2.5} className="fill-amber-400/10" />
-              </div>
-              <div className="flex-1 min-w-0 pr-2">
-                <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Daily Pro Tip</span>
-                <p className={`text-[10px] font-bold leading-snug mt-0.5 line-clamp-2 transition-all duration-300 ${isLight ? 'text-zinc-700' : 'text-zinc-300'}`}>
-                  "{PRO_TIPS[activeTipIndex]}"
-                </p>
-              </div>
-              <button 
-                onClick={() => setActiveTipIndex(prev => (prev + 1) % PRO_TIPS.length)}
-                className="p-1 bg-white/5 rounded-lg text-zinc-500 hover:text-white transition-colors cursor-pointer shrink-0"
-              >
-                <Lucide.ChevronRight size={14} />
-              </button>
-            </section>
-          </div>
+           </div>
         )}
       </main>
 
@@ -1252,8 +1478,7 @@ export default function ForexTracker() {
             {[
               { id: 'dashboard', icon: Lucide.LayoutDashboard, label: 'Overview' },
               { id: 'calendar', icon: Lucide.Calendar, label: 'Calendar' },
-              { id: 'history', icon: Lucide.Activity, label: 'Activity' },
-              { id: 'rewards', icon: Lucide.Gift, label: 'Rewards' }
+              { id: 'history', icon: Lucide.Activity, label: 'Activity' }
             ].map((item) => (
               <button 
                 key={item.id}
