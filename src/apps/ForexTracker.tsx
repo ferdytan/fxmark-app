@@ -149,6 +149,19 @@ export default function ForexTracker() {
     } catch { return INITIAL_DATA; }
   });
 
+  const [calendarStyle, setCalendarStyle] = useState<'outline' | 'original'>(() => {
+    try {
+      const saved = localStorage.getItem('fxmark_calendar_style');
+      return saved === 'original' ? 'original' : 'outline';
+    } catch {
+      return 'outline';
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('fxmark_calendar_style', calendarStyle);
+  }, [calendarStyle]);
+
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
 
   const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history' | 'holdings'>('dashboard');
@@ -631,7 +644,23 @@ export default function ForexTracker() {
           <div className="flex flex-col h-[65dvh] min-h-[400px] animate-in fade-in pb-4">
             {/* Calendar View */}
             <div className="flex justify-between items-center pl-2 mb-4 shrink-0">
-               <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Calendar Grid</h3>
+               <div className="flex items-center gap-3">
+                  <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Calendar Grid</h3>
+                  <div className="flex bg-zinc-900 border border-white/5 rounded-lg p-0.5 text-[8px] font-black tracking-wider uppercase">
+                     <button 
+                        onClick={() => setCalendarStyle('outline')}
+                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${calendarStyle === 'outline' ? 'bg-emerald-500 text-black font-black' : 'text-zinc-500 hover:text-white'}`}
+                     >
+                        Outlines
+                     </button>
+                     <button 
+                        onClick={() => setCalendarStyle('original')}
+                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${calendarStyle === 'original' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                     >
+                        Original
+                     </button>
+                  </div>
+               </div>
                <div className="flex gap-2 items-center bg-white/5 rounded-lg p-1">
                   <button onClick={() => {let m=calMonth-1; let y=calYear; if(m<0){m=11;y--;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronLeft size={14}/></button>
                   <span className="text-[9px] font-black">{MONTHS[calMonth]} {calYear}</span>
@@ -644,26 +673,38 @@ export default function ForexTracker() {
                   {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
                     <div key={day} className="bg-zinc-900 py-2 text-center text-[8px] font-black text-zinc-600">{day}</div>
                   ))}
-                  {calDays.map((d, i) => (
-                    <div key={i} className={`p-1 bg-[#0A0A0A] flex flex-col items-center justify-center gap-1 ${!d ? 'opacity-20' : ''}`}>
-                      {d && (
-                        <>
-                          <span className="text-[9px] font-bold opacity-30">{d.day}</span>
-                          {d.data && (
-                            <div className="flex gap-0.5 justify-center flex-wrap max-w-full">
-                              {d.data.tradesList.map((trade: any, idx: number) => (
-                                <span
-                                  key={idx}
-                                  className={`w-1.5 h-1.5 rounded-full shrink-0 ${trade.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
-                                />
-                              ))}
-                            </div>
-                          )}
-                          {d.data && <span className={`text-[10px] md:text-[11px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
-                        </>
-                      )}
-                    </div>
-                  ))}
+                  {calDays.map((d, i) => {
+                    let cellStyle = "border border-transparent bg-[#0A0A0A]";
+                    if (d && d.data && calendarStyle === 'outline') {
+                      if (d.data.profit > 0) {
+                        cellStyle = "border border-emerald-500/40 bg-emerald-500/[0.04]";
+                      } else if (d.data.profit < 0) {
+                        cellStyle = "border border-red-500/40 bg-red-500/[0.04]";
+                      } else {
+                        cellStyle = "border border-zinc-700/40 bg-zinc-900/10";
+                      }
+                    }
+                    return (
+                      <div key={i} className={`p-1 flex flex-col items-center justify-center gap-1 ${cellStyle} ${!d ? 'opacity-20' : ''}`}>
+                        {d && (
+                          <>
+                            <span className="text-[9px] font-bold opacity-30">{d.day}</span>
+                            {d.data && (
+                              <div className="flex gap-0.5 justify-center flex-wrap max-w-full">
+                                {d.data.tradesList.map((trade: any, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${trade.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                            {d.data && <span className={`text-[10px] md:text-[11px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                </div>
             </div>
           </div>
