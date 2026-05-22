@@ -155,10 +155,41 @@ const WISDOM_QUOTES = [
 ];
 
 export default function ForexTracker() {
-  // Enforce Dark Mode
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    try {
+      const saved = localStorage.getItem('fxmark_theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+    } catch {}
+    try {
+      const surabayaHour = parseInt(
+        new Date().toLocaleString("en-US", {
+          timeZone: "Asia/Jakarta",
+          hour: "numeric",
+          hour12: false
+        }),
+        10
+      );
+      return (surabayaHour >= 6 && surabayaHour < 18) ? 'light' : 'dark';
+    } catch {
+      const hour = new Date().getHours();
+      return (hour >= 6 && hour < 18) ? 'light' : 'dark';
+    }
+  });
+
   useEffect(() => {
-    document.documentElement.classList.add('dark');
-  }, []);
+    if (theme === 'light') {
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+      document.documentElement.classList.add('dark');
+    }
+    try {
+      localStorage.setItem('fxmark_theme', theme);
+    } catch {}
+  }, [theme]);
+
+  const isLight = theme === 'light';
 
   const [records, setRecords] = useState<TradeRecord[]>(() => {
     try {
@@ -185,33 +216,16 @@ export default function ForexTracker() {
   const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history' | 'holdings' | 'rewards'>('dashboard');
   
   // Gamification & Dashboard 2 states
-  const [tradingPoints, setTradingPoints] = useState<number>(() => {
+  const [tradingPoints] = useState<number>(() => {
     try {
       const saved = localStorage.getItem('fxmark_trading_points');
       return saved ? parseInt(saved, 10) : 3240;
     } catch { return 3240; }
   });
 
-  const [checkInStreak, setCheckInStreak] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('fxmark_checkin_streak');
-      return saved ? parseInt(saved, 10) : 2; // Default to 2 days checked for nice initial visualization
-    } catch { return 2; }
-  });
-
-  const [lastCheckInDate, setLastCheckInDate] = useState<string>(() => {
-    try {
-      return localStorage.getItem('fxmark_last_checkin_date') || '';
-    } catch { return ''; }
-  });
-
   useEffect(() => {
     localStorage.setItem('fxmark_trading_points', tradingPoints.toString());
   }, [tradingPoints]);
-
-  useEffect(() => {
-    localStorage.setItem('fxmark_checkin_streak', checkInStreak.toString());
-  }, [checkInStreak]);
 
   // Lot Size Calculator states
   const [showCalcModal, setShowCalcModal] = useState(false);
@@ -252,83 +266,6 @@ export default function ForexTracker() {
     setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
   };
 
-  const handleCheckIn = () => {
-    const todayStr = new Date().toISOString().substring(0, 10);
-    
-    // Calculate yesterday's date string in local time
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().substring(0, 10);
-
-    if (lastCheckInDate === todayStr) {
-      triggerToast("Already checked in today! Come back tomorrow.");
-      return;
-    }
-
-    let newStreak = 1;
-    if (lastCheckInDate === yesterdayStr || lastCheckInDate === '') {
-      newStreak = checkInStreak >= 7 ? 1 : checkInStreak + 1;
-    } else {
-      newStreak = 1;
-    }
-
-    const isMilestone = newStreak === 3 || newStreak === 7;
-    const pointsEarned = isMilestone ? 40 : 20;
-
-    setTradingPoints(prev => prev + pointsEarned);
-    setCheckInStreak(newStreak);
-    setLastCheckInDate(todayStr);
-    localStorage.setItem('fxmark_last_checkin_date', todayStr);
-
-    triggerToast(`Check-in Day ${newStreak}! +${pointsEarned} PTS awarded.`);
-  };
-
-  const handleRedeemRebate = async () => {
-    if (tradingPoints < 1000) {
-      triggerToast("Minimum redemption is 1,000 Points.");
-      return;
-    }
-
-    if (!window.confirm("Redeem 1,000 Points for a $10.00 cash deposit? This will credit your account balance directly.")) {
-      return;
-    }
-
-    const newId = generateUUID();
-    const formattedDate = new Date().toISOString().replace('T', ' ').substring(0, 19);
-    const newRecord: TradeRecord = {
-      id: newId,
-      symbol: 'DEPOSIT',
-      type: 'deposit',
-      profit: 10.00,
-      date: formattedDate
-    };
-
-    setTradingPoints(prev => prev - 1000);
-    setRecords(prev => [...prev, newRecord]);
-    
-    triggerToast("Success! $10.00 Cash Rebate deposited.");
-
-    setSyncStatus('syncing');
-    try {
-      const { error } = await supabase.from('trades').insert({
-        id: newRecord.id,
-        symbol: newRecord.symbol,
-        type: newRecord.type,
-        lots: null,
-        open_price: null,
-        close_price: null,
-        profit: newRecord.profit,
-        date: newRecord.date
-      });
-
-      if (error) throw error;
-      setSyncStatus('success');
-      setTimeout(() => setSyncStatus('idle'), 2000);
-    } catch (err) {
-      console.error("Gagal menyimpan ke cloud:", err);
-      setSyncStatus('error');
-    }
-  };
 
   const handleApplyLotSize = () => {
     setLots(calcResultLots);
@@ -627,6 +564,48 @@ export default function ForexTracker() {
     };
   }, [records]);
 
+  const weeklyStats = useMemo(() => {
+    const now = new Date();
+    const currentDay = now.getDay();
+    const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
+    
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - distanceToMonday);
+    monday.setHours(0, 0, 0, 0);
+    
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    
+    const days = [
+      { key: 'Mon', label: 'Mon', dayIndex: 1 },
+      { key: 'Tue', label: 'Tue', dayIndex: 2 },
+      { key: 'Wed', label: 'Wed', dayIndex: 3 },
+      { key: 'Thu', label: 'Thu', dayIndex: 4 },
+      { key: 'Fri', label: 'Fri', dayIndex: 5 },
+      { key: 'Sat', label: 'Sat', dayIndex: 6 },
+      { key: 'Sun', label: 'Sun', dayIndex: 0 },
+    ];
+    
+    return days.map(d => {
+      const dayTrades = records.filter(r => {
+        if (r.type === 'deposit') return false;
+        const tDate = new Date(r.date.replace(' ', 'T'));
+        if (isNaN(tDate.getTime())) return false;
+        if (tDate < monday || tDate > sunday) return false;
+        return tDate.getDay() === d.dayIndex;
+      });
+      const profit = dayTrades.reduce((sum, r) => sum + r.profit, 0);
+      const hasTraded = dayTrades.length > 0;
+      return { ...d, profit, hasTraded };
+    });
+  }, [records]);
+
+  const weeklySummary = useMemo(() => {
+    const netProfit = weeklyStats.reduce((sum, d) => sum + d.profit, 0);
+    return { netProfit };
+  }, [weeklyStats]);
+
   const handleDuplicate = (r: TradeRecord) => {
     setType(r.type);
     if(r.symbol !== 'DEPOSIT') setSymbol(r.symbol);
@@ -707,15 +686,15 @@ export default function ForexTracker() {
   }, [calMonth, calYear, stats.calendarData]);
 
   return (
-    <div className="h-screen overflow-y-auto bg-[#0A0A0A] text-white font-sans overflow-x-hidden pb-24">
+    <div className={`h-screen overflow-y-auto ${isLight ? 'bg-[#F3F4F6] text-zinc-900' : 'bg-[#0A0A0A] text-white'} font-sans overflow-x-hidden pb-24 transition-colors duration-300`}>
       {/* Top Navigation */}
-      <header className="sticky top-0 z-40 bg-[#0A0A0A]/90 backdrop-blur-md border-b border-white/10 px-4 py-3 flex justify-between items-center">
+      <header className={`sticky top-0 z-40 ${isLight ? 'bg-white/80 border-b border-zinc-200/80 text-zinc-900' : 'bg-[#0A0A0A]/90 border-b border-white/10 text-white'} backdrop-blur-md px-4 py-3 flex justify-between items-center transition-colors duration-300`}>
          <div className="flex items-center gap-3">
             <div className="h-6 w-24 flex items-center justify-start">
                <img src="/logo.png" alt="FXMARK Logo" className="h-full object-contain" />
             </div>
-            <div className="flex flex-col border-l border-white/10 pl-3">
-               <h1 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Portfolio Analyzer</h1>
+            <div className="flex flex-col border-l border-zinc-200/80 dark:border-white/10 pl-3">
+               <h1 className={`text-[11px] font-black uppercase tracking-[0.2em] ${isLight ? 'text-zinc-500' : 'text-zinc-400'}`}>Portfolio Analyzer</h1>
                <div className="flex items-center gap-2">
                   <p className="text-sm font-black tracking-tight">AUM: ${stats.balance.toLocaleString()}</p>
                   <div className="flex items-center gap-1" title={syncStatus === 'syncing' ? 'Syncing with Supabase...' : syncStatus === 'success' ? 'Cloud Synced' : syncStatus === 'error' ? 'Cloud Sync Failed' : 'Cloud Connected'}>
@@ -729,30 +708,43 @@ export default function ForexTracker() {
                         <Lucide.CloudOff size={12} className="text-red-500 animate-bounce" />
                      )}
                      {syncStatus === 'idle' && (
-                        <Lucide.Cloud size={12} className="text-zinc-600" />
+                        <Lucide.Cloud size={12} className={isLight ? 'text-zinc-400' : 'text-zinc-600'} />
                      )}
                   </div>
                </div>
             </div>
          </div>
-         <button onClick={() => { setPinAction('add'); setShowAddModal(true); }} className="w-8 h-8 bg-emerald-500 text-black rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <Lucide.Plus size={18} strokeWidth={3} />
-         </button>
+         <div className="flex items-center gap-2">
+            <button 
+               onClick={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')} 
+               className={`w-8 h-8 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                  isLight 
+                     ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-700 border border-zinc-200/80 shadow-sm' 
+                     : 'bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-white/5 shadow-inner'
+               }`}
+               title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            >
+               {isLight ? <Lucide.Moon size={15} strokeWidth={2.5} /> : <Lucide.Sun size={15} strokeWidth={2.5} />}
+            </button>
+            <button onClick={() => { setPinAction('add'); setShowAddModal(true); }} className="w-8 h-8 bg-emerald-500 text-black rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20 cursor-pointer">
+               <Lucide.Plus size={18} strokeWidth={3} />
+            </button>
+         </div>
       </header>
 
       <main className="p-4 space-y-6">
         {activeView === 'dashboard' && (
           <div className="space-y-6 animate-in fade-in">
             {/* Core Metrics Dashboard */}
-            <section className="bg-zinc-900/50 border border-white/5 rounded-3xl p-5 space-y-6">
+            <section className={`transition-all duration-300 rounded-3xl p-5 space-y-6 ${isLight ? 'bg-white border border-zinc-200/80 shadow-sm text-zinc-800' : 'bg-zinc-900/50 border border-white/5 text-white'}`}>
                {/* Equity Dynamic */}
-               <div className="border-b border-white/5 pb-4">
+               <div className={`border-b ${isLight ? 'border-zinc-100' : 'border-white/5'} pb-4`}>
                   <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2">Equity Dynamics</p>
                   <div className="flex items-baseline gap-2">
-                     <h2 className="text-4xl font-black tracking-tighter">${stats.totalProfit.toLocaleString()}</h2>
+                     <h2 className={`text-4xl font-black tracking-tighter ${isLight ? 'text-zinc-900' : 'text-white'}`}>${stats.totalProfit.toLocaleString()}</h2>
                      <span className="text-[10px] font-black text-emerald-500">+{((stats.totalProfit/1000)*100).toFixed(1)}% ROI</span>
                   </div>
-                  <p className="text-[9px] font-bold text-zinc-600 uppercase mt-1">Cumulative Net P&L</p>
+                  <p className={`text-[9px] font-bold ${isLight ? 'text-zinc-400' : 'text-zinc-600'} uppercase mt-1`}>Cumulative Net P&L</p>
                </div>
                
                {/* Risk & Win Rate Grid */}
@@ -760,12 +752,12 @@ export default function ForexTracker() {
                   <div>
                      <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Win Rate</p>
                      <h3 className="text-2xl font-black text-emerald-500">{stats.wRate.toFixed(1)}%</h3>
-                     <p className="text-[9px] font-bold text-zinc-600 uppercase mt-1">{stats.tradeCount} Trades</p>
+                     <p className={`text-[9px] font-bold ${isLight ? 'text-zinc-400' : 'text-zinc-600'} uppercase mt-1`}>{stats.tradeCount} Trades</p>
                   </div>
                   <div>
                      <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-1">Risk / DD</p>
                      <h3 className="text-2xl font-black text-red-500">{stats.maxDrawdown}%</h3>
-                     <p className="text-[9px] font-bold text-zinc-600 uppercase mt-1">Conservative</p>
+                     <p className={`text-[9px] font-bold ${isLight ? 'text-zinc-400' : 'text-zinc-600'} uppercase mt-1`}>Conservative</p>
                   </div>
                </div>
             </section>
@@ -773,7 +765,7 @@ export default function ForexTracker() {
             {/* Equity Curve */}
             <section className="space-y-3">
                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Growth Timeline</h3>
-               <div className="bg-zinc-900/30 rounded-3xl border border-white/5 p-4 h-48">
+               <div className={`rounded-3xl p-4 h-48 transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm' : 'bg-zinc-900/30 border border-white/5'}`}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={stats.eData}>
                       <defs>
@@ -783,7 +775,7 @@ export default function ForexTracker() {
                         </linearGradient>
                       </defs>
                       <Area type="monotone" dataKey="balance" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#curveColor)" />
-                      <Tooltip contentStyle={{ backgroundColor: '#111', border: 'none', borderRadius: '8px', fontSize: '10px' }} itemStyle={{ color: '#10b981' }} formatter={(v: any) => [`$${v}`, 'Balance']}/>
+                      <Tooltip contentStyle={isLight ? { backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '10px', color: '#1f2937' } : { backgroundColor: '#111', border: 'none', borderRadius: '8px', fontSize: '10px' }} itemStyle={{ color: '#10b981' }} formatter={(v: any) => [`$${v}`, 'Balance']}/>
                     </AreaChart>
                   </ResponsiveContainer>
                </div>
@@ -795,13 +787,13 @@ export default function ForexTracker() {
                <div className="w-full overflow-x-auto custom-scrollbar pb-2">
                   <div className="flex flex-col gap-3 w-full">
                      {Object.keys(stats.matrix).sort().reverse().map(year => (
-                        <div key={year} className="flex gap-2 items-center bg-zinc-900/40 border border-white/5 rounded-3xl p-3 w-full">
-                           <p className="text-[10px] font-black text-zinc-400 pr-2 border-r border-white/10 shrink-0">{year}</p>
+                        <div key={year} className={`flex gap-2 items-center rounded-3xl p-3 w-full transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm text-zinc-800' : 'bg-zinc-900/40 border border-white/5 text-white'}`}>
+                           <p className={`text-[10px] font-black pr-2 border-r shrink-0 ${isLight ? 'text-zinc-400 border-zinc-150' : 'text-zinc-400 border-white/10'}`}>{year}</p>
                            <div className="flex gap-2 flex-1 justify-between min-w-0 overflow-x-auto custom-scrollbar">
                               {stats.matrix[year].map((val, i) => (
-                                 <div key={i} className="flex flex-col items-center justify-center p-3 bg-black/40 rounded-2xl border border-white/5 min-w-[56px] flex-1 shrink-0 md:shrink">
-                                    <span className="text-[8px] font-bold text-zinc-500 uppercase mb-1">{MONTHS[i]}</span>
-                                    <span className={`text-[11px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : 'text-zinc-600'}`}>
+                                 <div key={i} className={`flex flex-col items-center justify-center p-3 rounded-2xl border min-w-[56px] flex-1 shrink-0 md:shrink transition-all duration-300 ${isLight ? 'bg-zinc-50 border-zinc-100/80 text-zinc-800' : 'bg-black/40 border-white/5 text-white'}`}>
+                                    <span className={`text-[8px] font-bold uppercase mb-1 ${isLight ? 'text-zinc-400' : 'text-zinc-500'}`}>{MONTHS[i]}</span>
+                                    <span className={`text-[11px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : (isLight ? 'text-zinc-300' : 'text-zinc-600')}`}>
                                        {val === 0 ? '-' : `${val > 0 ? '+' : ''}${((val/1000)*100).toFixed(1)}%`}
                                     </span>
                                  </div>
@@ -821,22 +813,22 @@ export default function ForexTracker() {
             <div className="flex justify-between items-center pl-2 mb-4 shrink-0">
                <div className="flex items-center gap-3">
                   <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Calendar Grid</h3>
-                  <div className="flex bg-zinc-900 border border-white/5 rounded-lg p-0.5 text-[8px] font-black tracking-wider uppercase">
+                  <div className={`flex border rounded-lg p-0.5 text-[8px] font-black tracking-wider uppercase transition-all duration-300 ${isLight ? 'bg-zinc-200 border-zinc-300' : 'bg-zinc-900 border-white/5'}`}>
                      <button 
                         onClick={() => setCalendarStyle('outline')}
-                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${calendarStyle === 'outline' ? 'bg-emerald-500 text-black font-black' : 'text-zinc-500 hover:text-white'}`}
+                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${calendarStyle === 'outline' ? (isLight ? 'bg-white text-zinc-900 shadow-sm font-black' : 'bg-emerald-500 text-black font-black') : (isLight ? 'text-zinc-500 hover:text-zinc-800' : 'text-zinc-500 hover:text-white')}`}
                      >
                         Outlines
                      </button>
                      <button 
                         onClick={() => setCalendarStyle('original')}
-                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${calendarStyle === 'original' ? 'bg-zinc-800 text-white' : 'text-zinc-500 hover:text-white'}`}
+                        className={`px-2 py-0.5 rounded transition-all cursor-pointer ${calendarStyle === 'original' ? (isLight ? 'bg-white text-zinc-900 shadow-sm' : 'bg-zinc-800 text-white') : (isLight ? 'text-zinc-500 hover:text-zinc-800' : 'text-zinc-500 hover:text-white')}`}
                      >
                         Original
                      </button>
                   </div>
                </div>
-               <div className="flex gap-2 items-center bg-white/5 rounded-lg p-1">
+               <div className={`flex gap-2 items-center rounded-lg p-1 transition-all duration-300 ${isLight ? 'bg-zinc-200 border border-zinc-300/80 shadow-sm' : 'bg-white/5'}`}>
                   <button onClick={() => {let m=calMonth-1; let y=calYear; if(m<0){m=11;y--;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronLeft size={14}/></button>
                   <span className="text-[9px] font-black">{MONTHS[calMonth]} {calYear}</span>
                   <button onClick={() => {let m=calMonth+1; let y=calYear; if(m>11){m=0;y++;} setCalMonth(m);setCalYear(y);}} className="p-1"><Lucide.ChevronRight size={14}/></button>
@@ -844,19 +836,37 @@ export default function ForexTracker() {
             </div>
             
             <div className="w-full flex-1 flex flex-col min-h-0">
-               <div className="w-full flex-1 grid grid-rows-[auto_1fr_1fr_1fr_1fr_1fr_1fr] grid-cols-7 gap-px bg-white/10 rounded-2xl overflow-hidden border border-white/5">
+               <div className={`w-full flex-1 grid grid-rows-[auto_1fr_1fr_1fr_1fr_1fr_1fr] grid-cols-7 gap-px rounded-2xl overflow-hidden border transition-all duration-300 ${isLight ? 'bg-zinc-200 border-zinc-200 shadow-sm' : 'bg-white/10 border-white/5'}`}>
                   {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-                    <div key={day} className="bg-zinc-900 py-2 text-center text-[8px] font-black text-zinc-600">{day}</div>
+                    <div key={day} className={`py-2 text-center text-[8px] font-black transition-colors duration-300 ${isLight ? 'bg-zinc-100 text-zinc-400' : 'bg-zinc-900 text-zinc-600'}`}>{day}</div>
                   ))}
                   {calDays.map((d, i) => {
-                    let cellStyle = "border border-transparent bg-[#0A0A0A]";
-                    if (d && d.data && calendarStyle === 'outline') {
-                      if (d.data.profit > 0) {
-                        cellStyle = "border border-emerald-500/40 bg-emerald-500/[0.04]";
-                      } else if (d.data.profit < 0) {
-                        cellStyle = "border border-red-500/40 bg-red-500/[0.04]";
+                    let cellStyle = isLight ? "border border-transparent bg-white text-zinc-800" : "border border-transparent bg-[#0A0A0A] text-white";
+                    if (d && d.data) {
+                      if (calendarStyle === 'outline') {
+                        if (d.data.profit > 0) {
+                          cellStyle = isLight 
+                            ? "border border-emerald-400 bg-emerald-50/[0.3] text-emerald-600" 
+                            : "border border-emerald-500/40 bg-emerald-500/[0.04] text-emerald-400";
+                        } else if (d.data.profit < 0) {
+                          cellStyle = isLight 
+                            ? "border border-red-400 bg-red-50/[0.3] text-red-600" 
+                            : "border border-red-500/40 bg-red-500/[0.04] text-red-400";
+                        } else {
+                          cellStyle = isLight 
+                            ? "border border-zinc-200 bg-zinc-50/50 text-zinc-400" 
+                            : "border border-zinc-700/40 bg-zinc-900/10 text-zinc-500";
+                        }
                       } else {
-                        cellStyle = "border border-zinc-700/40 bg-zinc-900/10";
+                        if (d.data.profit > 0) {
+                          cellStyle = isLight 
+                            ? "bg-emerald-100/70 text-emerald-800 border border-emerald-100" 
+                            : "bg-emerald-500/20 text-emerald-400";
+                        } else if (d.data.profit < 0) {
+                          cellStyle = isLight 
+                            ? "bg-red-100/70 text-red-800 border border-red-100" 
+                            : "bg-red-500/20 text-red-400";
+                        }
                       }
                     }
                     return (
@@ -901,10 +911,10 @@ export default function ForexTracker() {
                <div className="flex justify-between items-center pl-2 pr-1">
                   <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Execution Log</h3>
                   <div className="flex items-center gap-2">
-                     <button onClick={handleExport} className="flex items-center gap-1 px-2 py-1 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg text-[9px] font-black uppercase text-zinc-400 hover:text-white transition-all cursor-pointer">
+                     <button onClick={handleExport} className={`flex items-center gap-1 px-2 py-1 border rounded-lg text-[9px] font-black uppercase transition-all cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-500 hover:text-zinc-800 shadow-sm' : 'bg-zinc-900 hover:bg-zinc-800 border-white/5 text-zinc-400 hover:text-white'}`}>
                         <Lucide.Download size={10} /> Export
                      </button>
-                     <label className="flex items-center gap-1 px-2 py-1 bg-zinc-900 hover:bg-zinc-800 border border-white/5 rounded-lg text-[9px] font-black uppercase text-zinc-400 hover:text-white cursor-pointer transition-all">
+                     <label className={`flex items-center gap-1 px-2 py-1 border rounded-lg text-[9px] font-black uppercase cursor-pointer transition-all ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-500 hover:text-zinc-800 shadow-sm' : 'bg-zinc-900 hover:bg-zinc-800 border-white/5 text-zinc-400 hover:text-white'}`}>
                         <Lucide.Upload size={10} /> Import
                         <input type="file" accept=".json" onChange={handleImport} className="hidden" />
                      </label>
@@ -912,16 +922,16 @@ export default function ForexTracker() {
                </div>
                <div className="space-y-2">
                   {records.filter(r => r.type !== 'deposit').reverse().map((r, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 bg-zinc-900/30 rounded-2xl border border-white/5">
+                    <div key={i} className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${isLight ? 'bg-white border-zinc-200/80 shadow-sm text-zinc-800' : 'bg-zinc-900/30 border border-white/5 text-white'}`}>
                        <div className="flex flex-col">
                           <span className="text-[9px] font-black text-zinc-500 mb-1">{formatTradeDate(r.date)}</span>
                           <div className="flex items-center gap-2">
                              <span className={`w-1.5 h-1.5 rounded-full ${r.type === 'buy' ? 'bg-emerald-500' : 'bg-red-500'}`}/>
                              <span className="text-xs font-black uppercase">{r.symbol}</span>
-                             <button onClick={() => handleDuplicate(r)} className="ml-2 p-1 bg-white/5 rounded text-zinc-400 hover:text-white transition-colors cursor-pointer" title="Duplicate this trade">
+                             <button onClick={() => handleDuplicate(r)} className={`ml-2 p-1 rounded transition-colors cursor-pointer ${isLight ? 'bg-zinc-100 text-zinc-500 hover:text-zinc-800' : 'bg-white/5 text-zinc-400 hover:text-white'}`} title="Duplicate this trade">
                                 <Lucide.Copy size={12}/>
                              </button>
-                             <button onClick={() => handleDelete(r.id)} className="p-1 bg-white/5 rounded text-red-400 hover:text-red-600 transition-colors cursor-pointer" title="Delete this trade">
+                             <button onClick={() => handleDelete(r.id)} className={`p-1 rounded transition-colors cursor-pointer ${isLight ? 'bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700' : 'bg-white/5 text-red-400 hover:text-red-600'}`} title="Delete this trade">
                                 <Lucide.Trash2 size={12}/>
                              </button>
                           </div>
@@ -930,7 +940,7 @@ export default function ForexTracker() {
                           <p className={`text-sm font-black ${r.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                              {r.profit >= 0 ? '+' : ''}${r.profit.toFixed(2)}
                           </p>
-                          <p className="text-[9px] font-bold text-zinc-600">{r.lots} L</p>
+                          <p className={`text-[9px] font-bold ${isLight ? 'text-zinc-400' : 'text-zinc-600'}`}>{r.lots} L</p>
                        </div>
                     </div>
                   ))}
@@ -941,7 +951,7 @@ export default function ForexTracker() {
 
         {activeView === 'rewards' && (
           <div className="space-y-6 animate-in fade-in duration-300">
-            {/* available balance card (premium titan titanium layout) */}
+            {/* premium titanium layout */}
             <section className="relative overflow-hidden bg-gradient-to-br from-zinc-900 to-black border border-white/10 rounded-3xl p-6 shadow-2xl">
               {/* glassmorphic reflective sweep */}
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-transparent pointer-events-none" />
@@ -950,199 +960,221 @@ export default function ForexTracker() {
               <div className="absolute -top-16 -right-16 w-36 h-36 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
               <div className="absolute -bottom-16 -left-16 w-36 h-36 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex justify-between items-center mb-6">
                 <div>
-                  <p className="text-[9px] font-black tracking-[0.2em] text-amber-500 uppercase">FXMARK TITANIUM</p>
-                  <p className="text-[8px] font-bold text-zinc-500 uppercase mt-0.5">DISCIPLINE ACCOUNT</p>
+                  <span className="text-[8px] font-black uppercase text-amber-500 tracking-[0.25em]">PRO TRADER HUB</span>
+                  <h4 className="text-sm font-black text-white uppercase mt-0.5 tracking-wider">Consistency Metrics</h4>
                 </div>
-                {/* premium microchip visual */}
-                <div className="w-9 h-7 rounded-md bg-gradient-to-br from-amber-400 to-amber-600 border border-amber-300/30 p-1 flex flex-col justify-between shadow-inner">
-                  <div className="flex justify-between">
-                    <div className="w-1.5 h-1.5 bg-black/20 rounded-sm" />
-                    <div className="w-1.5 h-1.5 bg-black/20 rounded-sm" />
-                  </div>
-                  <div className="w-full h-0.5 bg-black/20 rounded-sm" />
-                  <div className="flex justify-between">
-                    <div className="w-1.5 h-1.5 bg-black/20 rounded-sm" />
-                    <div className="w-1.5 h-1.5 bg-black/20 rounded-sm" />
-                  </div>
+                {/* glowing dollar badge instead of gold chip */}
+                <div className="p-2.5 bg-emerald-500/20 border border-emerald-500/30 rounded-2xl text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.25)] flex items-center justify-center animate-pulse">
+                  <Lucide.DollarSign size={16} strokeWidth={2.5} />
                 </div>
               </div>
 
               <div className="space-y-1">
                 <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest">Available Balance</p>
                 <div className="flex items-baseline gap-2">
-                  <h2 className="text-3xl font-black tracking-tighter">${stats.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+                  <h2 className="text-3xl font-black tracking-tighter text-white">${stats.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
                   <span className="text-[10px] font-black text-emerald-500">
                     +{((stats.totalProfit / 1000) * 100).toFixed(1)}% ROI
                   </span>
                 </div>
               </div>
 
-              <div className="flex justify-between items-end mt-8 border-t border-white/5 pt-4">
-                <div>
-                  <p className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">Account Tier</p>
-                  <p className="text-[10px] font-black text-amber-500 flex items-center gap-1 mt-0.5">
-                    <Lucide.Trophy size={11} className="text-amber-500 animate-bounce" /> 
-                    {tradingPoints >= 5000 ? 'Forex Legend' : tradingPoints >= 3000 ? 'Master Disciplined' : tradingPoints >= 1000 ? 'Consistent Trader' : 'Novice Trader'}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[8px] font-black text-zinc-500 uppercase tracking-wider">MEMBER SINCE</p>
-                  <p className="text-[9px] font-black text-zinc-300 mt-0.5">MAY 2026</p>
-                </div>
-              </div>
-            </section>
-
-            {/* daily discipline tracker check-in system */}
-            <section className="bg-zinc-900/50 border border-white/5 rounded-3xl p-5 space-y-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-zinc-200">Discipline Check-In</h3>
-                  <p className="text-[9px] font-bold text-zinc-500 mt-0.5">Claim trading points daily for consistency</p>
-                </div>
-                <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full text-emerald-400">
-                  <Lucide.Flame size={12} className="animate-pulse fill-emerald-400" />
-                  <span className="text-[10px] font-black tracking-tight">{checkInStreak} Day Streak</span>
-                </div>
-              </div>
-
-              {/* paperclip style checklist grid */}
-              <div className="grid grid-cols-7 gap-1.5">
-                {[1, 2, 3, 4, 5, 6, 7].map((day) => {
-                  const todayStr = new Date().toISOString().substring(0, 10);
-                  const isCheckedToday = lastCheckInDate === todayStr;
-                  const isClaimed = day < checkInStreak || (day === checkInStreak && isCheckedToday);
-                  
-                  let isActive = false;
-                  if (!isCheckedToday) {
-                    const activeIndex = checkInStreak >= 7 ? 1 : checkInStreak + 1;
-                    isActive = day === activeIndex;
-                  }
-                  
-                  const isMilestone = day === 3 || day === 7;
-                  
-                  return (
-                    <button
-                      key={day}
-                      onClick={isActive ? handleCheckIn : undefined}
-                      disabled={!isActive}
-                      className={`relative flex flex-col items-center justify-between p-2 rounded-2xl border transition-all duration-300 min-h-[92px] ${
-                        isClaimed
-                          ? 'bg-emerald-500/[0.08] border-emerald-500/40 text-emerald-400'
-                          : isActive
-                          ? 'bg-zinc-900 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.15)] animate-pulse cursor-pointer'
-                          : 'bg-zinc-950/40 border-white/5 text-zinc-600'
-                      }`}
-                    >
-                      <span className="text-[8px] font-black tracking-widest uppercase">D{day}</span>
-                      
-                      <div className="my-1.5">
-                        {isClaimed ? (
-                          <Lucide.CheckCircle size={18} strokeWidth={2.5} className="text-emerald-500 fill-emerald-500/10" />
-                        ) : isActive ? (
-                          <div className="relative">
-                            <Lucide.Gift size={18} strokeWidth={2.5} className="text-emerald-400 fill-emerald-400/10 animate-bounce" />
-                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-ping" />
-                          </div>
-                        ) : isMilestone ? (
-                          <Lucide.Trophy size={16} className="text-zinc-600" />
-                        ) : (
-                          <Lucide.Lock size={14} className="text-zinc-700" />
-                        )}
-                      </div>
-
-                      <span className={`text-[8px] font-black ${isClaimed ? 'text-emerald-500' : isActive ? 'text-emerald-400' : 'text-zinc-500'}`}>
-                        +{isMilestone ? '40' : '20'}
-                      </span>
-
-                      {isMilestone && (
-                        <span className={`absolute -top-1 -right-1 px-1 rounded bg-gradient-to-r ${isClaimed ? 'from-emerald-500 to-teal-500' : isActive ? 'from-emerald-400 to-teal-400' : 'from-zinc-800 to-zinc-700'} text-[6px] font-black text-black scale-90`}>
-                          GIFT
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* claim button */}
-              {!(lastCheckInDate === new Date().toISOString().substring(0, 10)) ? (
-                <button
-                  onClick={handleCheckIn}
-                  className="w-full bg-emerald-500 text-black font-black uppercase tracking-widest py-3.5 rounded-2xl text-[10px] transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Lucide.Check size={14} strokeWidth={2.5} />
-                  Claim Today's Reward (+{ (checkInStreak >= 7 ? 1 : checkInStreak + 1) === 3 || (checkInStreak >= 7 ? 1 : checkInStreak + 1) === 7 ? '40' : '20' } PTS)
-                </button>
-              ) : (
-                <div className="w-full bg-zinc-900 border border-white/5 text-zinc-500 font-black uppercase tracking-widest py-3.5 rounded-2xl text-[9px] text-center flex items-center justify-center gap-2">
-                  <Lucide.Check size={14} strokeWidth={3} className="text-emerald-500" />
-                  Checked In for Today • Come Back Tomorrow
-                </div>
-              )}
-            </section>
-
-            {/* Twin cards grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Saving Target / Account Goal Card */}
-              <div className="bg-gradient-to-br from-amber-500/[0.06] to-orange-600/[0.06] border border-orange-500/20 rounded-3xl p-4 flex flex-col justify-between h-[155px]">
-                <div className="flex justify-between items-start">
-                  <div className="p-2 bg-orange-500/10 rounded-xl border border-orange-500/20 text-orange-400">
-                    <Lucide.Target size={16} strokeWidth={2.5} />
+              {/* sleek horizontal infographics for win rate & DD */}
+              <div className="mt-6 pt-4 border-t border-white/5 space-y-3">
+                <div className="space-y-1">
+                  <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-zinc-400">
+                    <span>Win Rate</span>
+                    <span className="text-emerald-400 font-bold">{stats.wRate.toFixed(1)}%</span>
                   </div>
-                  <span className="text-[8px] font-black uppercase text-orange-400 tracking-wider">Account Goal</span>
+                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)] transition-all duration-500" 
+                      style={{ width: `${stats.wRate}%` }}
+                    />
+                  </div>
                 </div>
                 
                 <div className="space-y-1">
-                  <p className="text-[9px] font-bold text-zinc-500 uppercase">Target Balance</p>
-                  <h4 className="text-lg font-black tracking-tight text-zinc-100">$10,000.00</h4>
+                  <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-zinc-400">
+                    <span>Max Drawdown</span>
+                    <span className="text-red-400 font-bold">{stats.maxDrawdown.toFixed(1)}% / 20.0% Limit</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.5)] transition-all duration-500" 
+                      style={{ width: `${Math.min(100, (stats.maxDrawdown / 20) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Weekly Stats board resetting every Monday */}
+            <section className={`transition-all duration-300 rounded-3xl p-5 space-y-4 ${isLight ? 'bg-white border border-zinc-200 shadow-sm text-zinc-800' : 'bg-zinc-900/50 border border-white/5 text-white'}`}>
+              <div className="flex justify-between items-center">
+                <div>
+                  <h3 className={`text-xs font-black uppercase tracking-wider ${isLight ? 'text-zinc-800' : 'text-zinc-200'}`}>Weekly Stats</h3>
+                  <p className={`text-[9px] font-bold ${isLight ? 'text-zinc-400' : 'text-zinc-500'} mt-0.5`}>Activity tracker resetting every Monday</p>
+                </div>
+                <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all duration-300 ${weeklySummary.netProfit >= 0 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                  <Lucide.Coins size={12} className="animate-pulse" />
+                  <span className="text-[10px] font-black tracking-tight">Week PnL: {weeklySummary.netProfit >= 0 ? '+' : ''}${weeklySummary.netProfit.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Monday to Sunday Traded Grid */}
+              <div className="grid grid-cols-7 gap-1.5">
+                {weeklyStats.map((day) => (
+                  <div
+                    key={day.key}
+                    className={`relative flex flex-col items-center justify-between p-2 rounded-2xl border transition-all duration-300 min-h-[92px] ${
+                      day.hasTraded
+                        ? day.profit >= 0 
+                          ? isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'bg-emerald-500/[0.08] border-emerald-500/30 text-emerald-400'
+                          : isLight ? 'bg-red-50 border-red-200 text-red-600' : 'bg-red-500/[0.08] border-red-500/30 text-red-400'
+                        : isLight ? 'bg-zinc-50 border-zinc-200/60 text-zinc-400' : 'bg-zinc-950/40 border-white/5 text-zinc-600'
+                    }`}
+                  >
+                    <span className="text-[8px] font-black tracking-widest uppercase">{day.label}</span>
+                    
+                    <div className="my-1.5">
+                      {day.hasTraded ? (
+                        <Lucide.CircleDollarSign size={18} strokeWidth={2.5} className={day.profit >= 0 ? 'text-emerald-500 fill-emerald-500/10' : 'text-red-500 fill-red-500/10'} />
+                      ) : (
+                        <div className={`w-[18px] h-[18px] rounded-full border-2 border-dashed ${isLight ? 'border-zinc-300' : 'border-zinc-700'} flex items-center justify-center`}>
+                          <span className={`text-[8px] font-bold ${isLight ? 'text-zinc-300' : 'text-zinc-700'}`}>$</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <span className={`text-[8px] font-black ${day.hasTraded ? (day.profit >= 0 ? 'text-emerald-500' : 'text-red-500') : 'text-zinc-500'}`}>
+                      {day.hasTraded ? `${day.profit >= 0 ? '+' : ''}$${day.profit.toFixed(0)}` : 'No Trade'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Weekly motivational banner */}
+              <div className={`w-full py-3 rounded-2xl text-[9px] font-black uppercase tracking-widest text-center border transition-all duration-300 ${
+                weeklySummary.netProfit >= 0 
+                  ? isLight ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-emerald-500/[0.03] border-emerald-500/10 text-emerald-400' 
+                  : isLight ? 'bg-red-50 border-red-100 text-red-700' : 'bg-red-500/[0.03] border-red-500/10 text-red-400'
+              }`}>
+                {weeklySummary.netProfit >= 0 
+                  ? `🔥 Excellent trading week! Net positive of +$${weeklySummary.netProfit.toFixed(2)}` 
+                  : `⚠️ Remaining disciplined. Weekly drawdown stands at -$${Math.abs(weeklySummary.netProfit).toFixed(2)}`
+                }
+              </div>
+            </section>
+
+            {/* Twin Bagger Metrics cards grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Bagger Time Card (Orange) */}
+              <div className={`bg-gradient-to-br from-amber-500/[0.06] to-orange-600/[0.06] border rounded-3xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${isLight ? 'border-orange-200' : 'border-orange-500/20'}`}>
+                <div className="flex justify-between items-start">
+                  <div className="p-2 bg-orange-500/10 rounded-xl border border-orange-500/20 text-orange-400">
+                    <Lucide.TrendingUp size={16} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[8px] font-black uppercase text-orange-400 tracking-wider">Bagger Time</span>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-[9px] font-bold text-zinc-500 uppercase">Current Level</p>
+                  <h4 className={`text-lg font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>{(stats.balance / 1000).toFixed(2)}x Bagger</h4>
                 </div>
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-[8px] font-bold text-zinc-400 uppercase">
-                    <span>{Math.min(100, Math.max(0, (stats.balance / 10000) * 100)).toFixed(1)}% Completed</span>
-                    <span>Remaining: ${Math.max(0, 10000 - stats.balance).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    <span>{(((stats.balance - (Math.floor(stats.balance / 1000) * 1000)) / 1000) * 100).toFixed(1)}% to Next</span>
+                    <span>Next: ${(Math.floor(stats.balance / 1000) * 1000 + 1000).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                   </div>
                   <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)]" 
-                      style={{ width: `${Math.min(100, (stats.balance / 10000) * 100)}%` }}
+                      className="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)] animate-pulse" 
+                      style={{ width: `${(((stats.balance - (Math.floor(stats.balance / 1000) * 1000)) / 1000) * 100)}%` }}
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Points & Rebate card */}
-              <div className="bg-gradient-to-br from-emerald-500/[0.06] to-teal-600/[0.06] border border-emerald-500/20 rounded-3xl p-4 flex flex-col justify-between h-[155px]">
+              {/* Approx Bagger Time Card (Mint) */}
+              <div className={`bg-gradient-to-br from-emerald-500/[0.06] to-teal-600/[0.06] border rounded-3xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${isLight ? 'border-emerald-200' : 'border-emerald-500/20'}`}>
                 <div className="flex justify-between items-start">
                   <div className="p-2 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-400">
-                    <Lucide.Coins size={16} strokeWidth={2.5} />
+                    <Lucide.Hourglass size={16} strokeWidth={2.5} />
                   </div>
-                  <span className="text-[8px] font-black uppercase text-emerald-400 tracking-wider">Point Rebates</span>
+                  <span className="text-[8px] font-black uppercase text-emerald-400 tracking-wider">Approx Bagger Time</span>
                 </div>
                 
                 <div className="space-y-1">
-                  <p className="text-[9px] font-bold text-zinc-500 uppercase">Current Points</p>
-                  <div className="flex items-baseline gap-1.5">
-                    <h4 className="text-lg font-black tracking-tight text-zinc-100">{tradingPoints} <span className="text-[9px] font-bold text-emerald-500">PTS</span></h4>
-                  </div>
-                  <p className="text-[9px] font-bold text-zinc-400 uppercase mt-0.5">Value: ${(tradingPoints * 0.01).toFixed(2)} USD</p>
+                  <p className="text-[9px] font-bold text-zinc-500 uppercase">Avg Profit / Trade</p>
+                  <h4 className={`text-lg font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>${(stats.tradeCount > 0 ? stats.totalProfit / stats.tradeCount : 10).toFixed(2)}</h4>
                 </div>
 
-                <button
-                  onClick={handleRedeemRebate}
-                  disabled={tradingPoints < 1000}
-                  className={`w-full text-center py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${
-                    tradingPoints >= 1000
-                      ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/15 cursor-pointer hover:scale-[1.02] active:scale-[0.98]'
-                      : 'bg-zinc-800 border border-white/5 text-zinc-500'
-                  }`}
-                >
-                  {tradingPoints >= 1000 ? 'Redeem $10 Rebate' : 'Min 1,000 PTS'}
-                </button>
+                <div className="space-y-1.5">
+                  <div className="text-[8px] font-bold text-zinc-400 uppercase flex justify-between">
+                    <span>Est. Trades to Next Level</span>
+                    <span className="text-emerald-500 font-black">
+                      { (stats.tradeCount > 0 ? stats.totalProfit / stats.tradeCount : 10) > 0 
+                        ? `${Math.ceil(((Math.floor(stats.balance / 1000) * 1000 + 1000) - stats.balance) / (stats.tradeCount > 0 ? stats.totalProfit / stats.tradeCount : 10))} Trades`
+                        : 'N/A'
+                      }
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" 
+                      style={{ width: `${Math.min(100, Math.max(0, 100 - (((Math.floor(stats.balance / 1000) * 1000 + 1000) - stats.balance) / 1000) * 100))}%` }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Growth Timeline duplicated directly in Rewards Hub */}
+            <section className="space-y-3">
+              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Growth Timeline</h3>
+              <div className={`rounded-3xl p-4 h-48 transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm' : 'bg-zinc-900/30 border border-white/5'}`}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={stats.eData}>
+                    <defs>
+                      <linearGradient id="rewardsCurveColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <Area type="monotone" dataKey="balance" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#rewardsCurveColor)" />
+                    <Tooltip contentStyle={isLight ? { backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '10px', color: '#1f2937' } : { backgroundColor: '#111', border: 'none', borderRadius: '8px', fontSize: '10px' }} itemStyle={{ color: '#10b981' }} formatter={(v: any) => [`$${v}`, 'Balance']}/>
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </section>
+
+            {/* Monthly Returns duplicated directly in Rewards Hub */}
+            <section className="space-y-3">
+              <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Monthly Returns</h3>
+              <div className="w-full overflow-x-auto custom-scrollbar pb-2">
+                <div className="flex flex-col gap-3 w-full">
+                  {Object.keys(stats.matrix).sort().reverse().map(year => (
+                    <div key={year} className={`flex gap-2 items-center rounded-3xl p-3 w-full transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm text-zinc-800' : 'bg-zinc-900/40 border border-white/5 text-white'}`}>
+                      <p className={`text-[10px] font-black pr-2 border-r shrink-0 ${isLight ? 'text-zinc-400 border-zinc-150' : 'text-zinc-400 border-white/10'}`}>{year}</p>
+                      <div className="flex gap-2 flex-1 justify-between min-w-0 overflow-x-auto custom-scrollbar">
+                        {stats.matrix[year].map((val, i) => (
+                          <div key={i} className={`flex flex-col items-center justify-center p-3 rounded-2xl border min-w-[56px] flex-1 shrink-0 md:shrink transition-all duration-300 ${isLight ? 'bg-zinc-50 border-zinc-100/80 text-zinc-800' : 'bg-black/40 border-white/5 text-white'}`}>
+                            <span className={`text-[8px] font-bold uppercase mb-1 ${isLight ? 'text-zinc-400' : 'text-zinc-500'}`}>{MONTHS[i]}</span>
+                            <span className={`text-[11px] font-black ${val > 0 ? 'text-emerald-500' : val < 0 ? 'text-red-500' : (isLight ? 'text-zinc-300' : 'text-zinc-600')}`}>
+                              {val === 0 ? '-' : `${val > 0 ? '+' : ''}${((val/1000)*100).toFixed(1)}%`}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
 
             {/* Quick Actions Grid */}
             <section className="space-y-3">
@@ -1150,21 +1182,21 @@ export default function ForexTracker() {
               <div className="grid grid-cols-4 gap-3">
                 <button 
                   onClick={() => setShowCalcModal(true)} 
-                  className="bg-zinc-900/50 hover:bg-zinc-800/50 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer"
+                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
                 >
                   <div className="p-2 bg-amber-500/10 rounded-xl group-hover:scale-110 transition-transform">
                     <Lucide.Calculator size={16} className="text-amber-500" />
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">Calc</span>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-600 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Calc</span>
                 </button>
                 <button 
                   onClick={() => setActiveView('history')} 
-                  className="bg-zinc-900/50 hover:bg-zinc-800/50 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer"
+                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
                 >
                   <div className="p-2 bg-emerald-500/10 rounded-xl group-hover:scale-110 transition-transform">
                     <Lucide.Activity size={16} className="text-emerald-500" />
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">Journal</span>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-600 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Journal</span>
                 </button>
                 <button 
                   onClick={() => {
@@ -1172,34 +1204,34 @@ export default function ForexTracker() {
                     setSelectedQuote(WISDOM_QUOTES[randomIdx]);
                     setShowWisdomModal(true);
                   }} 
-                  className="bg-zinc-900/50 hover:bg-zinc-800/50 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer"
+                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
                 >
                   <div className="p-2 bg-teal-500/10 rounded-xl group-hover:scale-110 transition-transform">
                     <Lucide.Sparkles size={16} className="text-teal-400" />
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">Wisdom</span>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-600 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Wisdom</span>
                 </button>
                 <button 
                   onClick={() => setShowClaimsModal(true)} 
-                  className="bg-zinc-900/50 hover:bg-zinc-800/50 border border-white/5 rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer"
+                  className={`border rounded-2xl p-3 flex flex-col items-center justify-center gap-1.5 transition-all group cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 shadow-sm' : 'bg-zinc-900/50 hover:bg-zinc-800/50 border-white/5'}`}
                 >
                   <div className="p-2 bg-indigo-500/10 rounded-xl group-hover:scale-110 transition-transform">
                     <Lucide.Trophy size={16} className="text-indigo-400" />
                   </div>
-                  <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 group-hover:text-zinc-200">Rank</span>
+                  <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-zinc-600 group-hover:text-zinc-800' : 'text-zinc-400 group-hover:text-zinc-200'}`}>Rank</span>
                 </button>
               </div>
             </section>
 
             {/* Daily revolving pro tip banner */}
-            <section className="bg-zinc-900/40 border border-white/5 rounded-3xl p-4 flex gap-3 items-center relative overflow-hidden group">
+            <section className={`border rounded-3xl p-4 flex gap-3 items-center relative overflow-hidden group transition-all duration-300 ${isLight ? 'bg-white border-zinc-200 shadow-sm' : 'bg-zinc-900/40 border-white/5'}`}>
               <div className="absolute -top-12 -left-12 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
               <div className="p-2.5 bg-amber-500/10 rounded-2xl text-amber-400 animate-pulse shrink-0">
                 <Lucide.Lightbulb size={18} strokeWidth={2.5} className="fill-amber-400/10" />
               </div>
               <div className="flex-1 min-w-0 pr-2">
                 <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Daily Pro Tip</span>
-                <p className="text-[10px] font-bold text-zinc-300 leading-snug mt-0.5 line-clamp-2 transition-all duration-300">
+                <p className={`text-[10px] font-bold leading-snug mt-0.5 line-clamp-2 transition-all duration-300 ${isLight ? 'text-zinc-700' : 'text-zinc-300'}`}>
                   "{PRO_TIPS[activeTipIndex]}"
                 </p>
               </div>
