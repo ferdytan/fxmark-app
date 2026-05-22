@@ -685,21 +685,30 @@ export default function ForexTracker() {
                       }
                     }
                     return (
-                      <div key={i} className={`p-1 flex flex-col items-center justify-center gap-1 ${cellStyle} ${!d ? 'opacity-20' : ''}`}>
+                      <div key={i} className={`relative p-1.5 min-h-[50px] flex flex-col items-center justify-center ${cellStyle} ${!d ? 'opacity-20' : ''}`}>
                         {d && (
                           <>
-                            <span className="text-[9px] font-bold opacity-30">{d.day}</span>
+                            {/* Day Number in top-left */}
+                            <span className="absolute top-1 left-1.5 text-[9px] font-bold opacity-30">{d.day}</span>
+                            
+                            {/* Profit/Loss Amount perfectly centered */}
                             {d.data && (
-                              <div className="flex gap-0.5 justify-center flex-wrap max-w-full">
+                              <span className={`text-[10px] md:text-[11px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                                ${Math.abs(d.data.profit).toFixed(0)}
+                              </span>
+                            )}
+                            
+                            {/* Trade Dots in bottom-right */}
+                            {d.data && (
+                              <div className="absolute bottom-1 right-1.5 flex gap-0.5 items-center justify-end max-w-[50%] flex-wrap">
                                 {d.data.tradesList.map((trade: any, idx: number) => (
                                   <span
                                     key={idx}
-                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${trade.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
+                                    className={`w-1 h-1 rounded-full shrink-0 ${trade.profit >= 0 ? 'bg-emerald-500' : 'bg-red-500'}`}
                                   />
                                 ))}
                               </div>
                             )}
-                            {d.data && <span className={`text-[10px] md:text-[11px] font-black ${d.data.profit >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>${Math.abs(d.data.profit).toFixed(0)}</span>}
                           </>
                         )}
                       </div>
