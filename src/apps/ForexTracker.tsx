@@ -1052,7 +1052,7 @@ export default function ForexTracker() {
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-[8px] font-bold text-zinc-400 uppercase">
-                    <span>{(((stats.totalProfit - (Math.floor(stats.totalProfit / 1000) * 1000)) / 1000) * 100).toFixed(1)}% to Next</span>
+                    <span>{(100 - ((stats.totalProfit - (Math.floor(stats.totalProfit / 1000) * 1000)) / 1000) * 100).toFixed(1)}% to Next</span>
                     <span>Next: ${(Math.floor(stats.totalProfit / 1000) * 1000 + 2000).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                   </div>
                   <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-zinc-150' : 'bg-white/5'}`}>
@@ -1095,7 +1095,7 @@ export default function ForexTracker() {
                   <div className="text-[8px] font-bold text-zinc-400 uppercase flex justify-between">
                     <span>Weekly Avg Profit</span>
                     <span className={`font-black ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}>
-                      ${avgWeeklyProfit.toFixed(2)}
+                      ${avgWeeklyProfit.toFixed(0)}
                     </span>
                   </div>
                   <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-zinc-150' : 'bg-white/5'}`}>
