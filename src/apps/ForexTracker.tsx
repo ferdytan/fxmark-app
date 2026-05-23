@@ -258,7 +258,27 @@ export default function ForexTracker() {
 
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
 
-  const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'calendar' | 'history' | 'compounding'>('dashboard');
+  
+  const [compoundBase, setCompoundBase] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('fxmark_compound_base');
+      return saved ? Number(saved) : 1000;
+    } catch { return 1000; }
+  });
+  const [compoundRate, setCompoundRate] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('fxmark_compound_rate');
+      return saved ? Number(saved) : 0.10;
+    } catch { return 0.10; }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('fxmark_compound_base', compoundBase.toString());
+      localStorage.setItem('fxmark_compound_rate', compoundRate.toString());
+    } catch {}
+  }, [compoundBase, compoundRate]);
   
   // Gamification & Dashboard 2 states
   const [tradingPoints] = useState<number>(() => {
@@ -609,6 +629,21 @@ export default function ForexTracker() {
       maxDrawdown: 4.2 // Placeholder as per original image
     };
   }, [records]);
+
+  const currentCompoundLevel = useMemo(() => {
+    if (stats.balance <= compoundBase) return 0;
+    const val = Math.floor(Math.log(stats.balance / compoundBase) / Math.log(1 + compoundRate));
+    return Math.max(0, val);
+  }, [stats.balance, compoundBase, compoundRate]);
+
+  const levelProgress = useMemo(() => {
+    const targetCurrent = compoundBase * Math.pow(1 + compoundRate, currentCompoundLevel);
+    const targetNext = compoundBase * Math.pow(1 + compoundRate, currentCompoundLevel + 1);
+    const diff = targetNext - targetCurrent;
+    if (diff <= 0) return 0;
+    const progress = ((stats.balance - targetCurrent) / diff) * 100;
+    return Math.min(100, Math.max(0, progress));
+  }, [stats.balance, currentCompoundLevel, compoundBase, compoundRate]);
 
   const weeklyStats = useMemo(() => {
     const now = new Date();
@@ -1321,12 +1356,16 @@ export default function ForexTracker() {
                     if (d && d.data) {
                       if (d.data.profit > 0) {
                         cellStyle = isLight 
-                          ? "bg-emerald-100/70 text-emerald-800 border border-emerald-100 shadow-sm" 
-                          : "bg-emerald-500/20 text-emerald-450 border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.1)]";
+                          ? "border-2 border-emerald-250 bg-emerald-50/50 text-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.06)]" 
+                          : "border-2 border-emerald-200/90 bg-emerald-950/30 text-emerald-400 shadow-[0_0_12px_rgba(167,243,208,0.18)]";
                       } else if (d.data.profit < 0) {
                         cellStyle = isLight 
-                          ? "bg-red-100/70 text-red-800 border border-red-100 shadow-sm" 
-                          : "bg-red-500/20 text-red-450 border border-red-500/30 shadow-[0_0_8px_rgba(239,68,68,0.1)]";
+                          ? "border-2 border-red-250 bg-red-50/50 text-red-600 shadow-[0_2px_8px_rgba(239,68,68,0.06)]" 
+                          : "border-2 border-red-200/90 bg-red-950/30 text-red-400 shadow-[0_0_12px_rgba(254,202,202,0.18)]";
+                      } else {
+                        cellStyle = isLight 
+                          ? "border border-zinc-200 bg-zinc-50/50 text-zinc-400" 
+                          : "border border-zinc-800/80 bg-zinc-900/10 text-zinc-500";
                       }
                     }
                     
@@ -1378,6 +1417,206 @@ export default function ForexTracker() {
                     );
                   })}
                </div>
+            </div>
+          </div>
+        )}
+
+        {activeView === 'compounding' && (
+          <div className="space-y-6 animate-in fade-in pb-8">
+            {/* Header */}
+            <div className="pl-2">
+              <span className="text-[8px] font-black text-violet-500 uppercase tracking-widest">Compounding Hub</span>
+              <h2 className="text-xl font-black tracking-tight mt-0.5">Exponential Strategy</h2>
+              <p className="text-[9px] text-zinc-500 font-bold mt-1 uppercase tracking-wider">Dynamic compounding roadmap & milestone tracker</p>
+            </div>
+
+            {/* Current Level Hero Card (Compounding Level Info) */}
+            <div className={`relative overflow-hidden rounded-[2rem] p-6 border transition-all duration-500 ${
+              isLight 
+                ? 'bg-gradient-to-br from-violet-50 via-purple-50/50 to-indigo-50 border-violet-200/80 shadow-[0_10px_30px_rgba(139,92,246,0.08)] text-zinc-800' 
+                : 'bg-gradient-to-br from-violet-950/[0.12] via-purple-950/[0.04] to-black/60 border-violet-500/20 shadow-[0_0_30px_rgba(139,92,246,0.1)] text-white'
+            }`}>
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+              
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                {/* Level Circular Badge */}
+                <div className="flex items-center gap-5">
+                  <div className="relative shrink-0 w-20 h-20 flex items-center justify-center rounded-full bg-violet-500/10 border border-violet-500/20 shadow-lg shadow-violet-500/10">
+                    {/* Glowing outer progress ring */}
+                    <svg className="absolute inset-0 w-full h-full -rotate-90">
+                      <circle 
+                        cx="40" 
+                        cy="40" 
+                        r="37" 
+                        className={isLight ? 'stroke-zinc-200' : 'stroke-white/5'}
+                        strokeWidth="3.5"
+                        fill="transparent"
+                      />
+                      <circle 
+                        cx="40" 
+                        cy="40" 
+                        r="37" 
+                        className="stroke-violet-500" 
+                        strokeWidth="3.5"
+                        fill="transparent"
+                        strokeDasharray={2 * Math.PI * 37}
+                        strokeDashoffset={2 * Math.PI * 37 * (1 - levelProgress / 100)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="flex flex-col items-center">
+                      <span className="text-[9px] font-black uppercase text-violet-400 tracking-wider">Lvl</span>
+                      <span className="text-2xl font-black tracking-tighter leading-none">{currentCompoundLevel}</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <span className="text-[8px] font-black uppercase tracking-widest text-violet-500 px-2 py-0.5 rounded bg-violet-500/10 border border-violet-500/10">
+                      {currentCompoundLevel >= 15 ? 'Legendary Compounder' : currentCompoundLevel >= 10 ? 'Elite Master' : currentCompoundLevel >= 5 ? 'Pro Compounder' : 'Consistent Apprentice'}
+                    </span>
+                    <h3 className="text-lg font-black tracking-tight mt-2">Level {currentCompoundLevel} Achieved</h3>
+                    <p className={`text-[10px] font-bold mt-1 ${isLight ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                      Balance: <span className="font-black text-xs text-violet-500">${stats.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Progress Details */}
+                <div className="flex-1 md:max-w-[280px] space-y-2">
+                  <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-zinc-400">
+                    <span>Progress to Level {currentCompoundLevel + 1}</span>
+                    <span className="text-violet-500">{levelProgress.toFixed(1)}%</span>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className={`w-full h-2 rounded-full overflow-hidden ${isLight ? 'bg-zinc-200' : 'bg-white/5'}`}>
+                    <div 
+                      className="h-full bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+                      style={{ width: `${levelProgress}%` }}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between text-[8px] font-bold text-zinc-500">
+                    <span>Lvl {currentCompoundLevel} Target: ${(compoundBase * Math.pow(1 + compoundRate, currentCompoundLevel)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    <span>Lvl {currentCompoundLevel + 1} Target: ${(compoundBase * Math.pow(1 + compoundRate, currentCompoundLevel + 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  </div>
+
+                  <p className="text-[9px] font-black text-center text-emerald-500 uppercase tracking-widest mt-1 bg-emerald-500/5 py-1 rounded-lg border border-emerald-500/10">
+                    Only ${(compoundBase * Math.pow(1 + compoundRate, currentCompoundLevel + 1) - stats.balance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} left to Level Up!
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Compounding Customization Card */}
+            <div className={`rounded-3xl p-5 border transition-all duration-300 ${isLight ? 'bg-white border-zinc-200 shadow-sm text-zinc-800' : 'bg-zinc-900/30 border border-white/5 text-white'}`}>
+              <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-4">Compounding Settings</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Base Starting Capital</label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-black text-zinc-500">$</span>
+                    <input 
+                      type="number" 
+                      value={compoundBase} 
+                      onChange={(e) => setCompoundBase(Math.max(1, Number(e.target.value)))} 
+                      className={`w-full pl-7 pr-3 py-2.5 rounded-xl text-xs font-black outline-none border focus:border-violet-500/50 transition-colors uppercase ${
+                        isLight ? 'bg-zinc-50 border-zinc-200 text-zinc-850' : 'bg-black/45 border-white/5 text-white'
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Compounding Rate</label>
+                  <select 
+                    value={compoundRate} 
+                    onChange={(e) => setCompoundRate(Number(e.target.value))} 
+                    className={`w-full px-3 py-2.5 rounded-xl text-xs font-black outline-none border focus:border-violet-500/50 transition-colors uppercase ${
+                      isLight ? 'bg-zinc-50 border-zinc-200 text-zinc-850' : 'bg-black/45 border-white/5 text-white'
+                    }`}
+                  >
+                    <option value="0.05">5% Growth</option>
+                    <option value="0.07">7% Growth</option>
+                    <option value="0.10">10% Growth (Recommended)</option>
+                    <option value="0.12">12% Growth</option>
+                    <option value="0.15">15% Growth</option>
+                    <option value="0.20">20% Growth</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Compounding Level Milestones Table */}
+            <div className={`rounded-3xl border overflow-hidden transition-all duration-300 ${isLight ? 'bg-white border-zinc-200 shadow-sm' : 'bg-zinc-900/30 border border-white/5'}`}>
+              <div className="px-5 py-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Compounding Roadmap (Levels 1 - 20)</h3>
+                <span className="text-[8px] font-black px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/10">Base: ${compoundBase.toLocaleString()}</span>
+              </div>
+              <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
+                <table className="w-full text-left">
+                  <thead className={`text-[8px] font-black uppercase tracking-wider border-b ${isLight ? 'bg-zinc-50 border-zinc-150 text-zinc-400' : 'bg-white/5 border-white/5 text-zinc-500'}`}>
+                    <tr>
+                      <th className="px-5 py-3.5">Level</th>
+                      <th className="px-5 py-3.5 text-right">Target Balance</th>
+                      <th className="px-5 py-3.5 text-right">Net Profit Needed</th>
+                      <th className="px-5 py-3.5 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-[10px] font-bold">
+                    {Array.from({ length: 20 }, (_, index) => {
+                      const lvl = index + 1;
+                      const targetVal = compoundBase * Math.pow(1 + compoundRate, lvl);
+                      const profitNeeded = targetVal - compoundBase;
+                      const isAchieved = stats.balance >= targetVal;
+                      const isCurrent = lvl === currentCompoundLevel;
+                      const isNext = lvl === currentCompoundLevel + 1;
+
+                      let statusBadge = null;
+                      let rowStyle = "";
+
+                      if (isAchieved) {
+                        rowStyle = isLight ? "bg-emerald-500/[0.02]" : "bg-emerald-500/[0.01] text-zinc-300";
+                        statusBadge = (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[7.5px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 border border-emerald-500/10 shadow-sm shadow-emerald-500/5">
+                            <Lucide.Check size={8} strokeWidth={3} /> Achieved
+                          </span>
+                        );
+                      } else if (isCurrent) {
+                        rowStyle = isLight ? "bg-violet-500/10" : "bg-violet-500/5 border-l-2 border-l-violet-500 text-violet-300 font-extrabold";
+                        statusBadge = (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[7.5px] font-black uppercase tracking-wider bg-violet-500/15 text-violet-400 border border-violet-500/20 animate-pulse">
+                            Active
+                          </span>
+                        );
+                      } else if (isNext) {
+                        rowStyle = isLight ? "bg-cyan-500/5" : "bg-cyan-500/[0.02] text-cyan-300";
+                        statusBadge = (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[7.5px] font-black uppercase tracking-wider bg-cyan-500/10 text-cyan-400 border border-cyan-500/10">
+                            Next Up
+                          </span>
+                        );
+                      } else {
+                        rowStyle = "opacity-45 text-zinc-550";
+                        statusBadge = (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[7.5px] font-black uppercase tracking-wider bg-zinc-800/10 text-zinc-500 border border-zinc-800/20">
+                            <Lucide.Lock size={8} /> Locked
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <tr key={lvl} className={`hover:bg-white/[0.02] transition-colors ${rowStyle}`}>
+                          <td className="px-5 py-3.5">Lvl {lvl}</td>
+                          <td className="px-5 py-3.5 text-right font-black">${targetVal.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                          <td className="px-5 py-3.5 text-right text-zinc-400 font-medium">+${profitNeeded.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                          <td className="px-5 py-3.5 text-center">{statusBadge}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -1434,6 +1673,7 @@ export default function ForexTracker() {
             {[
               { id: 'dashboard', icon: Lucide.LayoutDashboard, label: 'Overview' },
               { id: 'calendar', icon: Lucide.Calendar, label: 'Calendar' },
+              { id: 'compounding', icon: Lucide.TrendingUp, label: 'Compound' },
               { id: 'history', icon: Lucide.Activity, label: 'Activity' }
             ].map((item) => (
               <button 
