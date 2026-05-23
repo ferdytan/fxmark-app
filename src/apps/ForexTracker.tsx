@@ -1333,20 +1333,20 @@ export default function ForexTracker() {
                     <div key={day} className={`py-2 text-center text-[8px] font-black transition-colors duration-300 ${isLight ? 'bg-zinc-100 text-zinc-400' : 'bg-zinc-900 text-zinc-600'}`}>{day}</div>
                   ))}
                   {calDays.map((d, i) => {
-                    let cellStyle = isLight ? "border border-zinc-150 bg-white text-zinc-800" : "border border-white/[0.03] bg-[#0A0A0A] text-white";
+                    let cellStyle = isLight ? "border border-zinc-150 bg-white text-zinc-800" : "border border-white/[0.02] bg-[#0A0A0A] text-white";
                     if (d && d.data) {
                       if (d.data.profit > 0) {
                         cellStyle = isLight 
                           ? "border border-emerald-250 bg-emerald-50/50 text-emerald-600 shadow-[0_2px_8px_rgba(16,185,129,0.06)]" 
-                          : "border border-emerald-200/90 bg-emerald-950/30 text-emerald-400 shadow-[0_0_12px_rgba(167,243,208,0.18)]";
+                          : "border border-emerald-500/20 bg-emerald-950/30 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.06)]";
                       } else if (d.data.profit < 0) {
                         cellStyle = isLight 
                           ? "border border-red-250 bg-red-50/50 text-red-600 shadow-[0_2px_8px_rgba(239,68,68,0.06)]" 
-                          : "border border-red-200/90 bg-red-950/30 text-red-400 shadow-[0_0_12px_rgba(254,202,202,0.18)]";
+                          : "border border-red-500/20 bg-red-950/30 text-red-400 shadow-[0_0_10px_rgba(239,68,68,0.06)]";
                       } else {
                         cellStyle = isLight 
                           ? "border border-zinc-200 bg-zinc-50/50 text-zinc-400" 
-                          : "border border-zinc-800/80 bg-zinc-900/10 text-zinc-500";
+                          : "border border-zinc-800/30 bg-zinc-900/10 text-zinc-500";
                       }
                     }
                     
