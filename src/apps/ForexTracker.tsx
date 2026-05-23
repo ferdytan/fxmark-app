@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as Lucide from 'lucide-react';
 import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from '../supabaseClient';
@@ -335,7 +335,8 @@ export default function ForexTracker() {
   const [enteredPin, setEnteredPin] = useState('');
   const [pinError, setPinError] = useState(false);
   
-  const [pinAction, setPinAction] = useState<'add' | 'delete' | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pinAction, setPinAction] = useState<'add' | 'delete' | 'import' | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const generateUUID = () => {
@@ -365,6 +366,11 @@ export default function ForexTracker() {
           handleCloseModal();
           if (targetId) {
             executeDelete(targetId);
+          }
+        } else if (pinAction === 'import') {
+          handleCloseModal();
+          if (fileInputRef.current) {
+            fileInputRef.current.click();
           }
         } else {
           setIsPinVerified(true);
@@ -938,8 +944,8 @@ export default function ForexTracker() {
                   
                   if (day.hasTraded) {
                     capsuleClass = isLight
-                      ? "bg-emerald-50/70 border-2 border-emerald-300 text-emerald-700 shadow-sm shadow-emerald-500/5 hover:border-emerald-400"
-                      : "bg-emerald-500/[0.04] border-2 border-emerald-500/30 text-emerald-400 hover:border-emerald-500/45";
+                      ? "bg-emerald-50/70 border border-emerald-300 text-emerald-700 shadow-sm shadow-emerald-500/5 hover:border-emerald-400"
+                      : "bg-emerald-500/[0.04] border border-emerald-500/30 text-emerald-400 hover:border-emerald-500/45";
                     labelClass = isLight ? "text-emerald-600 font-extrabold" : "text-emerald-400 font-extrabold";
                     
                     if (day.profit >= 0) {
@@ -964,30 +970,30 @@ export default function ForexTracker() {
                   return (
                     <div
                       key={day.key}
-                      className={`relative flex flex-col items-center justify-between py-5 px-1.5 rounded-[2rem] min-h-[140px] w-full text-center transition-all duration-300 group ${capsuleClass}`}
+                      className={`relative flex flex-col items-center justify-center aspect-square rounded-full py-3 px-1 w-full text-center transition-all duration-300 group ${capsuleClass}`}
                     >
                       {/* Top: Day Label */}
-                      <span className={`text-[11px] uppercase tracking-wider leading-none font-extrabold ${labelClass}`}>
+                      <span className={`text-[10px] uppercase tracking-wider leading-none font-black ${labelClass}`}>
                         {day.label}
                       </span>
                       
                       {/* Middle: Icon */}
-                      <div className="flex items-center justify-center my-2">
+                      <div className="flex items-center justify-center my-1.5">
                         {day.hasTraded ? (
                           <Lucide.CheckCircle2 
-                            size={28} 
-                            className="text-emerald-500 transition-transform duration-500 group-hover:scale-115" 
+                            size={20} 
+                            className="text-emerald-500 transition-transform duration-500 group-hover:scale-110" 
                           />
                         ) : (
                           <Lucide.Lock 
-                            size={18} 
+                            size={14} 
                             className={isLight ? "text-zinc-300" : "text-zinc-700"} 
                           />
                         )}
                       </div>
 
                       {/* Bottom: Daily Profit/Loss Amount */}
-                      <span className={`text-[10px] leading-none font-bold ${profitClass}`}>
+                      <span className={`text-[9px] leading-none font-bold ${profitClass}`}>
                         {day.hasTraded ? (
                           `${day.profit >= 0 ? '+' : '-'}$${Math.abs(day.profit).toFixed(0)}`
                         ) : (
@@ -1033,21 +1039,21 @@ export default function ForexTracker() {
 
             {/* Twin Bagger Metrics cards grid */}
             <div className="grid grid-cols-2 gap-4">
-              {/* Bagger Time Card (Orange/Purple Cosmic) */}
+              {/* Bagger Time Card (Amber/Gold Premium) */}
               <div className={`border rounded-2xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${
                 isLight 
-                  ? 'from-indigo-50/80 via-purple-50/60 to-pink-50 border-purple-200/80 shadow-[0_4px_12px_rgba(168,85,247,0.05)] bg-gradient-to-br' 
-                  : 'from-purple-950/[0.12] via-fuchsia-950/[0.04] to-black/40 border-purple-500/20 shadow-[0_0_20px_rgba(168,85,247,0.05)] bg-gradient-to-br'
+                  ? 'from-amber-50/80 via-yellow-50/60 to-orange-50/45 border-amber-200/80 shadow-[0_4px_12px_rgba(245,158,11,0.05)] bg-gradient-to-br' 
+                  : 'from-amber-950/[0.12] via-yellow-950/[0.04] to-black/40 border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.05)] bg-gradient-to-br'
               }`}>
                 <div className="flex justify-between items-start">
                   <div className={`p-2 rounded-xl border transition-all duration-300 ${
                     isLight 
-                      ? 'bg-purple-50 border-purple-200 text-purple-600' 
-                      : 'bg-purple-500/10 border border-purple-500/20 text-purple-400'
+                      ? 'bg-amber-50 border-amber-200 text-amber-600' 
+                      : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
                   }`}>
                     <Lucide.TrendingUp size={16} strokeWidth={2.5} />
                   </div>
-                  <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-purple-700' : 'text-purple-400'}`}>Bagger Time</span>
+                  <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>Bagger Time</span>
                 </div>
                 
                 <div className="space-y-1">
@@ -1056,7 +1062,7 @@ export default function ForexTracker() {
                     <span className={`text-2.5xl font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>
                       {(stats.totalProfit / 1000).toFixed(2)}x
                     </span>
-                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-purple-600' : 'text-purple-400'}`}>Bagger</span>
+                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-amber-600' : 'text-amber-400'}`}>Bagger</span>
                   </div>
                 </div>
 
@@ -1067,7 +1073,7 @@ export default function ForexTracker() {
                   </div>
                   <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-zinc-150' : 'bg-white/5'}`}>
                     <div 
-                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.5)] animate-pulse" 
+                      className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)] animate-pulse" 
                       style={{ width: `${(((stats.totalProfit - (Math.floor(stats.totalProfit / 1000) * 1000)) / 1000) * 100)}%` }}
                     />
                   </div>
@@ -1077,7 +1083,7 @@ export default function ForexTracker() {
               {/* Approx Bagger Time Card (Mint/Cyan-Blue Cyberpunk) */}
               <div className={`border rounded-2xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${
                 isLight 
-                  ? 'from-cyan-50/80 via-blue-50/60 to-indigo-50 border-cyan-200/80 shadow-[0_4px_12px_rgba(6,182,212,0.05)] bg-gradient-to-br' 
+                  ? 'from-cyan-50/80 via-blue-50/60 to-teal-50 border-cyan-200/80 shadow-[0_4px_12px_rgba(6,182,212,0.05)] bg-gradient-to-br' 
                   : 'from-cyan-950/[0.12] via-blue-950/[0.04] to-black/40 border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.05)] bg-gradient-to-br'
               }`}>
                 <div className="flex justify-between items-start">
@@ -1353,7 +1359,7 @@ export default function ForexTracker() {
                           <>
                             {/* Day Number inside a circular badge if it is today */}
                             {isToday ? (
-                              <span className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-full bg-violet-600 text-[8px] font-black text-white shadow-sm shadow-violet-500/30">
+                              <span className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-full bg-emerald-600 text-[8px] font-black text-white shadow-sm shadow-emerald-500/30">
                                 {d.day}
                               </span>
                             ) : (
@@ -1400,7 +1406,7 @@ export default function ForexTracker() {
           <div className="space-y-6 animate-in fade-in pb-8">
             {/* Header */}
             <div className="pl-2">
-              <span className="text-[8px] font-black text-violet-500 uppercase tracking-widest">Compounding Hub</span>
+              <span className="text-[8px] font-black text-teal-500 uppercase tracking-widest">Compounding Hub</span>
               <h2 className="text-xl font-black tracking-tight mt-0.5">Scale Sizing Strategy</h2>
               <p className="text-[9px] text-zinc-500 font-bold mt-1 uppercase tracking-wider">Compounding $10 target profit per $1,000 balance step</p>
             </div>
@@ -1408,15 +1414,15 @@ export default function ForexTracker() {
             {/* Current Level Hero Card (Compounding Level Info) */}
             <div className={`relative overflow-hidden rounded-[2rem] p-6 border transition-all duration-500 ${
               isLight 
-                ? 'bg-gradient-to-br from-violet-50 via-purple-50/50 to-indigo-50 border-violet-200/80 shadow-[0_10px_30px_rgba(139,92,246,0.08)] text-zinc-800' 
-                : 'bg-gradient-to-br from-violet-950/[0.12] via-purple-950/[0.04] to-black/60 border-violet-500/20 shadow-[0_0_30px_rgba(139,92,246,0.1)] text-white'
+                ? 'bg-gradient-to-br from-teal-50 via-emerald-50/50 to-cyan-50 border-teal-200/80 shadow-[0_10px_30px_rgba(20,184,166,0.08)] text-zinc-800' 
+                : 'bg-gradient-to-br from-teal-950/[0.12] via-emerald-950/[0.04] to-black/60 border-teal-500/20 shadow-[0_0_30px_rgba(20,184,166,0.1)] text-white'
             }`}>
-              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
               
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
                 {/* Level Circular Badge */}
                 <div className="flex items-center gap-5">
-                  <div className="relative shrink-0 w-20 h-20 flex items-center justify-center rounded-full bg-violet-500/10 border border-violet-500/20 shadow-lg shadow-violet-500/10">
+                  <div className="relative shrink-0 w-20 h-20 flex items-center justify-center rounded-full bg-teal-500/10 border border-teal-500/20 shadow-lg shadow-teal-500/10">
                     {/* Glowing outer progress ring */}
                     <svg className="absolute inset-0 w-full h-full -rotate-90">
                       <circle 
@@ -1431,7 +1437,7 @@ export default function ForexTracker() {
                         cx="40" 
                         cy="40" 
                         r="37" 
-                        className="stroke-violet-500" 
+                        className="stroke-teal-500" 
                         strokeWidth="3.5"
                         fill="transparent"
                         strokeDasharray={2 * Math.PI * 37}
@@ -1440,18 +1446,18 @@ export default function ForexTracker() {
                       />
                     </svg>
                     <div className="flex flex-col items-center">
-                      <span className="text-[9px] font-black uppercase text-violet-400 tracking-wider">Lvl</span>
+                      <span className="text-[9px] font-black uppercase text-teal-400 tracking-wider">Lvl</span>
                       <span className="text-2xl font-black tracking-tighter leading-none">{currentCompoundLevel}</span>
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-[8px] font-black uppercase tracking-widest text-violet-500 px-2 py-0.5 rounded bg-violet-500/10 border border-violet-500/10">
+                    <span className="text-[8px] font-black uppercase tracking-widest text-teal-500 px-2 py-0.5 rounded bg-teal-500/10 border border-teal-500/10">
                       {currentCompoundLevel >= 5 ? 'Elite Scale Compounder' : currentCompoundLevel >= 3 ? 'Master Scale Compounder' : currentCompoundLevel >= 2 ? 'Advanced Compounder' : 'Base Scale Compounder'}
                     </span>
                     <h3 className="text-lg font-black tracking-tight mt-2">Level {currentCompoundLevel} Achieved</h3>
                     <p className={`text-[10px] font-bold mt-1 ${isLight ? 'text-zinc-500' : 'text-zinc-450'}`}>
-                      Balance: <span className="font-black text-xs text-violet-500">${stats.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      Balance: <span className="font-black text-xs text-teal-500">${stats.balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                     </p>
                   </div>
                 </div>
@@ -1460,13 +1466,13 @@ export default function ForexTracker() {
                 <div className="flex-1 md:max-w-[280px] space-y-2">
                   <div className="flex justify-between text-[9px] font-black uppercase tracking-wider text-zinc-400">
                     <span>Progress to Level {currentCompoundLevel + 1}</span>
-                    <span className="text-violet-500">{levelProgress.toFixed(1)}%</span>
+                    <span className="text-teal-500">{levelProgress.toFixed(1)}%</span>
                   </div>
                   
                   {/* Progress Bar */}
                   <div className={`w-full h-2 rounded-full overflow-hidden ${isLight ? 'bg-zinc-200' : 'bg-white/5'}`}>
                     <div 
-                      className="h-full bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 rounded-full shadow-[0_0_10px_rgba(168,85,247,0.5)]"
+                      className="h-full bg-gradient-to-r from-teal-500 via-emerald-500 to-cyan-500 rounded-full shadow-[0_0_10px_rgba(20,184,166,0.5)]"
                       style={{ width: `${levelProgress}%` }}
                     />
                   </div>
@@ -1495,9 +1501,9 @@ export default function ForexTracker() {
                   <span className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Target Profit / Trade</span>
                   <p className="text-sm font-black mt-1">$10 per Step (1.0%)</p>
                 </div>
-                <div className={`p-3 rounded-2xl border transition-all duration-300 ${isLight ? 'bg-zinc-50 border-violet-200/50' : 'bg-violet-500/5 border-violet-500/15'}`}>
-                  <span className="text-[8px] font-black text-violet-500 uppercase tracking-widest">Current Target / Trade</span>
-                  <p className="text-sm font-black mt-1 text-violet-500">${currentCompoundLevel * 10} / Entry</p>
+                <div className={`p-3 rounded-2xl border transition-all duration-300 ${isLight ? 'bg-zinc-50 border-teal-200/50' : 'bg-teal-500/5 border-teal-500/15'}`}>
+                  <span className="text-[8px] font-black text-teal-500 uppercase tracking-widest">Current Target / Trade</span>
+                  <p className="text-sm font-black mt-1 text-teal-500">${currentCompoundLevel * 10} / Entry</p>
                 </div>
                 <div className={`p-3 rounded-2xl border transition-all duration-300 ${isLight ? 'bg-zinc-50 border-zinc-150' : 'bg-black/40 border-white/5'}`}>
                   <span className="text-[8px] font-black text-zinc-500 uppercase tracking-widest">Next Target / Trade</span>
@@ -1510,7 +1516,7 @@ export default function ForexTracker() {
             <div className={`rounded-3xl border overflow-hidden transition-all duration-300 ${isLight ? 'bg-white border-zinc-200 shadow-sm' : 'bg-zinc-900/30 border border-white/5'}`}>
               <div className="px-5 py-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
                 <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Compounding Roadmap (Levels 1 - 15)</h3>
-                <span className="text-[8px] font-black px-2 py-0.5 rounded bg-violet-500/10 text-violet-400 border border-violet-500/10">Step Sizing: $10 / $1k</span>
+                <span className="text-[8px] font-black px-2 py-0.5 rounded bg-teal-500/10 text-teal-400 border border-teal-500/10">Step Sizing: $10 / $1k</span>
               </div>
               <div className="max-h-[350px] overflow-y-auto custom-scrollbar">
                 <table className="w-full text-left">
@@ -1582,10 +1588,25 @@ export default function ForexTracker() {
                      <button onClick={handleExport} className={`flex items-center gap-1 px-2 py-1 border rounded-lg text-[9px] font-black uppercase transition-all cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-500 hover:text-zinc-800 shadow-sm' : 'bg-zinc-900 hover:bg-zinc-800 border-white/5 text-zinc-400 hover:text-white'}`}>
                         <Lucide.Download size={10} /> Export
                      </button>
-                     <label className={`flex items-center gap-1 px-2 py-1 border rounded-lg text-[9px] font-black uppercase cursor-pointer transition-all ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-500 hover:text-zinc-800 shadow-sm' : 'bg-zinc-900 hover:bg-zinc-800 border-white/5 text-zinc-400 hover:text-white'}`}>
-                        <Lucide.Upload size={10} /> Import
-                        <input type="file" accept=".json" onChange={handleImport} className="hidden" />
-                     </label>
+                      <button 
+                         onClick={() => {
+                           setPinAction('import');
+                           setIsPinVerified(false);
+                           setEnteredPin('');
+                           setPinError(false);
+                           setShowAddModal(true);
+                         }}
+                         className={`flex items-center gap-1 px-2 py-1 border rounded-lg text-[9px] font-black uppercase transition-all cursor-pointer ${isLight ? 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-500 hover:text-zinc-800 shadow-sm' : 'bg-zinc-900 hover:bg-zinc-800 border-white/5 text-zinc-400 hover:text-white'}`}
+                      >
+                         <Lucide.Upload size={10} /> Import
+                      </button>
+                      <input 
+                         type="file" 
+                         ref={fileInputRef}
+                         accept=".json" 
+                         onChange={handleImport} 
+                         className="hidden" 
+                      />
                   </div>
                </div>
                <div className="space-y-2">
@@ -1645,7 +1666,7 @@ export default function ForexTracker() {
             <div className="bg-[#111] w-full max-w-sm rounded-[2rem] p-6 border border-white/10 animate-in slide-in-from-bottom-8">
                <div className="flex justify-between items-center mb-6">
                   <h3 className="text-sm font-black uppercase tracking-widest">
-                     {isPinVerified ? 'New Execution' : pinAction === 'delete' ? 'Delete Verification' : 'Security Verification'}
+                     {isPinVerified ? 'New Execution' : pinAction === 'delete' ? 'Delete Verification' : pinAction === 'import' ? 'Import Verification' : 'Security Verification'}
                   </h3>
                   <button onClick={handleCloseModal} className="p-2 text-zinc-500"><Lucide.X size={20}/></button>
                </div>
@@ -1655,15 +1676,21 @@ export default function ForexTracker() {
                      <div className="w-12 h-12 bg-zinc-900 border border-white/10 rounded-full flex items-center justify-center text-emerald-500 mb-4 shadow-lg shadow-emerald-500/5">
                         {pinAction === 'delete' ? (
                            <Lucide.Trash2 size={20} className="text-red-500 animate-pulse" />
+                        ) : pinAction === 'import' ? (
+                           <Lucide.Upload size={20} className="text-teal-500 animate-pulse" />
                         ) : (
                            <Lucide.Lock size={20} strokeWidth={2.5} />
                         )}
                      </div>
                      <h4 className="text-xs font-black uppercase tracking-widest text-zinc-200">
-                        {pinAction === 'delete' ? 'Delete Verification' : 'Security Gate'}
+                        {pinAction === 'delete' ? 'Delete Verification' : pinAction === 'import' ? 'Import Verification' : 'Security Gate'}
                      </h4>
                      <p className="text-[10px] font-bold text-zinc-500 mt-1 mb-6">
-                        {pinAction === 'delete' ? 'Enter PIN to delete trade execution' : 'Enter PIN to access New Execution'}
+                        {pinAction === 'delete' 
+                           ? 'Enter PIN to delete trade execution' 
+                           : pinAction === 'import' 
+                           ? 'Enter PIN to import database backup' 
+                           : 'Enter PIN to access New Execution'}
                      </p>
 
                      {/* PIN Dots */}
@@ -1897,12 +1924,12 @@ export default function ForexTracker() {
       {showClaimsModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-300">
           <div className="bg-[#111] w-full max-w-sm rounded-[2rem] p-6 border border-white/10 animate-in scale-in duration-200 text-center space-y-6">
-            <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400 mx-auto">
+            <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-400 mx-auto">
               <Lucide.Trophy size={22} strokeWidth={2.5} />
             </div>
             
             <div className="space-y-1">
-              <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">CONSISTENCY TIER</span>
+              <span className="text-[8px] font-black text-amber-400 uppercase tracking-widest">CONSISTENCY TIER</span>
               <h3 className="text-xl font-black text-zinc-100 tracking-tight">
                 {tradingPoints >= 5000 ? 'Forex Legend' : tradingPoints >= 3000 ? 'Master Disciplined' : tradingPoints >= 1000 ? 'Consistent Trader' : 'Novice Trader'}
               </h3>
@@ -1913,19 +1940,19 @@ export default function ForexTracker() {
               <h4 className="text-[9px] font-black text-zinc-400 uppercase tracking-wider border-b border-white/5 pb-2">Tiers Progress</h4>
               
               <div className="flex justify-between items-center text-[10px]">
-                <span className={`font-bold ${tradingPoints < 1000 ? 'text-indigo-400 font-black' : 'text-zinc-500'}`}>Novice (&lt; 1k PTS)</span>
+                <span className={`font-bold ${tradingPoints < 1000 ? 'text-amber-400 font-black' : 'text-zinc-500'}`}>Novice (&lt; 1k PTS)</span>
                 {tradingPoints >= 1000 ? <Lucide.Check size={12} className="text-emerald-500" /> : <span>Active</span>}
               </div>
               <div className="flex justify-between items-center text-[10px]">
-                <span className={`font-bold ${tradingPoints >= 1000 && tradingPoints < 3000 ? 'text-indigo-400 font-black' : 'text-zinc-500'}`}>Consistent Trader (1k - 3k PTS)</span>
+                <span className={`font-bold ${tradingPoints >= 1000 && tradingPoints < 3000 ? 'text-amber-400 font-black' : 'text-zinc-500'}`}>Consistent Trader (1k - 3k PTS)</span>
                 {tradingPoints >= 3000 ? <Lucide.Check size={12} className="text-emerald-500" /> : tradingPoints >= 1000 ? <span>Active</span> : <Lucide.Lock size={10} />}
               </div>
               <div className="flex justify-between items-center text-[10px]">
-                <span className={`font-bold ${tradingPoints >= 3000 && tradingPoints < 5000 ? 'text-indigo-400 font-black' : 'text-zinc-500'}`}>Master Disciplined (3k - 5k PTS)</span>
+                <span className={`font-bold ${tradingPoints >= 3000 && tradingPoints < 5000 ? 'text-amber-400 font-black' : 'text-zinc-500'}`}>Master Disciplined (3k - 5k PTS)</span>
                 {tradingPoints >= 5000 ? <Lucide.Check size={12} className="text-emerald-500" /> : tradingPoints >= 3000 ? <span>Active</span> : <Lucide.Lock size={10} />}
               </div>
               <div className="flex justify-between items-center text-[10px]">
-                <span className={`font-bold ${tradingPoints >= 5000 ? 'text-indigo-400 font-black' : 'text-zinc-500'}`}>Forex Legend (5k+ PTS)</span>
+                <span className={`font-bold ${tradingPoints >= 5000 ? 'text-amber-400 font-black' : 'text-zinc-500'}`}>Forex Legend (5k+ PTS)</span>
                 {tradingPoints >= 5000 ? <span>Active</span> : <Lucide.Lock size={10} />}
               </div>
             </div>
