@@ -970,7 +970,7 @@ export default function ForexTracker() {
                   return (
                     <div
                       key={day.key}
-                      className={`relative flex flex-col items-center justify-center aspect-square rounded-full py-3 px-1 w-full text-center transition-all duration-300 group ${capsuleClass}`}
+                      className={`relative flex flex-col items-center justify-center aspect-square rounded-xl py-3 px-1 w-full text-center transition-all duration-300 group ${capsuleClass}`}
                     >
                       {/* Top: Day Label */}
                       <span className={`text-[10px] uppercase tracking-wider leading-none font-black ${labelClass}`}>
@@ -1039,21 +1039,21 @@ export default function ForexTracker() {
 
             {/* Twin Bagger Metrics cards grid */}
             <div className="grid grid-cols-2 gap-4">
-              {/* Bagger Time Card (Amber/Gold Premium) */}
+              {/* Bagger Time Card (Orange Premium) */}
               <div className={`border rounded-2xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${
                 isLight 
-                  ? 'from-amber-50/80 via-yellow-50/60 to-orange-50/45 border-amber-200/80 shadow-[0_4px_12px_rgba(245,158,11,0.05)] bg-gradient-to-br' 
-                  : 'from-amber-950/[0.12] via-yellow-950/[0.04] to-black/40 border-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.05)] bg-gradient-to-br'
+                  ? 'from-orange-50/80 via-amber-50/60 to-orange-50/45 border-orange-200/80 shadow-[0_4px_12px_rgba(249,115,22,0.05)] bg-gradient-to-br' 
+                  : 'from-orange-950/[0.12] via-amber-950/[0.04] to-black/40 border-orange-500/20 shadow-[0_0_20px_rgba(249,115,22,0.05)] bg-gradient-to-br'
               }`}>
                 <div className="flex justify-between items-start">
                   <div className={`p-2 rounded-xl border transition-all duration-300 ${
                     isLight 
-                      ? 'bg-amber-50 border-amber-200 text-amber-600' 
-                      : 'bg-amber-500/10 border border-amber-500/20 text-amber-400'
+                      ? 'bg-orange-50 border-orange-200 text-orange-600' 
+                      : 'bg-orange-500/10 border border-orange-500/20 text-orange-400'
                   }`}>
                     <Lucide.TrendingUp size={16} strokeWidth={2.5} />
                   </div>
-                  <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-amber-700' : 'text-amber-400'}`}>Bagger Time</span>
+                  <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-orange-700' : 'text-orange-400'}`}>Bagger Time</span>
                 </div>
                 
                 <div className="space-y-1">
@@ -1062,7 +1062,7 @@ export default function ForexTracker() {
                     <span className={`text-2.5xl font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>
                       {(stats.totalProfit / 1000).toFixed(2)}x
                     </span>
-                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-amber-600' : 'text-amber-400'}`}>Bagger</span>
+                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-orange-600' : 'text-orange-400'}`}>Bagger</span>
                   </div>
                 </div>
 
@@ -1073,7 +1073,7 @@ export default function ForexTracker() {
                   </div>
                   <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-zinc-150' : 'bg-white/5'}`}>
                     <div 
-                      className="h-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)] animate-pulse" 
+                      className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)] animate-pulse" 
                       style={{ width: `${(((stats.totalProfit - (Math.floor(stats.totalProfit / 1000) * 1000)) / 1000) * 100)}%` }}
                     />
                   </div>
@@ -1383,7 +1383,7 @@ export default function ForexTracker() {
                             
                             {/* Horizontal circle indicators (e.g. 3 circles for 3 trades) */}
                             {d.data && d.data.tradesList.length > 0 && (
-                              <div className="flex gap-1 justify-center absolute bottom-1.5 left-1/2 -translate-x-1/2">
+                              <div className="flex gap-0.5 justify-end absolute bottom-1.5 right-1.5">
                                 {d.data.tradesList.map((t, idx) => (
                                   <span 
                                     key={idx} 
