@@ -172,15 +172,12 @@ const mergeRecords = (local: TradeRecord[], remote: TradeRecord[]): TradeRecord[
 
 const getLocalDateTimeString = () => {
   const now = new Date();
-  const gmt3Offset = 3 * 60 * 60 * 1000;
-  const gmt3Time = new Date(now.getTime() + gmt3Offset + now.getTimezoneOffset() * 60000);
-  
-  const year = gmt3Time.getFullYear();
-  const month = String(gmt3Time.getMonth() + 1).padStart(2, '0');
-  const day = String(gmt3Time.getDate()).padStart(2, '0');
-  const hours = String(gmt3Time.getHours()).padStart(2, '0');
-  const minutes = String(gmt3Time.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
 };
 
 const formatTradeDate = (dateStr: string) => {
@@ -607,15 +604,15 @@ export default function ForexTracker() {
         const d = new Date(normalized);
         if (isNaN(d.getTime())) return r;
         
-        // Shift to GMT+3
-        const gmt3Date = new Date(d.getTime() + 3 * 60 * 60 * 1000);
+        // Shift to GMT+4
+        const gmt4Date = new Date(d.getTime() + 4 * 60 * 60 * 1000);
         
-        const year = gmt3Date.getUTCFullYear();
-        const month = String(gmt3Date.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(gmt3Date.getUTCDate()).padStart(2, '0');
-        const hours = String(gmt3Date.getUTCHours()).padStart(2, '0');
-        const minutes = String(gmt3Date.getUTCMinutes()).padStart(2, '0');
-        const seconds = String(gmt3Date.getUTCSeconds()).padStart(2, '0');
+        const year = gmt4Date.getUTCFullYear();
+        const month = String(gmt4Date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(gmt4Date.getUTCDate()).padStart(2, '0');
+        const hours = String(gmt4Date.getUTCHours()).padStart(2, '0');
+        const minutes = String(gmt4Date.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(gmt4Date.getUTCSeconds()).padStart(2, '0');
         
         return {
           ...r,
@@ -754,7 +751,12 @@ export default function ForexTracker() {
     }
 
     if (!profit || !date) return;
-    const formattedDate = date.includes('T') ? date.replace('T', ' ') + ':00+03:00' : date;
+    
+    // Parse local datetime input to UTC to save in Supabase
+    const cleanDate = date.replace(' ', 'T');
+    const parseDate = new Date(cleanDate);
+    const formattedDate = isNaN(parseDate.getTime()) ? date : parseDate.toISOString();
+    
     const newId = generateUUID();
     const newRecord: TradeRecord = {
       id: newId,
@@ -1836,7 +1838,14 @@ export default function ForexTracker() {
                         </div>
                      )}
                      <div className="w-full">
-                        <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required className="w-full bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none text-white dark:[color-scheme:dark]" />
+                        <input 
+                           type="text" 
+                           value={date} 
+                           onChange={(e) => setDate(e.target.value)} 
+                           required 
+                           className="w-full bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none text-white" 
+                           placeholder="YYYY-MM-DD HH:mm"
+                        />
                      </div>
                      <div className="flex gap-3 pt-2">
                         <button type="button" onClick={(e) => handleSubmit(e, true)} className="flex-1 bg-zinc-800 text-white rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all hover:bg-zinc-700 cursor-pointer">Add Bulk</button>
