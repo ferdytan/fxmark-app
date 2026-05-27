@@ -1665,10 +1665,10 @@ export default function ForexTracker() {
          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
             <div className="bg-[#111] w-full max-w-sm rounded-[2rem] p-6 border border-white/10 animate-in slide-in-from-bottom-8">
                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-sm font-black uppercase tracking-widest">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-white">
                      {isPinVerified ? 'New Execution' : pinAction === 'delete' ? 'Delete Verification' : pinAction === 'import' ? 'Import Verification' : 'Security Verification'}
                   </h3>
-                  <button onClick={handleCloseModal} className="p-2 text-zinc-500"><Lucide.X size={20}/></button>
+                  <button onClick={handleCloseModal} className="p-2 text-zinc-500 hover:text-white transition-colors cursor-pointer"><Lucide.X size={20}/></button>
                </div>
 
                {!isPinVerified ? (
@@ -1719,7 +1719,7 @@ export default function ForexTracker() {
                               key={num}
                               type="button"
                               onClick={() => handleKeypadPress(num)}
-                              className="h-12 bg-zinc-900 hover:bg-zinc-800 active:scale-95 border border-white/5 text-base font-black rounded-2xl flex items-center justify-center transition-all duration-100"
+                              className="h-12 bg-zinc-900 hover:bg-zinc-800 active:scale-95 border border-white/5 text-base font-black text-white rounded-2xl flex items-center justify-center transition-all duration-100 cursor-pointer"
                            >
                               {num}
                            </button>
@@ -1727,21 +1727,21 @@ export default function ForexTracker() {
                         <button
                            type="button"
                            onClick={handleKeypadClear}
-                           className="h-12 bg-zinc-950/40 hover:bg-zinc-900 active:scale-95 text-[10px] font-black uppercase tracking-wider text-zinc-500 rounded-2xl flex items-center justify-center transition-all duration-100"
+                           className="h-12 bg-zinc-950/40 hover:bg-zinc-900 active:scale-95 text-[10px] font-black uppercase tracking-wider text-zinc-400 hover:text-white rounded-2xl flex items-center justify-center transition-all duration-100 cursor-pointer"
                         >
                            Clear
                         </button>
                         <button
                            type="button"
                            onClick={() => handleKeypadPress('0')}
-                           className="h-12 bg-zinc-900 hover:bg-zinc-800 active:scale-95 border border-white/5 text-base font-black rounded-2xl flex items-center justify-center transition-all duration-100"
+                           className="h-12 bg-zinc-900 hover:bg-zinc-800 active:scale-95 border border-white/5 text-base font-black text-white rounded-2xl flex items-center justify-center transition-all duration-100 cursor-pointer"
                         >
                            0
                         </button>
                         <button
                            type="button"
                            onClick={handleKeypadBackspace}
-                           className="h-12 bg-zinc-950/40 hover:bg-zinc-900 active:scale-95 text-zinc-500 rounded-2xl flex items-center justify-center transition-all duration-100"
+                           className="h-12 bg-zinc-950/40 hover:bg-zinc-900 active:scale-95 text-zinc-400 hover:text-white rounded-2xl flex items-center justify-center transition-all duration-100 cursor-pointer"
                         >
                            <Lucide.Delete size={18} />
                         </button>
@@ -1750,14 +1750,14 @@ export default function ForexTracker() {
                ) : (
                   <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in duration-300">
                      <div className="grid grid-cols-2 gap-3">
-                        <select value={type} onChange={(e) => setType(e.target.value as any)} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none">
+                        <select value={type} onChange={(e) => setType(e.target.value as any)} className="bg-zinc-900 text-white border border-white/5 rounded-xl p-3 text-xs font-bold outline-none">
                            <option value="buy">BUY</option><option value="sell">SELL</option><option value="deposit">DEPOSIT</option>
                         </select>
-                        <input type="text" value={symbol} onChange={(e) => setSymbol(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Symbol" />
+                        <input type="text" value={symbol} onChange={(e) => setSymbol(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none disabled:opacity-50" placeholder="Symbol" />
                      </div>
                      <div className="grid grid-cols-2 gap-3">
-                        <input type="number" step="any" value={lots} onChange={(e) => setLots(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Lots" />
-                        <input type="number" step="any" value={profit} onChange={(e) => setProfit(e.target.value)} required className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Profit $" />
+                        <input type="number" step="any" value={lots} onChange={(e) => setLots(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none disabled:opacity-50" placeholder="Lots" />
+                        <input type="number" step="any" value={profit} onChange={(e) => setProfit(e.target.value)} required className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Profit $" />
                      </div>
                      {type !== 'deposit' && (
                         <div className="grid grid-cols-2 gap-3">
@@ -1778,18 +1778,18 @@ export default function ForexTracker() {
                                     setClosePrice('');
                                  }
                               }} 
-                              className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" 
+                              className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" 
                               placeholder="Open Price (Opt)" 
                             />
-                           <input type="number" step="any" value={closePrice} onChange={(e) => setClosePrice(e.target.value)} className="bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Close Price (Opt)" />
+                           <input type="number" step="any" value={closePrice} onChange={(e) => setClosePrice(e.target.value)} className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Close Price (Opt)" />
                         </div>
                      )}
                      <div className="w-full">
                         <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)} required className="w-full bg-zinc-900 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none text-white dark:[color-scheme:dark]" />
                      </div>
                      <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={(e) => handleSubmit(e, true)} className="flex-1 bg-zinc-800 text-white rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all hover:bg-zinc-700">Add Bulk</button>
-                        <button type="button" onClick={(e) => handleSubmit(e, false)} className="flex-1 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all shadow-lg shadow-emerald-500/20">Commit</button>
+                        <button type="button" onClick={(e) => handleSubmit(e, true)} className="flex-1 bg-zinc-800 text-white rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all hover:bg-zinc-700 cursor-pointer">Add Bulk</button>
+                        <button type="button" onClick={(e) => handleSubmit(e, false)} className="flex-1 bg-emerald-500 text-black rounded-xl font-black uppercase tracking-widest p-4 text-[9px] transition-all shadow-lg shadow-emerald-500/20 cursor-pointer">Commit</button>
                      </div>
                   </form>
                )}
