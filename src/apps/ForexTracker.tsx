@@ -170,6 +170,16 @@ const mergeRecords = (local: TradeRecord[], remote: TradeRecord[]): TradeRecord[
   return Array.from(map.values()).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
+const getLocalDateTimeString = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 const formatTradeDate = (dateStr: string) => {
   try {
     const normalized = dateStr.includes(' ') && !dateStr.includes('T')
@@ -320,6 +330,7 @@ export default function ForexTracker() {
     
     setPinAction('add');
     setShowAddModal(true);
+    setDate(getLocalDateTimeString());
   };
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -327,7 +338,7 @@ export default function ForexTracker() {
   const [type, setType] = useState<'buy' | 'sell' | 'deposit'>('buy');
   const [lots, setLots] = useState('0.10');
   const [profit, setProfit] = useState('10');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
+  const [date, setDate] = useState(getLocalDateTimeString());
   const [openPrice, setOpenPrice] = useState('');
   const [closePrice, setClosePrice] = useState('');
 
@@ -576,16 +587,44 @@ export default function ForexTracker() {
     setShowAddModal(true);
   };
 
+  const shiftedRecords = useMemo(() => {
+    return records.map(r => {
+      try {
+        const normalized = r.date.includes(' ') && !r.date.includes('T')
+          ? r.date.replace(' ', 'T')
+          : r.date;
+        const d = new Date(normalized);
+        if (isNaN(d.getTime())) return r;
+        
+        d.setHours(d.getHours() + 4);
+        
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        
+        return {
+          ...r,
+          date: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+        };
+      } catch {
+        return r;
+      }
+    });
+  }, [records]);
+
   const stats = useMemo(() => {
-    const tradesOnly = records.filter(r => r.type !== 'deposit');
+    const tradesOnly = shiftedRecords.filter(r => r.type !== 'deposit');
     const tProfit = tradesOnly.reduce((sum, r) => sum + r.profit, 0);
-    const tDeposit = records.filter(r => r.type === 'deposit').reduce((sum, r) => sum + r.profit, 0);
+    const tDeposit = shiftedRecords.filter(r => r.type === 'deposit').reduce((sum, r) => sum + r.profit, 0);
     const balance = tDeposit + tProfit;
     
     const wTrades = tradesOnly.filter(r => r.profit > 0);
     const wRate = tradesOnly.length > 0 ? (wTrades.length / tradesOnly.length) * 100 : 0;
     
-    const sorted = [...records].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const sorted = [...shiftedRecords].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const eData = [];
     let accBalance = 0;
     for (const r of sorted) {
@@ -614,7 +653,7 @@ export default function ForexTracker() {
       tradeCount: tradesOnly.length, matrix, calendarData,
       maxDrawdown: 4.2 // Placeholder as per original image
     };
-  }, [records]);
+  }, [shiftedRecords]);
 
   const currentCompoundLevel = useMemo(() => {
     return Math.max(1, Math.floor(stats.balance / 1000));
@@ -648,7 +687,7 @@ export default function ForexTracker() {
     ];
     
     return days.map(d => {
-      const dayTrades = records.filter(r => {
+      const dayTrades = shiftedRecords.filter(r => {
         if (r.type === 'deposit') return false;
         const tDate = new Date(r.date.replace(' ', 'T'));
         if (isNaN(tDate.getTime())) return false;
@@ -659,7 +698,7 @@ export default function ForexTracker() {
       const hasTraded = dayTrades.length > 0;
       return { ...d, profit, hasTraded };
     });
-  }, [records]);
+  }, [shiftedRecords]);
 
   const weeklySummary = useMemo(() => {
     const netProfit = weeklyStats.reduce((sum, d) => sum + d.profit, 0);
@@ -667,7 +706,7 @@ export default function ForexTracker() {
   }, [weeklyStats]);
 
   const avgWeeklyProfit = useMemo(() => {
-    const tradesOnly = records.filter(r => r.type !== 'deposit');
+    const tradesOnly = shiftedRecords.filter(r => r.type !== 'deposit');
     if (tradesOnly.length === 0) return 0;
     const dates = tradesOnly.map(r => new Date(r.date.replace(' ', 'T')).getTime()).filter(t => !isNaN(t));
     if (dates.length === 0) return 0;
@@ -677,7 +716,7 @@ export default function ForexTracker() {
     const msInWeek = 7 * 24 * 60 * 60 * 1000;
     const numWeeks = Math.max(1, Math.ceil(durationMs / msInWeek));
     return stats.totalProfit / numWeeks;
-  }, [records, stats.totalProfit]);
+  }, [shiftedRecords, stats.totalProfit]);
 
   const handleDuplicate = (r: TradeRecord) => {
     setType(r.type);
@@ -820,7 +859,7 @@ export default function ForexTracker() {
             >
                {isLight ? <Lucide.Moon size={15} strokeWidth={2.5} /> : <Lucide.Sun size={15} strokeWidth={2.5} />}
             </button>
-            <button onClick={() => { setPinAction('add'); setShowAddModal(true); }} className="w-8 h-8 bg-emerald-500 text-black rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20 cursor-pointer">
+            <button onClick={() => { setPinAction('add'); setShowAddModal(true); setDate(getLocalDateTimeString()); }} className="w-8 h-8 bg-emerald-500 text-black rounded-full flex items-center justify-center shadow-lg shadow-emerald-500/20 cursor-pointer">
                <Lucide.Plus size={18} strokeWidth={3} />
             </button>
          </div>
@@ -1610,7 +1649,7 @@ export default function ForexTracker() {
                   </div>
                </div>
                <div className="space-y-2">
-                  {records.filter(r => r.type !== 'deposit').reverse().map((r, i) => (
+                  {shiftedRecords.filter(r => r.type !== 'deposit').reverse().map((r, i) => (
                     <div key={i} className={`flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ${isLight ? 'bg-white border-zinc-200/80 shadow-sm text-zinc-800' : 'bg-zinc-900/30 border border-white/5 text-white'}`}>
                        <div className="flex flex-col">
                           <span className="text-[9px] font-black text-zinc-500 mb-1">{formatTradeDate(r.date)}</span>
