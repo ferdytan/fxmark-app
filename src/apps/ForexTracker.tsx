@@ -172,33 +172,40 @@ const mergeRecords = (local: TradeRecord[], remote: TradeRecord[]): TradeRecord[
 
 const getLocalDateTimeString = () => {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const gmt3Offset = 3 * 60 * 60 * 1000;
+  const gmt3Time = new Date(now.getTime() + gmt3Offset + now.getTimezoneOffset() * 60000);
+  
+  const year = gmt3Time.getFullYear();
+  const month = String(gmt3Time.getMonth() + 1).padStart(2, '0');
+  const day = String(gmt3Time.getDate()).padStart(2, '0');
+  const hours = String(gmt3Time.getHours()).padStart(2, '0');
+  const minutes = String(gmt3Time.getMinutes()).padStart(2, '0');
   return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 const formatTradeDate = (dateStr: string) => {
   try {
-    const normalized = dateStr.includes(' ') && !dateStr.includes('T')
-      ? dateStr.replace(' ', 'T')
-      : dateStr;
-    const d = new Date(normalized);
-    if (isNaN(d.getTime())) return dateStr;
-
-    const day = d.getDate();
+    const clean = dateStr.replace('T', ' ');
+    const parts = clean.split(' ');
+    const datePart = parts[0];
+    const timePart = parts[1] || '00:00:00';
+    
+    const ymd = datePart.split('-');
+    const year = ymd[0];
+    const monthIndex = parseInt(ymd[1]) - 1;
+    const day = parseInt(ymd[2]);
+    
+    const hms = timePart.split(':');
+    const hours = hms[0];
+    const minutes = hms[1];
+    
     const months = [
       'January', 'February', 'March', 'April', 'May', 'June',
       'July', 'August', 'September', 'October', 'November', 'December'
     ];
-    const month = months[d.getMonth()];
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-
-    return `${day} ${month} ${year}  -  ${hours}:${minutes}`;
+    const monthName = months[monthIndex];
+    
+    return `${day} ${monthName} ${year}  -  ${hours}:${minutes}`;
   } catch {
     return dateStr;
   }
@@ -590,20 +597,25 @@ export default function ForexTracker() {
   const shiftedRecords = useMemo(() => {
     return records.map(r => {
       try {
-        const normalized = r.date.includes(' ') && !r.date.includes('T')
-          ? r.date.replace(' ', 'T')
-          : r.date;
+        let normalized = r.date;
+        if (r.date.includes(' ') && !r.date.includes('T')) {
+          normalized = r.date.replace(' ', 'T');
+        }
+        if (!normalized.includes('+') && !normalized.endsWith('Z') && normalized.split('-').length >= 3) {
+          normalized = normalized + 'Z';
+        }
         const d = new Date(normalized);
         if (isNaN(d.getTime())) return r;
         
-        d.setHours(d.getHours() + 4);
+        // Shift to GMT+3
+        const gmt3Date = new Date(d.getTime() + 3 * 60 * 60 * 1000);
         
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        const seconds = String(d.getSeconds()).padStart(2, '0');
+        const year = gmt3Date.getUTCFullYear();
+        const month = String(gmt3Date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(gmt3Date.getUTCDate()).padStart(2, '0');
+        const hours = String(gmt3Date.getUTCHours()).padStart(2, '0');
+        const minutes = String(gmt3Date.getUTCMinutes()).padStart(2, '0');
+        const seconds = String(gmt3Date.getUTCSeconds()).padStart(2, '0');
         
         return {
           ...r,
@@ -742,7 +754,7 @@ export default function ForexTracker() {
     }
 
     if (!profit || !date) return;
-    const formattedDate = date.includes('T') ? date.replace('T', ' ') + ':00' : date;
+    const formattedDate = date.includes('T') ? date.replace('T', ' ') + ':00+03:00' : date;
     const newId = generateUUID();
     const newRecord: TradeRecord = {
       id: newId,
