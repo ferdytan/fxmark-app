@@ -594,29 +594,11 @@ export default function ForexTracker() {
   const shiftedRecords = useMemo(() => {
     return records.map(r => {
       try {
-        let normalized = r.date;
-        if (r.date.includes(' ') && !r.date.includes('T')) {
-          normalized = r.date.replace(' ', 'T');
-        }
-        if (!normalized.includes('+') && !normalized.endsWith('Z') && normalized.split('-').length >= 3) {
-          normalized = normalized + 'Z';
-        }
-        const d = new Date(normalized);
-        if (isNaN(d.getTime())) return r;
-        
-        // Shift to GMT+4
-        const gmt4Date = new Date(d.getTime() + 4 * 60 * 60 * 1000);
-        
-        const year = gmt4Date.getUTCFullYear();
-        const month = String(gmt4Date.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(gmt4Date.getUTCDate()).padStart(2, '0');
-        const hours = String(gmt4Date.getUTCHours()).padStart(2, '0');
-        const minutes = String(gmt4Date.getUTCMinutes()).padStart(2, '0');
-        const seconds = String(gmt4Date.getUTCSeconds()).padStart(2, '0');
-        
+        const clean = r.date.replace('T', ' ');
+        const naiveDateStr = clean.slice(0, 19);
         return {
           ...r,
-          date: `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+          date: naiveDateStr
         };
       } catch {
         return r;
@@ -752,10 +734,11 @@ export default function ForexTracker() {
 
     if (!profit || !date) return;
     
-    // Parse local datetime input to UTC to save in Supabase
+    // Save timezone-naive datetime string
     const cleanDate = date.replace(' ', 'T');
-    const parseDate = new Date(cleanDate);
-    const formattedDate = isNaN(parseDate.getTime()) ? date : parseDate.toISOString();
+    const formattedDate = cleanDate.includes(':') 
+      ? (cleanDate.split(':').length === 2 ? cleanDate + ':00' : cleanDate)
+      : cleanDate + ' 00:00:00';
     
     const newId = generateUUID();
     const newRecord: TradeRecord = {
