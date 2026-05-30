@@ -208,14 +208,7 @@ const formatTradeDate = (dateStr: string) => {
   }
 };
 
-const PRO_TIPS = [
-  "Plan your trade and trade your plan. Consistency is built on discipline, not luck.",
-  "Risk management is the key to longevity. Never risk more than 1-2% per trade.",
-  "Let your winners run and cut your losses quickly. The math of trading is in your favor.",
-  "The market is a device for transferring money from the impatient to the patient.",
-  "Don't overtrade. Sometimes the best position is no position at all.",
-  "Keep an emotional journal. Your state of mind is as important as your technical analysis."
-];
+
 
 const WISDOM_QUOTES = [
   { quote: "The goal of a successful trader is to make the best trades. Money is secondary.", author: "Alexander Elder" },
@@ -307,19 +300,13 @@ export default function ForexTracker() {
     }
   }, [calcAccountSize, calcRiskPercent, calcStopLossPips]);
 
-  const [activeTipIndex, setActiveTipIndex] = useState(0);
+
   const [toast, setToast] = useState<{ show: boolean; message: string }>({ show: false, message: '' });
   const [showWisdomModal, setShowWisdomModal] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState({ quote: '', author: '' });
   const [showClaimsModal, setShowClaimsModal] = useState(false);
 
-  // Pro tip cycling effect
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTipIndex(prev => (prev + 1) % PRO_TIPS.length);
-    }, 8000);
-    return () => clearInterval(interval);
-  }, []);
+
 
   const triggerToast = (message: string) => {
     setToast({ show: true, message });
@@ -639,9 +626,27 @@ export default function ForexTracker() {
       calendarData[d].tradesList.push({ profit: t.profit });
     });
 
+    const sortedTrades = [...tradesOnly].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    let cumulativeProfit = 0;
+    let maxBaggerReached = 0;
+    const baggerMilestones: Record<string, number[]> = {};
+    sortedTrades.forEach(t => {
+      cumulativeProfit += t.profit;
+      const currentBagger = Math.floor(cumulativeProfit / 1000);
+      if (currentBagger > maxBaggerReached) {
+        const d = t.date.substring(0, 10);
+        if (!baggerMilestones[d]) baggerMilestones[d] = [];
+        for (let b = maxBaggerReached + 1; b <= currentBagger; b++) {
+          baggerMilestones[d].push(b);
+        }
+        maxBaggerReached = currentBagger;
+      }
+    });
+
     return { 
       totalProfit: tProfit, balance, wRate, eData, 
       tradeCount: tradesOnly.length, matrix, calendarData,
+      baggerMilestones,
       maxDrawdown: 4.2 // Placeholder as per original image
     };
   }, [shiftedRecords]);
@@ -1327,25 +1332,7 @@ export default function ForexTracker() {
               </div>
             </section>
 
-            {/* Daily revolving pro tip banner */}
-            <section className={`border rounded-2xl p-4 flex gap-3 items-center relative overflow-hidden group transition-all duration-300 ${isLight ? 'bg-white border-zinc-200 shadow-sm' : 'bg-zinc-900/40 border-white/5'}`}>
-              <div className="absolute -top-12 -left-12 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
-              <div className="p-2.5 bg-amber-500/10 rounded-2xl text-amber-400 animate-pulse shrink-0">
-                <Lucide.Lightbulb size={18} strokeWidth={2.5} className="fill-amber-400/10" />
-              </div>
-              <div className="flex-1 min-w-0 pr-2">
-                <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Daily Pro Tip</span>
-                <p className={`text-[10px] font-bold leading-snug mt-0.5 line-clamp-2 transition-all duration-300 ${isLight ? 'text-zinc-700' : 'text-zinc-300'}`}>
-                  "{PRO_TIPS[activeTipIndex]}"
-                </p>
-              </div>
-              <button 
-                onClick={() => setActiveTipIndex(prev => (prev + 1) % PRO_TIPS.length)}
-                className="p-1 bg-white/5 rounded-lg text-zinc-500 hover:text-white transition-colors cursor-pointer shrink-0"
-              >
-                <Lucide.ChevronRight size={14} />
-              </button>
-            </section>
+
           </div>
         )}
 
@@ -1393,6 +1380,16 @@ export default function ForexTracker() {
                       <div key={i} className={`relative p-1.5 min-h-[56px] flex flex-col items-center justify-center transition-all duration-300 rounded-xl ${cellStyle} ${!d ? 'opacity-20' : ''}`}>
                         {d && (
                           <>
+                            {/* Medal Icon on Bagger Hit */}
+                            {d.date && stats.baggerMilestones && stats.baggerMilestones[d.date] && (
+                              <div 
+                                className="absolute top-1 left-1.5 flex items-center justify-center text-amber-500 animate-pulse"
+                                title={`Hit ${stats.baggerMilestones[d.date].join('x, ')}x Bagger!`}
+                              >
+                                <Lucide.Medal size={11} strokeWidth={2.5} />
+                              </div>
+                            )}
+
                             {/* Day Number inside a circular badge if it is today */}
                             {isToday ? (
                               <span className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center rounded-full bg-emerald-600 text-[8px] font-black text-white shadow-sm shadow-emerald-500/30">
@@ -1676,7 +1673,11 @@ export default function ForexTracker() {
       </main>
 
       {/* Bottom Navigation - Visible on both Mobile and Desktop */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/10 pb-safe shadow-2xl">
+      <nav className={`fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl pb-safe shadow-2xl transition-colors duration-300 ${
+         isLight 
+            ? 'bg-white/80 border-t border-zinc-200/80' 
+            : 'bg-[#0A0A0A]/90 border-t border-white/10'
+      }`}>
          <div className="flex items-center justify-between p-2">
             {[
               { id: 'dashboard', icon: Lucide.LayoutDashboard, label: 'Overview' },
@@ -1687,7 +1688,13 @@ export default function ForexTracker() {
               <button 
                 key={item.id}
                 onClick={() => setActiveView(item.id as any)}
-                className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all ${activeView === item.id ? 'text-emerald-500' : 'text-zinc-600 hover:text-zinc-400'}`}
+                className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all ${
+                  activeView === item.id 
+                    ? 'text-emerald-500' 
+                    : isLight 
+                      ? 'text-zinc-400 hover:text-zinc-800' 
+                      : 'text-zinc-600 hover:text-zinc-400'
+                }`}
               >
                 <item.icon size={20} strokeWidth={activeView === item.id ? 2.5 : 2} />
                 <span className="text-[9px] font-black uppercase tracking-widest">{item.label}</span>
