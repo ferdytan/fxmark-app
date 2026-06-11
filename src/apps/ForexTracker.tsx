@@ -386,11 +386,24 @@ export default function ForexTracker() {
     return decimals > 0 ? result.toFixed(decimals) : result.toString();
   };
 
-  const handleLotsChange = (val: string) => {
-    setLots(val);
-    const numLots = Number(val);
-    if (!isNaN(numLots)) {
-      setProfit((numLots * 100).toString());
+  const updateCalculatedProfit = (openVal: string, closeVal: string, tradeType: 'buy' | 'sell' | 'deposit', lotsVal: string) => {
+    if (tradeType === 'deposit') return;
+    if (openVal && closeVal && lotsVal) {
+      const openNum = Number(openVal);
+      const closeNum = Number(closeVal);
+      const lotsNum = Number(lotsVal);
+      if (!isNaN(openNum) && !isNaN(closeNum) && !isNaN(lotsNum)) {
+        const diff = tradeType === 'buy' ? (closeNum - openNum) : (openNum - closeNum);
+        const p = diff * lotsNum * 100;
+        setProfit(Number(p.toFixed(2)).toString());
+        return;
+      }
+    }
+    if (lotsVal) {
+      const lotsNum = Number(lotsVal);
+      if (!isNaN(lotsNum)) {
+        setProfit((lotsNum * 100).toString());
+      }
     }
   };
 
@@ -1865,19 +1878,18 @@ export default function ForexTracker() {
                            onChange={(e) => {
                               const newType = e.target.value as any;
                               setType(newType);
-                              if (openPrice) {
-                                 setClosePrice(calculateClosePrice(openPrice, newType));
+                              if (newType === 'deposit') {
+                                 return;
                               }
+                              const newClose = calculateClosePrice(openPrice, newType);
+                              setClosePrice(newClose);
+                              updateCalculatedProfit(openPrice, newClose, newType, lots);
                            }} 
                            className="bg-zinc-900 text-white border border-white/5 rounded-xl p-3 text-xs font-bold outline-none"
                         >
                            <option value="buy">BUY</option><option value="sell">SELL</option><option value="deposit">DEPOSIT</option>
                         </select>
                         <input type="text" value={symbol} onChange={(e) => setSymbol(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none disabled:opacity-50" placeholder="Symbol" />
-                     </div>
-                     <div className="grid grid-cols-2 gap-3">
-                        <input type="number" step="any" value={lots} onChange={(e) => handleLotsChange(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none disabled:opacity-50" placeholder="Lots" />
-                        <input type="number" step="any" value={profit} onChange={(e) => setProfit(e.target.value)} required className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Profit $" />
                      </div>
                      {type !== 'deposit' && (
                         <div className="grid grid-cols-2 gap-3">
@@ -1888,14 +1900,43 @@ export default function ForexTracker() {
                               onChange={(e) => {
                                  const val = e.target.value;
                                  setOpenPrice(val);
-                                 setClosePrice(calculateClosePrice(val, type));
+                                 const newClose = calculateClosePrice(val, type);
+                                 setClosePrice(newClose);
+                                 updateCalculatedProfit(val, newClose, type, lots);
                               }} 
                               className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" 
                               placeholder="Open Price (Opt)" 
                             />
-                           <input type="number" step="any" value={closePrice} onChange={(e) => setClosePrice(e.target.value)} className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Close Price (Opt)" />
+                           <input 
+                              type="number" 
+                              step="any" 
+                              value={closePrice} 
+                              onChange={(e) => {
+                                 const val = e.target.value;
+                                 setClosePrice(val);
+                                 updateCalculatedProfit(openPrice, val, type, lots);
+                              }} 
+                              className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" 
+                              placeholder="Close Price (Opt)" 
+                           />
                         </div>
                      )}
+                     <div className="grid grid-cols-2 gap-3">
+                        <input 
+                           type="number" 
+                           step="any" 
+                           value={lots} 
+                           onChange={(e) => {
+                              const val = e.target.value;
+                              setLots(val);
+                              updateCalculatedProfit(openPrice, closePrice, type, val);
+                           }} 
+                           disabled={type === 'deposit'} 
+                           className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none disabled:opacity-50" 
+                           placeholder="Lots" 
+                        />
+                        <input type="number" step="any" value={profit} onChange={(e) => setProfit(e.target.value)} required className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Profit $" />
+                     </div>
                      <div className="w-full">
                         <input 
                            type="text" 
