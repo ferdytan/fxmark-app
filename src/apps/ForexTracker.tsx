@@ -377,6 +377,17 @@ export default function ForexTracker() {
     return 'tr-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 9);
   };
 
+  const generateNextId = () => {
+    let maxId = 0;
+    records.forEach(r => {
+      const num = Number(r.id);
+      if (!isNaN(num) && num > maxId) {
+        maxId = num;
+      }
+    });
+    return maxId > 0 ? (maxId + 1).toString() : generateUUID();
+  };
+
   const calculateClosePrice = (entryVal: string, tradeType: 'buy' | 'sell' | 'deposit') => {
     if (!entryVal || tradeType === 'deposit') return '';
     const num = Number(entryVal);
@@ -803,7 +814,7 @@ export default function ForexTracker() {
       ? (cleanDate.split(':').length === 2 ? cleanDate + ':00' : cleanDate)
       : cleanDate + ' 00:00:00';
     
-    const newId = generateUUID();
+    const newId = generateNextId();
     const newRecord: TradeRecord = {
       id: newId,
       symbol: type === 'deposit' ? 'DEPOSIT' : symbol,
