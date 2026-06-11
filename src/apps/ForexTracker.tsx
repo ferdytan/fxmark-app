@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import * as Lucide from 'lucide-react';
-import { AreaChart, Area, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, Tooltip, ResponsiveContainer, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { supabase } from '../supabaseClient';
 
 interface TransparentImageProps {
@@ -218,6 +218,35 @@ const WISDOM_QUOTES = [
   { quote: "Every day I assume every position I have is wrong.", author: "Paul Tudor Jones" },
   { quote: "Amateurs think about how much money they can make. Professionals think about how much money they can lose.", author: "Jack Schwager" }
 ];
+const formatXAxis = (tickItem: string) => {
+  if (!tickItem) return '';
+  try {
+    const parts = tickItem.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      const date = new Date(year, month, day);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+    }
+    const d = new Date(tickItem);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  } catch (e) {
+    // ignore
+  }
+  return tickItem;
+};
+
+const formatYAxis = (tickItem: number) => {
+  if (Math.abs(tickItem) >= 1000) {
+    return `$${(tickItem / 1000).toFixed(1).replace('.0', '')}k`;
+  }
+  return `$${tickItem}`;
+};
 
 export default function ForexTracker() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -327,8 +356,8 @@ export default function ForexTracker() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [symbol, setSymbol] = useState('XAUUSD.c');
   const [type, setType] = useState<'buy' | 'sell' | 'deposit'>('buy');
-  const [lots, setLots] = useState('0.10');
-  const [profit, setProfit] = useState('10');
+  const [lots, setLots] = useState(() => localStorage.getItem('fxmark_last_lots') || '0.10');
+  const [profit, setProfit] = useState(() => localStorage.getItem('fxmark_last_profit') || '10');
   const [date, setDate] = useState(getLocalDateTimeString());
   const [openPrice, setOpenPrice] = useState('');
   const [closePrice, setClosePrice] = useState('');
@@ -348,6 +377,23 @@ export default function ForexTracker() {
     return 'tr-' + Date.now().toString(36) + '-' + Math.random().toString(36).substring(2, 9);
   };
 
+  const calculateClosePrice = (entryVal: string, tradeType: 'buy' | 'sell' | 'deposit') => {
+    if (!entryVal || tradeType === 'deposit') return '';
+    const num = Number(entryVal);
+    if (isNaN(num)) return '';
+    const decimals = entryVal.includes('.') ? entryVal.split('.')[1].length : 0;
+    const result = tradeType === 'buy' ? num + 1 : num - 1;
+    return decimals > 0 ? result.toFixed(decimals) : result.toString();
+  };
+
+  const handleLotsChange = (val: string) => {
+    setLots(val);
+    const numLots = Number(val);
+    if (!isNaN(numLots)) {
+      setProfit((numLots * 100).toString());
+    }
+  };
+
   const handleCloseModal = () => {
     setShowAddModal(false);
     setIsPinVerified(false);
@@ -355,7 +401,6 @@ export default function ForexTracker() {
     setPinError(false);
     setOpenPrice('');
     setClosePrice('');
-    setProfit('10');
     setPinAction(null);
     setPendingDeleteId(null);
   };
@@ -758,7 +803,8 @@ export default function ForexTracker() {
     };
 
     setRecords(prev => [...prev, newRecord]);
-    setProfit('10');
+    localStorage.setItem('fxmark_last_lots', lots);
+    localStorage.setItem('fxmark_last_profit', profit);
     setOpenPrice('');
     setClosePrice('');
     if (!keepOpen) handleCloseModal();
@@ -1064,13 +1110,34 @@ export default function ForexTracker() {
                <h3 className="text-[10px] font-black text-zinc-500 uppercase tracking-widest pl-2">Growth Timeline</h3>
                <div className={`rounded-2xl p-4 h-48 transition-all duration-300 ${isLight ? 'bg-white border border-zinc-200 shadow-sm' : 'bg-zinc-900/30 border border-white/5'}`}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={stats.eData}>
+                    <AreaChart data={stats.eData} margin={{ top: 10, right: 10, left: -10, bottom: 5 }}>
                       <defs>
                         <linearGradient id="curveColor" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
                           <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
+                      <CartesianGrid 
+                        vertical={false} 
+                        stroke={isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)'} 
+                      />
+                      <XAxis 
+                        dataKey="date" 
+                        tickFormatter={formatXAxis} 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: isLight ? '#71717a' : '#a1a1aa', fontSize: 8, fontWeight: 600 }}
+                        dy={5}
+                      />
+                      <YAxis 
+                        domain={['auto', 'auto']}
+                        tickFormatter={formatYAxis} 
+                        axisLine={false} 
+                        tickLine={false} 
+                        tick={{ fill: isLight ? '#71717a' : '#a1a1aa', fontSize: 8, fontWeight: 600 }}
+                        width={40}
+                        dx={-5}
+                      />
                       <Area type="monotone" dataKey="balance" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#curveColor)" />
                       <Tooltip contentStyle={isLight ? { backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '10px', color: '#1f2937' } : { backgroundColor: '#111', border: 'none', borderRadius: '8px', fontSize: '10px' }} itemStyle={{ color: '#10b981' }} formatter={(v: any) => [`$${v}`, 'Balance']}/>
                     </AreaChart>
@@ -1793,13 +1860,23 @@ export default function ForexTracker() {
                ) : (
                   <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in duration-300">
                      <div className="grid grid-cols-2 gap-3">
-                        <select value={type} onChange={(e) => setType(e.target.value as any)} className="bg-zinc-900 text-white border border-white/5 rounded-xl p-3 text-xs font-bold outline-none">
+                        <select 
+                           value={type} 
+                           onChange={(e) => {
+                              const newType = e.target.value as any;
+                              setType(newType);
+                              if (openPrice) {
+                                 setClosePrice(calculateClosePrice(openPrice, newType));
+                              }
+                           }} 
+                           className="bg-zinc-900 text-white border border-white/5 rounded-xl p-3 text-xs font-bold outline-none"
+                        >
                            <option value="buy">BUY</option><option value="sell">SELL</option><option value="deposit">DEPOSIT</option>
                         </select>
                         <input type="text" value={symbol} onChange={(e) => setSymbol(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none disabled:opacity-50" placeholder="Symbol" />
                      </div>
                      <div className="grid grid-cols-2 gap-3">
-                        <input type="number" step="any" value={lots} onChange={(e) => setLots(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none disabled:opacity-50" placeholder="Lots" />
+                        <input type="number" step="any" value={lots} onChange={(e) => handleLotsChange(e.target.value)} disabled={type === 'deposit'} className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none disabled:opacity-50" placeholder="Lots" />
                         <input type="number" step="any" value={profit} onChange={(e) => setProfit(e.target.value)} required className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" placeholder="Profit $" />
                      </div>
                      {type !== 'deposit' && (
@@ -1811,15 +1888,7 @@ export default function ForexTracker() {
                               onChange={(e) => {
                                  const val = e.target.value;
                                  setOpenPrice(val);
-                                 if (val) {
-                                    const num = Number(val);
-                                    if (!isNaN(num)) {
-                                       const decimals = val.includes('.') ? val.split('.')[1].length : 0;
-                                       setClosePrice(decimals > 0 ? (num - 1).toFixed(decimals) : (num - 1).toString());
-                                    }
-                                 } else {
-                                    setClosePrice('');
-                                 }
+                                 setClosePrice(calculateClosePrice(val, type));
                               }} 
                               className="bg-zinc-900 text-white placeholder-zinc-500 border border-white/5 rounded-xl p-3 text-xs font-bold outline-none" 
                               placeholder="Open Price (Opt)" 
