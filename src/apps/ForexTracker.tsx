@@ -1169,92 +1169,6 @@ export default function ForexTracker() {
                </div>
             </section>
 
-            {/* Twin Bagger Metrics cards grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Bagger Time Card (Orange Premium) */}
-              <div className={`border rounded-2xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${
-                isLight 
-                  ? 'from-orange-50/80 via-amber-50/60 to-orange-50/45 border-orange-200/80 shadow-[0_4px_12px_rgba(249,115,22,0.05)] bg-gradient-to-br' 
-                  : 'from-orange-950/[0.12] via-amber-950/[0.04] to-black/40 border-orange-500/20 shadow-[0_0_20px_rgba(249,115,22,0.05)] bg-gradient-to-br'
-              }`}>
-                <div className="flex justify-between items-start">
-                  <div className={`p-2 rounded-xl border transition-all duration-300 ${
-                    isLight 
-                      ? 'bg-orange-50 border-orange-200 text-orange-600' 
-                      : 'bg-orange-500/10 border border-orange-500/20 text-orange-400'
-                  }`}>
-                    <Lucide.TrendingUp size={16} strokeWidth={2.5} />
-                  </div>
-                  <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-orange-700' : 'text-orange-400'}`}>Bagger Time</span>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Current Level</p>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className={`text-2.5xl font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>
-                      {(stats.totalProfit / 1000).toFixed(2)}x
-                    </span>
-                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-orange-600' : 'text-orange-400'}`}>Bagger</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[8px] font-bold text-zinc-400 uppercase">
-                    <span>{(100 - ((stats.totalProfit - (Math.floor(stats.totalProfit / 1000) * 1000)) / 1000) * 100).toFixed(1)}% to Next</span>
-                    <span>Next: ${(Math.floor(stats.totalProfit / 1000) * 1000 + 2000).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-                  </div>
-                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-zinc-150' : 'bg-white/5'}`}>
-                    <div 
-                      className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)] animate-pulse" 
-                      style={{ width: `${(((stats.totalProfit - (Math.floor(stats.totalProfit / 1000) * 1000)) / 1000) * 100)}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Approx Bagger Time Card (Mint/Cyan-Blue Cyberpunk) */}
-              <div className={`border rounded-2xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${
-                isLight 
-                  ? 'from-cyan-50/80 via-blue-50/60 to-teal-50 border-cyan-200/80 shadow-[0_4px_12px_rgba(6,182,212,0.05)] bg-gradient-to-br' 
-                  : 'from-cyan-950/[0.12] via-blue-950/[0.04] to-black/40 border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.05)] bg-gradient-to-br'
-              }`}>
-                <div className="flex justify-between items-start">
-                  <div className={`p-2 rounded-xl border transition-all duration-300 ${
-                    isLight 
-                      ? 'bg-cyan-50 border-cyan-200 text-cyan-650' 
-                      : 'bg-cyan-500/10 border border-cyan-500/20 text-cyan-400'
-                  }`}>
-                    <Lucide.Hourglass size={16} strokeWidth={2.5} />
-                  </div>
-                  <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-cyan-700' : 'text-cyan-400'}`}>Approx Bagger Time</span>
-                </div>
-                
-                <div className="space-y-1">
-                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Est. Weeks to Level</p>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className={`text-2.5xl font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>
-                      {avgWeeklyProfit > 0 ? (((Math.floor(stats.totalProfit / 1000) * 1000 + 1000) - stats.totalProfit) / avgWeeklyProfit).toFixed(1) : '--'}
-                    </span>
-                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}>Weeks</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="text-[8px] font-bold text-zinc-400 uppercase flex justify-between">
-                    <span>Weekly Avg Profit</span>
-                    <span className={`font-black ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}>
-                      ${avgWeeklyProfit.toFixed(0)}
-                    </span>
-                  </div>
-                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-zinc-150' : 'bg-white/5'}`}>
-                    <div 
-                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.5)]" 
-                      style={{ width: `${Math.min(100, Math.max(0, 100 - (((Math.floor(stats.totalProfit / 1000) * 1000 + 1000) - stats.totalProfit) / 1000) * 100))}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* Monthly Performance (Calories Burned Style Pill Bar Chart) */}
             <section className="space-y-3">
@@ -1384,6 +1298,93 @@ export default function ForexTracker() {
                   </div>
                </div>
             </section>
+
+            {/* Twin Bagger Metrics cards grid */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Bagger Time Card (Orange Premium) */}
+              <div className={`border rounded-2xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${
+                isLight 
+                  ? 'from-orange-50/80 via-amber-50/60 to-orange-50/45 border-orange-200/80 shadow-[0_4px_12px_rgba(249,115,22,0.05)] bg-gradient-to-br' 
+                  : 'from-orange-950/[0.12] via-amber-950/[0.04] to-black/40 border-orange-500/20 shadow-[0_0_20px_rgba(249,115,22,0.05)] bg-gradient-to-br'
+              }`}>
+                <div className="flex justify-between items-start">
+                  <div className={`p-2 rounded-xl border transition-all duration-300 ${
+                    isLight 
+                      ? 'bg-orange-50 border-orange-200 text-orange-600' 
+                      : 'bg-orange-500/10 border border-orange-500/20 text-orange-400'
+                  }`}>
+                    <Lucide.TrendingUp size={16} strokeWidth={2.5} />
+                  </div>
+                  <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-orange-700' : 'text-orange-400'}`}>Bagger Time</span>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Current Level</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={`text-2.5xl font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>
+                      {(stats.totalProfit / 1000).toFixed(2)}x
+                    </span>
+                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-orange-600' : 'text-orange-400'}`}>Bagger</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[8px] font-bold text-zinc-400 uppercase">
+                    <span>{(100 - ((stats.totalProfit - (Math.floor(stats.totalProfit / 1000) * 1000)) / 1000) * 100).toFixed(1)}% to Next</span>
+                    <span>Next: ${(Math.floor(stats.totalProfit / 1000) * 1000 + 2000).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  </div>
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-zinc-150' : 'bg-white/5'}`}>
+                    <div 
+                      className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full shadow-[0_0_10px_rgba(249,115,22,0.5)] animate-pulse" 
+                      style={{ width: `${(((stats.totalProfit - (Math.floor(stats.totalProfit / 1000) * 1000)) / 1000) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Approx Bagger Time Card (Mint/Cyan-Blue Cyberpunk) */}
+              <div className={`border rounded-2xl p-4 flex flex-col justify-between h-[155px] transition-all duration-300 ${
+                isLight 
+                  ? 'from-cyan-50/80 via-blue-50/60 to-teal-50 border-cyan-200/80 shadow-[0_4px_12px_rgba(6,182,212,0.05)] bg-gradient-to-br' 
+                  : 'from-cyan-950/[0.12] via-blue-950/[0.04] to-black/40 border-cyan-500/20 shadow-[0_0_20px_rgba(6,182,212,0.05)] bg-gradient-to-br'
+              }`}>
+                <div className="flex justify-between items-start">
+                  <div className={`p-2 rounded-xl border transition-all duration-300 ${
+                    isLight 
+                      ? 'bg-cyan-50 border-cyan-200 text-cyan-650' 
+                      : 'bg-cyan-500/10 border border-cyan-500/20 text-cyan-400'
+                  }`}>
+                    <Lucide.Hourglass size={16} strokeWidth={2.5} />
+                  </div>
+                  <span className={`text-[8px] font-black uppercase tracking-wider ${isLight ? 'text-cyan-700' : 'text-cyan-400'}`}>Approx Bagger Time</span>
+                </div>
+                
+                <div className="space-y-1">
+                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-wider">Est. Weeks to Level</p>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className={`text-2.5xl font-black tracking-tight ${isLight ? 'text-zinc-800' : 'text-zinc-100'}`}>
+                      {avgWeeklyProfit > 0 ? Math.ceil(((Math.floor(stats.totalProfit / 1000) * 1000 + 1000) - stats.totalProfit) / avgWeeklyProfit) : '--'}
+                    </span>
+                    <span className={`text-[9px] font-black uppercase tracking-wider ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}>Weeks</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="text-[8px] font-bold text-zinc-400 uppercase flex justify-between">
+                    <span>Weekly Avg Profit</span>
+                    <span className={`font-black ${isLight ? 'text-cyan-600' : 'text-cyan-400'}`}>
+                      ${avgWeeklyProfit.toFixed(0)}
+                    </span>
+                  </div>
+                  <div className={`w-full h-1.5 rounded-full overflow-hidden ${isLight ? 'bg-zinc-150' : 'bg-white/5'}`}>
+                    <div 
+                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full shadow-[0_0_10px_rgba(6,182,212,0.5)]" 
+                      style={{ width: `${Math.min(100, Math.max(0, 100 - (((Math.floor(stats.totalProfit / 1000) * 1000 + 1000) - stats.totalProfit) / 1000) * 100))}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Quick Actions Grid */}
             <section className="space-y-3">
