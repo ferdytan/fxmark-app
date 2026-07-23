@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, RefreshCw, Check, AlertCircle, Sparkles } from 'lucide-react';
+import { Search, RefreshCw, Check, AlertCircle, Sparkles, Sun, Moon } from 'lucide-react';
 import type { ViewType } from '../types';
 
 interface HeaderProps {
@@ -9,6 +9,7 @@ interface HeaderProps {
   activeView: ViewType;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  setTheme: (theme: 'light' | 'dark') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,7 +18,8 @@ export const Header: React.FC<HeaderProps> = ({
   isLight,
   activeView,
   searchTerm,
-  setSearchTerm
+  setSearchTerm,
+  setTheme
 }) => {
   const [greeting, setGreeting] = useState('Welcome back');
   const [traderName, setTraderName] = useState('Ferdy'); // Default name based on mockup
@@ -82,29 +84,45 @@ export const Header: React.FC<HeaderProps> = ({
             className={`h-7 object-contain ${isLight ? 'invert' : 'invert-0'}`} 
           />
           
-          {/* Mobile Sync Badge */}
-          <button
-            onClick={onForceSync}
-            disabled={syncStatus === 'syncing'}
-            className={`flex items-center gap-1.5 px-3 h-8.5 rounded-xl border text-[10px] font-black tracking-tight transition-all duration-300 cursor-pointer active:scale-95 disabled:opacity-50 ${
-              isLight
-                ? 'bg-white hover:bg-zinc-50 border-zinc-150 text-zinc-750'
-                : 'bg-zinc-900 hover:bg-zinc-850 border-zinc-800 text-zinc-200'
-            }`}
-          >
-            {syncStatus === 'syncing' ? (
-              <RefreshCw size={11} className="animate-spin text-lime-500" />
-            ) : syncStatus === 'success' ? (
-              <Check size={11} className="text-lime-500 stroke-[3]" />
-            ) : syncStatus === 'error' ? (
-              <AlertCircle size={11} className="text-rose-500" />
-            ) : (
-              <RefreshCw size={11} className="text-zinc-400" />
-            )}
-            <span>
-              {syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'success' ? 'Synced' : syncStatus === 'error' ? 'Error' : 'Sync'}
-            </span>
-          </button>
+          {/* Mobile Actions Container (Sync + Theme toggle) */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Sync Badge */}
+            <button
+              onClick={onForceSync}
+              disabled={syncStatus === 'syncing'}
+              className={`flex items-center gap-1.5 px-3 h-8.5 rounded-xl border text-[10px] font-black tracking-tight transition-all duration-300 cursor-pointer active:scale-95 disabled:opacity-50 ${
+                isLight
+                  ? 'bg-white hover:bg-zinc-50 border-zinc-150 text-zinc-750'
+                  : 'bg-zinc-900 hover:bg-zinc-850 border-zinc-800 text-zinc-200'
+              }`}
+            >
+              {syncStatus === 'syncing' ? (
+                <RefreshCw size={11} className="animate-spin text-lime-500" />
+              ) : syncStatus === 'success' ? (
+                <Check size={11} className="text-lime-500 stroke-[3]" />
+              ) : syncStatus === 'error' ? (
+                <AlertCircle size={11} className="text-rose-500" />
+              ) : (
+                <RefreshCw size={11} className="text-zinc-400" />
+              )}
+              <span>
+                {syncStatus === 'syncing' ? 'Syncing...' : syncStatus === 'success' ? 'Synced' : syncStatus === 'error' ? 'Error' : 'Sync'}
+              </span>
+            </button>
+
+            {/* Mobile Light/Dark Mode Switcher */}
+            <button
+              onClick={() => setTheme(isLight ? 'dark' : 'light')}
+              className={`flex items-center justify-center w-8.5 h-8.5 rounded-xl border transition-all duration-300 cursor-pointer active:scale-95 ${
+                isLight
+                  ? 'bg-white hover:bg-zinc-50 border-zinc-150 text-amber-500 shadow-[0_1px_3px_rgba(0,0,0,0.02)]'
+                  : 'bg-zinc-900 hover:bg-zinc-850 border-zinc-800 text-lime-400'
+              }`}
+              title={isLight ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+            >
+              {isLight ? <Moon size={14} /> : <Sun size={14} />}
+            </button>
+          </div>
         </div>
 
         {/* Greeting Label */}

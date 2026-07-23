@@ -737,6 +737,7 @@ export const ForexTrackerV2: React.FC<ForexTrackerV2Props> = ({ onToggleV1 }) =>
           activeView={activeView}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          setTheme={setTheme}
         />
 
         {/* Dynamic Inner Tab View */}
