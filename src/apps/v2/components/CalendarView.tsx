@@ -163,32 +163,33 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
       </div>
 
       {/* Main Calendar Grid Card */}
-      <div className={`rounded-[32px] p-6 border transition-all duration-300 ${
+      <div className={`rounded-[24px] md:rounded-[32px] p-3 md:p-6 border transition-all duration-300 ${
         isLight 
           ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
           : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'
       }`}>
         
         {/* Days of Week Header */}
-        <div className="grid grid-cols-7 gap-3 mb-3 text-center">
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2 md:gap-3 mb-3 text-center">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
             <div 
               key={day} 
-              className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest py-1"
+              className="text-[9px] md:text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider md:tracking-widest py-1"
             >
-              {day}
+              <span className="block md:hidden">{day[0]}</span>
+              <span className="hidden md:block">{day}</span>
             </div>
           ))}
         </div>
 
         {/* Days Grid */}
-        <div className="grid grid-cols-7 gap-3">
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2 md:gap-3">
           {calDays.map((d, i) => {
             if (!d) {
               return (
                 <div 
                   key={`empty-${i}`} 
-                  className={`min-h-[90px] rounded-2xl opacity-15 border border-dashed ${
+                  className={`min-h-[52px] sm:min-h-[65px] md:min-h-[90px] rounded-xl md:rounded-2xl opacity-15 border border-dashed ${
                     isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-zinc-900/20 border-zinc-800'
                   }`}
                 />
@@ -228,22 +229,23 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
             return (
               <div 
                 key={`day-${d.day}`}
-                className={`min-h-[90px] rounded-2xl border p-3 flex flex-col justify-between transition-all duration-300 relative group ${cellStyle}`}
+                className={`min-h-[52px] sm:min-h-[65px] md:min-h-[90px] rounded-xl md:rounded-2xl border p-1 md:p-3 flex flex-col justify-between transition-all duration-300 relative group ${cellStyle}`}
               >
                 {/* Header of Cell */}
                 <div className="flex justify-between items-start">
                   {/* Bagger Milestones Indicator */}
                   {d.date && stats.baggerMilestones && stats.baggerMilestones[d.date] && (
                     <div 
-                      className="w-5 h-5 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center animate-pulse"
+                      className="w-3.5 h-3.5 md:w-5 md:h-5 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center animate-pulse"
                       title={`Hit ${stats.baggerMilestones[d.date].join('x, ')}x Bagger!`}
                     >
-                      <Medal size={11} className="stroke-[2.5]" />
+                      <Medal size={9} className="stroke-[2.5] md:hidden" />
+                      <Medal size={11} className="stroke-[2.5] hidden md:block" />
                     </div>
                   )}
 
                   {/* Day Number */}
-                  <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ml-auto ${
+                  <span className={`w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center text-[8px] md:text-[10px] font-black ml-auto ${
                     isToday
                       ? 'bg-lime-400 text-black shadow-sm font-extrabold'
                       : 'text-zinc-400 dark:text-zinc-500'
@@ -254,15 +256,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
 
                 {/* Body of Cell: Daily Profit/Loss value */}
                 {hasData && (
-                  <div className="mt-2 text-left">
-                    <p className={`text-xs md:text-sm font-black tracking-tight leading-none ${
+                  <div className="mt-1 md:mt-2 text-center md:text-left">
+                    <p className={`text-[8px] sm:text-[9px] md:text-xs lg:text-sm font-black tracking-tighter md:tracking-tight leading-none ${
                       d.data.profit >= 0 
                         ? isLight ? 'text-lime-650' : 'text-lime-400' 
                         : isLight ? 'text-rose-600' : 'text-rose-450'
                     }`}>
                       {d.data.profit >= 0 ? '+' : '-'}${Math.abs(d.data.profit).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </p>
-                    <p className="text-[8.5px] font-bold text-zinc-400 dark:text-zinc-500 tracking-tight mt-1">
+                    <p className="text-[8.5px] font-bold text-zinc-400 dark:text-zinc-500 tracking-tight mt-1 hidden md:block">
                       {d.data.tradesList.length} trade{d.data.tradesList.length > 1 ? 's' : ''}
                     </p>
                   </div>
@@ -270,7 +272,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
 
                 {/* Footer dots for individual trades in that day */}
                 {hasData && d.data.tradesList.length > 0 && (
-                  <div className="flex gap-1 mt-2 justify-end">
+                  <div className="hidden md:flex gap-1 mt-2 justify-end">
                     {d.data.tradesList.slice(0, 5).map((t, idx) => (
                       <span 
                         key={idx} 

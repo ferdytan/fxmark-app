@@ -316,7 +316,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               return (
                 <div
                   key={day.key}
-                  className={`flex flex-col items-center justify-between aspect-square rounded-2xl p-3 text-center transition-all duration-300 border ${capsuleClass}`}
+                  className={`flex flex-col items-center justify-center gap-2 md:gap-2.5 rounded-2xl py-4 px-2 text-center transition-all duration-300 border min-h-[90px] md:min-h-[105px] ${capsuleClass}`}
                 >
                   <span className={`text-[10px] uppercase tracking-wider font-extrabold ${labelClass}`}>
                     {day.label}
