@@ -233,16 +233,35 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
               >
                 {/* Header of Cell */}
                 <div className="flex justify-between items-start">
-                  {/* Bagger Milestones Indicator */}
-                  {d.date && stats.baggerMilestones && stats.baggerMilestones[d.date] && (
-                    <div 
-                      className="w-3.5 h-3.5 md:w-5 md:h-5 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center animate-pulse"
-                      title={`Hit ${stats.baggerMilestones[d.date].join('x, ')}x Bagger!`}
-                    >
-                      <Medal size={9} className="stroke-[2.5] md:hidden" />
-                      <Medal size={11} className="stroke-[2.5] hidden md:block" />
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {/* Bagger Milestones Indicator */}
+                    {d.date && stats.baggerMilestones && stats.baggerMilestones[d.date] && (
+                      <div 
+                        className="w-3.5 h-3.5 md:w-5 md:h-5 rounded-md bg-amber-500/10 text-amber-500 flex items-center justify-center animate-pulse"
+                        title={`Hit ${stats.baggerMilestones[d.date].join('x, ')}x Bagger!`}
+                      >
+                        <Medal size={9} className="stroke-[2.5] md:hidden" />
+                        <Medal size={11} className="stroke-[2.5] hidden md:block" />
+                      </div>
+                    )}
+
+                    {/* Trade Dots at the Top */}
+                    {hasData && d.data.tradesList.length > 0 && (
+                      <div className="flex flex-wrap gap-0.5 md:gap-1 max-w-[24px] md:max-w-[40px]">
+                        {d.data.tradesList.slice(0, 5).map((t, idx) => (
+                          <span 
+                            key={idx} 
+                            className={`w-[3px] h-[3px] md:w-1 md:h-1 rounded-full ${
+                              t.profit >= 0 ? 'bg-lime-500' : 'bg-rose-500'
+                            }`} 
+                          />
+                        ))}
+                        {d.data.tradesList.length > 5 && (
+                          <span className="text-[6px] md:text-[6.5px] font-bold text-zinc-400 leading-none">+{d.data.tradesList.length - 5}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Day Number */}
                   <span className={`w-4 h-4 md:w-5 md:h-5 rounded-full flex items-center justify-center text-[8px] md:text-[10px] font-black ml-auto ${
@@ -267,23 +286,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
                     <p className="text-[8.5px] font-bold text-zinc-400 dark:text-zinc-500 tracking-tight mt-1 hidden md:block">
                       {d.data.tradesList.length} trade{d.data.tradesList.length > 1 ? 's' : ''}
                     </p>
-                  </div>
-                )}
-
-                {/* Footer dots for individual trades in that day */}
-                {hasData && d.data.tradesList.length > 0 && (
-                  <div className="flex flex-wrap gap-0.5 md:gap-1 mt-1.5 md:mt-2 justify-end">
-                    {d.data.tradesList.slice(0, 5).map((t, idx) => (
-                      <span 
-                        key={idx} 
-                        className={`w-[3px] h-[3px] md:w-1 md:h-1 rounded-full ${
-                          t.profit >= 0 ? 'bg-lime-500' : 'bg-rose-500'
-                        }`} 
-                      />
-                    ))}
-                    {d.data.tradesList.length > 5 && (
-                      <span className="text-[6px] md:text-[6.5px] font-bold text-zinc-400 leading-none">+{d.data.tradesList.length - 5}</span>
-                    )}
                   </div>
                 )}
               </div>
