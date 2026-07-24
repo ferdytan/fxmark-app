@@ -256,7 +256,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
 
                 {/* Body of Cell: Daily Profit/Loss value */}
                 {hasData && (
-                  <div className="mt-1 md:mt-2 text-center md:text-left">
+                  <div className="mt-1 md:mt-2 text-right">
                     <p className={`text-[8px] sm:text-[9px] md:text-xs lg:text-sm font-black tracking-tighter md:tracking-tight leading-none ${
                       d.data.profit >= 0 
                         ? isLight ? 'text-lime-650' : 'text-lime-400' 
@@ -272,17 +272,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
 
                 {/* Footer dots for individual trades in that day */}
                 {hasData && d.data.tradesList.length > 0 && (
-                  <div className="hidden md:flex gap-1 mt-2 justify-end">
+                  <div className="flex flex-wrap gap-0.5 md:gap-1 mt-1.5 md:mt-2 justify-end">
                     {d.data.tradesList.slice(0, 5).map((t, idx) => (
                       <span 
                         key={idx} 
-                        className={`w-1 h-1 rounded-full ${
+                        className={`w-[3px] h-[3px] md:w-1 md:h-1 rounded-full ${
                           t.profit >= 0 ? 'bg-lime-500' : 'bg-rose-500'
                         }`} 
                       />
                     ))}
                     {d.data.tradesList.length > 5 && (
-                      <span className="text-[6.5px] font-bold text-zinc-400 leading-none">+{d.data.tradesList.length - 5}</span>
+                      <span className="text-[6px] md:text-[6.5px] font-bold text-zinc-400 leading-none">+{d.data.tradesList.length - 5}</span>
                     )}
                   </div>
                 )}
