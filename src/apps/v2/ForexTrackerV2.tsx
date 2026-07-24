@@ -7,7 +7,9 @@ import { DashboardView } from './components/DashboardView';
 import { CalendarView } from './components/CalendarView';
 import { CompoundingView } from './components/CompoundingView';
 import { HistoryView } from './components/HistoryView';
+import { AIView } from './components/AIView';
 import { PINModal, AddTradeModal, CalculatorModal, WisdomModal } from './components/Modals';
+import { Trophy, X } from 'lucide-react';
 
 const INITIAL_DATA: TradeRecord[] = [
   { id: 'dep-1', symbol: 'DEPOSIT', type: 'deposit', profit: 1000.00, date: '2026-02-09 15:17:53' },
@@ -355,6 +357,7 @@ export const ForexTrackerV2: React.FC<ForexTrackerV2Props> = ({ onToggleV1 }) =>
   const [showCalcModal, setShowCalcModal] = useState(false);
   const [showWisdomModal, setShowWisdomModal] = useState(false);
   const [wisdomQuote, setWisdomQuote] = useState<Quote>(WISDOM_QUOTES[0]);
+  const [showCompoundingModal, setShowCompoundingModal] = useState(false);
 
   // Form Fields State
   const [type, setType] = useState<'buy' | 'sell' | 'deposit'>('buy');
@@ -751,7 +754,7 @@ export const ForexTrackerV2: React.FC<ForexTrackerV2Props> = ({ onToggleV1 }) =>
               onOpenAddDeposit={() => triggerAuthPIN('add', 'deposit')}
               onOpenCalc={() => setShowCalcModal(true)}
               onForceSync={syncData}
-              setActiveView={setActiveView}
+              onOpenCompounding={() => setShowCompoundingModal(true)}
             />
           )}
 
@@ -762,10 +765,9 @@ export const ForexTrackerV2: React.FC<ForexTrackerV2Props> = ({ onToggleV1 }) =>
             />
           )}
 
-          {activeView === 'compounding' && (
-            <CompoundingView
+          {activeView === 'ai' && (
+            <AIView
               stats={stats}
-              currentCompoundLevel={currentCompoundLevel}
               isLight={isLight}
             />
           )}
@@ -847,6 +849,50 @@ export const ForexTrackerV2: React.FC<ForexTrackerV2Props> = ({ onToggleV1 }) =>
         onRefreshQuote={handleRefreshQuote}
         isLight={isLight}
       />
+
+      {/* 4. Compounding Roadmap Modal Overlay */}
+      {showCompoundingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-300">
+          {/* Backdrop */}
+          <div 
+            onClick={() => setShowCompoundingModal(false)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          
+          {/* Modal Container */}
+          <div className={`relative w-full max-w-5xl max-h-[85vh] overflow-y-auto rounded-3xl p-6 md:p-8 border shadow-2xl transition-all duration-300 ${
+            isLight 
+              ? 'bg-white border-zinc-150 text-zinc-800' 
+              : 'bg-[#121312] border-zinc-900/60 text-zinc-100'
+          }`}>
+            {/* Header with Close button */}
+            <div className="flex justify-between items-center mb-6 pb-4 border-b border-dashed border-zinc-200 dark:border-zinc-800/80">
+              <div>
+                <h3 className="text-lg md:text-xl font-black tracking-tight text-zinc-850 dark:text-zinc-100 flex items-center gap-2">
+                  <Trophy className="text-lime-500" size={20} />
+                  <span>Compounding Roadmap</span>
+                </h3>
+                <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-bold mt-0.5">
+                  Track your progression toward the ultimate 15-level compound target.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCompoundingModal(false)}
+                className="p-1.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-400 dark:text-zinc-500 cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            {/* Modal Body: Compounding View */}
+            <CompoundingView
+              stats={stats}
+              currentCompoundLevel={currentCompoundLevel}
+              isLight={isLight}
+            />
+          </div>
+        </div>
+      )}
 
     </div>
   );

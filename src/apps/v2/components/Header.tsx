@@ -62,8 +62,8 @@ export const Header: React.FC<HeaderProps> = ({
         return 'Stay on top of your tasks, monitor progress, and track status.';
       case 'calendar':
         return 'Track your daily performance, streaks, and monthly profit maps.';
-      case 'compounding':
-        return 'Track your progression toward the ultimate 15-level compound target.';
+      case 'ai':
+        return 'Advanced machine intelligence and predictive analysis co-pilot.';
       case 'history':
         return 'Detailed log of your trading activity. Import or export backups.';
       default:

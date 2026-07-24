@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Calendar, Trophy, History, Settings, LogOut, Sun, Moon, Calculator, Sparkles, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, Cpu, History, Settings, LogOut, Sun, Moon, Calculator, Sparkles, X } from 'lucide-react';
 import type { ViewType } from '../types';
 
 interface SidebarProps {
@@ -26,7 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'dashboard' as ViewType, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'calendar' as ViewType, label: 'Calendar', icon: Calendar },
-    { id: 'compounding' as ViewType, label: 'Goals', icon: Trophy },
+    { id: 'ai' as ViewType, label: 'AI Terminal', icon: Cpu },
     { id: 'history' as ViewType, label: 'Journal', icon: History },
   ];
 
@@ -210,10 +210,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
 
             {/* Menu Panel */}
-            <div className={`fixed bottom-20 left-4 right-4 z-40 rounded-3xl p-5 border shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 ${
+            <div className={`fixed bottom-20 left-4 right-4 z-40 rounded-3xl p-5 shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 border ${
               isLight
                 ? 'bg-white border-zinc-150 text-zinc-800 shadow-[0_10px_35px_rgb(0,0,0,0.06)]'
-                : 'bg-[#18181b] border-zinc-850 text-zinc-100 shadow-[0_10px_35px_rgb(0,0,0,0.4)]'
+                : 'bg-[#18181b] border-zinc-900/60 text-zinc-100 shadow-[0_10px_35px_rgb(0,0,0,0.4)]'
             }`}>
               <div className="flex justify-between items-center mb-4">
                 <span className="text-[10px] font-black text-zinc-450 uppercase tracking-widest flex items-center gap-1.5">

@@ -9,7 +9,7 @@ export interface TradeRecord {
   date: string;
 }
 
-export type ViewType = 'dashboard' | 'calendar' | 'history' | 'compounding';
+export type ViewType = 'dashboard' | 'calendar' | 'history' | 'compounding' | 'ai';
 
 export interface WeeklyDayStat {
   key: string;

@@ -11,7 +11,7 @@ interface DashboardViewProps {
   onOpenAddDeposit: () => void;
   onOpenCalc: () => void;
   onForceSync: () => void;
-  setActiveView: (view: any) => void;
+  onOpenCompounding?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -22,7 +22,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onOpenAddDeposit,
   onOpenCalc,
   onForceSync,
-  setActiveView
+  onOpenCompounding
 }) => {
   const [chartType, setChartType] = useState<'monthly' | 'timeline'>('monthly');
   const [hoveredMonth, setHoveredMonth] = useState<number | null>(new Date().getMonth());
@@ -712,7 +712,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           {/* Action button redirecting to Compounding Roadmap */}
           <button
-            onClick={() => setActiveView('compounding')}
+            onClick={() => onOpenCompounding?.()}
             className="w-full mt-5 py-3 px-4 bg-lime-400 dark:bg-lime-500 hover:bg-lime-500 dark:hover:bg-lime-400 text-black text-xs font-extrabold rounded-2xl flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
           >
             <span>Show Compounding Roadmap</span>

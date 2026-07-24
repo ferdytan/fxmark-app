@@ -189,7 +189,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
               return (
                 <div 
                   key={`empty-${i}`} 
-                  className={`min-h-[52px] sm:min-h-[65px] md:min-h-[90px] rounded-xl md:rounded-2xl opacity-15 border border-dashed ${
+                  className={`min-h-[52px] sm:min-h-[65px] md:min-h-[90px] rounded-lg md:rounded-2xl opacity-15 border border-dashed ${
                     isLight ? 'bg-zinc-50 border-zinc-200' : 'bg-zinc-900/20 border-zinc-800'
                   }`}
                 />
@@ -229,7 +229,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
             return (
               <div 
                 key={`day-${d.day}`}
-                className={`min-h-[52px] sm:min-h-[65px] md:min-h-[90px] rounded-xl md:rounded-2xl border p-1 md:p-3 flex flex-col justify-between transition-all duration-300 relative group ${cellStyle}`}
+                className={`min-h-[52px] sm:min-h-[65px] md:min-h-[90px] rounded-lg md:rounded-2xl border p-1 md:p-3 flex flex-col justify-between transition-all duration-300 relative group ${cellStyle}`}
               >
                 {/* Header of Cell */}
                 <div className="flex justify-between items-start">

@@ -1,0 +1,608 @@
+import { useState, useEffect } from 'react';
+import { 
+  Sparkles, 
+  Cpu, 
+  Play, 
+  Activity, 
+  CheckCircle,
+  RefreshCw,
+  Zap
+} from 'lucide-react';
+import type { Stats } from '../types';
+
+interface AIViewProps {
+  stats?: Stats;
+  isLight: boolean;
+}
+
+type SymbolType = 'XAUUSD' | 'EURUSD' | 'GBPUSD' | 'USDJPY' | 'USDCAD' | 'AUDUSD';
+
+interface ScanVerdict {
+  bias: 'BUY' | 'SELL' | 'NEUTRAL';
+  price: string;
+  marketState: string;
+  confidence: string;
+  recommendation: string;
+  rrr: string;
+  session: string;
+  volatility: 'Low' | 'Medium' | 'High';
+  liquidity: 'Low' | 'Medium' | 'High';
+  directionText: string;
+  opportunityScore: string;
+  execGrade: string;
+  confluence: number;
+}
+
+export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
+  const [activeSymbol, setActiveSymbol] = useState<SymbolType>('XAUUSD');
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanStep, setScanStep] = useState(0);
+  const [hasScanned, setHasScanned] = useState(false);
+
+  // Pre-programmed symbol intelligence matching the quant terminal PDF
+  const symbolDatabase: Record<SymbolType, ScanVerdict> = {
+    XAUUSD: {
+      bias: 'NEUTRAL',
+      price: '4053.70',
+      marketState: 'Low Liquidity (Thin tape — patience until liquidity returns)',
+      confidence: 'Low · 44.1%',
+      recommendation: 'Reduce Size or Stand Aside',
+      rrr: '1 : 1.5',
+      session: 'New York (Outside major hours)',
+      volatility: 'Low',
+      liquidity: 'Low',
+      directionText: 'NEUTRAL',
+      opportunityScore: '1/100 LOW',
+      execGrade: 'D (score 2/100)',
+      confluence: 34
+    },
+    EURUSD: {
+      bias: 'SELL',
+      price: '1.0850',
+      marketState: 'Session Liquidity Sweep (Sweeping daily highs before drop)',
+      confidence: 'High · 80.0%',
+      recommendation: 'Scale Into Sell (Forming Opportunity)',
+      rrr: '1 : 2.0',
+      session: 'London Open',
+      volatility: 'Medium',
+      liquidity: 'High',
+      directionText: 'SELL',
+      opportunityScore: '80/100 HIGH',
+      execGrade: 'B+ (score 80/100)',
+      confluence: 80
+    },
+    GBPUSD: {
+      bias: 'SELL',
+      price: '1.2910',
+      marketState: 'Bearish Breakdown (Break of Session VWAP)',
+      confidence: 'High · 78.0%',
+      recommendation: 'Execute Sell (Active Setup)',
+      rrr: '1 : 2.0',
+      session: 'London open',
+      volatility: 'Medium',
+      liquidity: 'Medium',
+      directionText: 'SELL',
+      opportunityScore: '78/100 HIGH',
+      execGrade: 'B+ (score 78/100)',
+      confluence: 78
+    },
+    USDJPY: {
+      bias: 'BUY',
+      price: '155.20',
+      marketState: 'Bullish Continuation (Above Daily High)',
+      confidence: 'High · 85.0%',
+      recommendation: 'Execute Buy on VWAP Pullback',
+      rrr: '1 : 2.5',
+      session: 'Tokyo Open',
+      volatility: 'High',
+      liquidity: 'High',
+      directionText: 'BUY',
+      opportunityScore: '85/100 HIGH',
+      execGrade: 'A (score 85/100)',
+      confluence: 85
+    },
+    USDCAD: {
+      bias: 'BUY',
+      price: '1.3740',
+      marketState: 'Consolidating near Range Low (Accumulation phase)',
+      confidence: 'Medium · 62.0%',
+      recommendation: 'Wait for Range Breakout',
+      rrr: '1 : 1.5',
+      session: 'New York Open',
+      volatility: 'Low',
+      liquidity: 'High',
+      directionText: 'BUY',
+      opportunityScore: '60/100 MED',
+      execGrade: 'B (score 60/100)',
+      confluence: 62
+    },
+    AUDUSD: {
+      bias: 'SELL',
+      price: '0.6650',
+      marketState: 'Bearish Trend Expansion (Strong selling pressure)',
+      confidence: 'High · 82.0%',
+      recommendation: 'Sell at VWAP Retest',
+      rrr: '1 : 3.0',
+      session: 'Sydney Open',
+      volatility: 'Medium',
+      liquidity: 'Low',
+      directionText: 'SELL',
+      opportunityScore: '82/100 HIGH',
+      execGrade: 'B+ (score 82/100)',
+      confluence: 82
+    }
+  };
+
+  const activeVerdict = symbolDatabase[activeSymbol];
+
+  const scanSteps = [
+    'Initializing Connection to Quant Feed...',
+    'Sweeping Session Liquidity Maps...',
+    'Analyzing Order Flow Confluence...',
+    'Computing Volatility & Spread Metrics...',
+    'Finalizing AI Copilot Verdict...'
+  ];
+
+  useEffect(() => {
+    let interval: any;
+    if (isScanning) {
+      interval = setInterval(() => {
+        setScanStep((prev) => {
+          if (prev < scanSteps.length - 1) {
+            return prev + 1;
+          } else {
+            setIsScanning(false);
+            setHasScanned(true);
+            return 0;
+          }
+        });
+      }, 500);
+    }
+    return () => clearInterval(interval);
+  }, [isScanning]);
+
+  const handleRunScan = () => {
+    setIsScanning(true);
+    setScanStep(0);
+    setHasScanned(false);
+  };
+
+  return (
+    <div className="w-full space-y-6 mt-6 pb-20 animate-in fade-in duration-300">
+      
+      {/* Title Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-dashed border-zinc-200 dark:border-zinc-800 pb-5">
+        <div>
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-zinc-850 dark:text-zinc-100 flex items-center gap-2">
+            <Cpu className="text-lime-500 stroke-[2.5]" size={22} />
+            <span>AI Trading Terminal</span>
+          </h2>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500 font-bold mt-1">
+            XAU/USD Intelligence · AI Co-pilot Active
+          </p>
+        </div>
+
+        {/* Live Engine Indicator */}
+        <div className={`px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 ${
+          isLight ? 'bg-zinc-50 border-zinc-150 text-zinc-700' : 'bg-zinc-950 border-zinc-850 text-lime-400'
+        }`}>
+          <span className="w-1.5 h-1.5 rounded-full bg-lime-500 animate-ping" />
+          <span>Engine Live</span>
+        </div>
+      </div>
+
+      {/* Main Terminal Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left Column: Terminal Controls & Scan Button */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          {/* Quick Symbol Metrics Selector */}
+          <div className={`rounded-3xl p-5 border ${
+            isLight ? 'bg-white border-zinc-150/70 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
+          }`}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Symbol selector */}
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Symbol</span>
+                <select
+                  value={activeSymbol}
+                  onChange={(e) => {
+                    setActiveSymbol(e.target.value as SymbolType);
+                    setHasScanned(false);
+                  }}
+                  className={`px-3 py-2 rounded-xl text-xs font-black uppercase border cursor-pointer outline-none transition-all ${
+                    isLight 
+                      ? 'bg-zinc-50 border-zinc-200 text-zinc-800 focus:border-zinc-300' 
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-zinc-700'
+                  }`}
+                >
+                  {(Object.keys(symbolDatabase) as SymbolType[]).map((sym) => (
+                    <option key={sym} value={sym}>{sym}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Live Price */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Live Price</span>
+                <span className="text-sm font-black text-zinc-800 dark:text-zinc-100">
+                  ${activeVerdict.price}
+                </span>
+              </div>
+
+              {/* Confidence */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Scan Confidence</span>
+                <span className={`text-sm font-black ${
+                  activeVerdict.bias === 'BUY' 
+                    ? 'text-lime-650 dark:text-lime-400' 
+                    : activeVerdict.bias === 'SELL' 
+                      ? 'text-rose-500' 
+                      : 'text-amber-500'
+                }`}>
+                  {activeVerdict.confidence}
+                </span>
+              </div>
+
+              {/* Score */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Opportunity Score</span>
+                <span className="text-sm font-black text-zinc-800 dark:text-zinc-100">
+                  {activeVerdict.opportunityScore}
+                </span>
+              </div>
+            </div>
+
+            {/* Sub-row session metrics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 pt-4 border-t border-dashed border-zinc-150 dark:border-zinc-800/80">
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Session</span>
+                <span className="text-[11px] font-black text-zinc-750 dark:text-zinc-350">{activeVerdict.session.split(' ')[0]}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Bias Direction</span>
+                <span className={`text-[11px] font-black ${
+                  activeVerdict.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : activeVerdict.bias === 'SELL' ? 'text-rose-500' : 'text-zinc-400'
+                }`}>{activeVerdict.directionText}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Liquidity</span>
+                <span className="text-[11px] font-black text-zinc-750 dark:text-zinc-350">{activeVerdict.liquidity}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Volatility</span>
+                <span className="text-[11px] font-black text-zinc-750 dark:text-zinc-350">{activeVerdict.volatility}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* AI Scan Console Card */}
+          <div className={`rounded-3xl p-6 border relative overflow-hidden transition-all duration-300 ${
+            isLight 
+              ? 'bg-gradient-to-br from-zinc-50 to-zinc-100/50 border-zinc-200 shadow-sm' 
+              : 'bg-gradient-to-br from-[#0e0e0e] to-[#121712] border-zinc-850'
+          }`}>
+            
+            {/* Tech scanner background indicator */}
+            <div className="absolute right-0 top-0 opacity-[0.02] dark:opacity-[0.03] text-zinc-500 dark:text-lime-400 pointer-events-none p-4">
+              <Zap size={250} />
+            </div>
+
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="space-y-2 max-w-md">
+                <span className="text-[9px] font-black uppercase text-lime-600 dark:text-lime-400 tracking-widest flex items-center gap-1.5">
+                  <Sparkles size={11} className="animate-pulse" /> AI Co-pilot Read
+                </span>
+                <h3 className="text-lg md:text-xl font-black text-zinc-850 dark:text-zinc-100 tracking-tight">
+                  Run an AI Market Scan
+                </h3>
+                <p className="text-xs text-zinc-450 dark:text-zinc-400 leading-relaxed font-bold">
+                  Institutional intelligence on the active instrument. Bias, liquidity, session volatility & tone — distilled in seconds.
+                </p>
+                <p className="text-[9.5px] font-semibold text-zinc-400 dark:text-zinc-500 italic mt-1">
+                  Last scan: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+                </p>
+              </div>
+
+              {/* Trigger Button */}
+              <button
+                onClick={handleRunScan}
+                disabled={isScanning}
+                className="py-4 px-6 rounded-2xl bg-gradient-to-r from-lime-400 to-lime-500 hover:from-lime-400 hover:to-emerald-500 text-zinc-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-lime-500/10 hover:shadow-lime-500/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50 min-w-[170px]"
+              >
+                {isScanning ? (
+                  <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    <span>Analyzing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play size={14} fill="currentColor" />
+                    <span>Run AI Market Scan</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Scan Progress Bar (Visible while scanning) */}
+            {isScanning && (
+              <div className="mt-6 pt-5 border-t border-dashed border-zinc-200 dark:border-zinc-800/80 space-y-2 animate-in fade-in duration-300">
+                <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-wider text-lime-600 dark:text-lime-400">
+                  <span className="animate-pulse">{scanSteps[scanStep]}</span>
+                  <span>{Math.round(((scanStep + 1) / scanSteps.length) * 100)}%</span>
+                </div>
+                <div className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-lime-500 transition-all duration-300 rounded-full"
+                    style={{ width: `${((scanStep + 1) / scanSteps.length) * 100}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* AI Scanner Result Verdict Output */}
+          {hasScanned && !isScanning && (
+            <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
+              
+              {/* Market Verdict Banner */}
+              <div className={`rounded-3xl p-5 border ${
+                isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
+              }`}>
+                <div className="flex justify-between items-center mb-4 pb-3 border-b border-dashed border-zinc-150 dark:border-zinc-800">
+                  <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                    <Activity size={12} className="text-lime-500" /> Market Verdict
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                    activeVerdict.bias === 'BUY'
+                      ? 'bg-lime-500/10 text-lime-650 dark:text-lime-400'
+                      : activeVerdict.bias === 'SELL'
+                        ? 'bg-rose-500/10 text-rose-500'
+                        : 'bg-amber-500/10 text-amber-500'
+                  }`}>
+                    {activeVerdict.bias} BIAS
+                  </span>
+                </div>
+
+                {/* Grid of Verdict Details */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Market State */}
+                  <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
+                    <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">Market State</span>
+                    <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-100 leading-snug">
+                      {activeVerdict.marketState.split(' (')[0]}
+                    </h4>
+                    <p className="text-[9.5px] text-zinc-450 dark:text-zinc-500 mt-1 leading-normal font-semibold">
+                      {activeVerdict.marketState.split(' (')[1]?.replace(')', '') || 'Structure unresolved.'}
+                    </p>
+                  </div>
+
+                  {/* Confidence level */}
+                  <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
+                    <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">Confidence Score</span>
+                    <h4 className={`text-xs font-black leading-snug ${
+                      activeVerdict.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : activeVerdict.bias === 'SELL' ? 'text-rose-500' : 'text-amber-500'
+                    }`}>
+                      {activeVerdict.confidence.split(' · ')[1]}
+                    </h4>
+                    <p className="text-[9.5px] text-zinc-450 dark:text-zinc-500 mt-1 leading-normal font-semibold">
+                      Alignment: {activeVerdict.confidence.split(' · ')[0]} quality indicators.
+                    </p>
+                  </div>
+
+                  {/* Recommendation */}
+                  <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
+                    <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">AI Recommendation</span>
+                    <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-100 leading-snug flex items-center gap-1.5">
+                      <Zap size={11} className="text-amber-400 animate-pulse" /> {activeVerdict.recommendation}
+                    </h4>
+                    <p className="text-[9.5px] text-zinc-450 dark:text-zinc-500 mt-1 leading-normal font-semibold">
+                      Suggested RRR: {activeVerdict.rrr}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Execution Intelligence Card */}
+              <div className={`rounded-3xl p-5 border ${
+                isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
+              }`}>
+                <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-4">
+                  Execution Intelligence
+                </span>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  
+                  {/* Execution Grade Card */}
+                  <div className={`p-4 rounded-2xl border flex flex-col justify-between ${
+                    isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
+                  }`}>
+                    <div>
+                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Exec Grade</span>
+                      <h4 className="text-2xl font-black text-rose-500 dark:text-rose-450 mt-1 tracking-tight">
+                        {activeVerdict.execGrade.split(' ')[0]}
+                      </h4>
+                    </div>
+                    <p className="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold mt-2">
+                      {activeVerdict.execGrade.split(' (')[1]?.replace(')', '') || 'Trade Quality'}
+                    </p>
+                  </div>
+
+                  {/* Readiness */}
+                  <div className={`p-4 rounded-2xl border flex flex-col justify-between ${
+                    isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
+                  }`}>
+                    <div>
+                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Readiness</span>
+                      <h4 className={`text-2xl font-black mt-1 tracking-tight ${
+                        activeVerdict.bias === 'NEUTRAL' ? 'text-zinc-400' : 'text-lime-500'
+                      }`}>
+                        {activeVerdict.bias === 'NEUTRAL' ? '0%' : '80%'}
+                      </h4>
+                    </div>
+                    <p className="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold mt-2">
+                      Directional bias confirmation
+                    </p>
+                  </div>
+
+                  {/* Confluence */}
+                  <div className={`p-4 rounded-2xl border flex flex-col justify-between ${
+                    isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
+                  }`}>
+                    <div>
+                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Confluence</span>
+                      <h4 className="text-2xl font-black text-zinc-800 dark:text-zinc-100 mt-1 tracking-tight">
+                        {activeVerdict.confluence}
+                      </h4>
+                    </div>
+                    <p className="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold mt-2">
+                      Coherence level metrics
+                    </p>
+                  </div>
+
+                  {/* Action */}
+                  <div className={`p-4 rounded-2xl border flex flex-col justify-between ${
+                    isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
+                  }`}>
+                    <div>
+                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Suggested Action</span>
+                      <h4 className={`text-base font-black mt-2 tracking-tight ${
+                        activeVerdict.bias === 'NEUTRAL' ? 'text-amber-500' : 'text-lime-650 dark:text-lime-400'
+                      }`}>
+                        {activeVerdict.bias === 'NEUTRAL' ? 'STAND ASIDE' : 'EXECUTE OPPORTUNITY'}
+                      </h4>
+                    </div>
+                    <p className="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold mt-2">
+                      Decision state recommendation
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          )}
+
+        </div>
+
+        {/* Right Column: Opportunities Board & Behavioral Monitor */}
+        <div className="space-y-6">
+          
+          {/* Opportunities Board */}
+          <div className={`rounded-3xl p-5 border ${
+            isLight ? 'bg-white border-zinc-150 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
+          }`}>
+            <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-4">
+              Today's Opportunities
+            </span>
+
+            {/* Status counts capsules */}
+            <div className="grid grid-cols-4 gap-1.5 mb-5 text-center">
+              <div className={`py-2 rounded-xl border ${
+                isLight ? 'bg-zinc-50 border-zinc-150' : 'bg-zinc-900/50 border-zinc-850/80'
+              }`}>
+                <span className="text-[8px] font-black text-zinc-400 block">READY</span>
+                <span className="text-xs font-black text-zinc-800 dark:text-zinc-100">0</span>
+              </div>
+              <div className={`py-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.02] dark:bg-amber-500/[0.01]`}>
+                <span className="text-[8px] font-black text-amber-500 block">FORMING</span>
+                <span className="text-xs font-black text-amber-500">5</span>
+              </div>
+              <div className={`py-2 rounded-xl border ${
+                isLight ? 'bg-zinc-50 border-zinc-150' : 'bg-zinc-900/50 border-zinc-850/80'
+              }`}>
+                <span className="text-[8px] font-black text-zinc-400 block">ACTIVE</span>
+                <span className="text-xs font-black text-zinc-800 dark:text-zinc-100">0</span>
+              </div>
+              <div className={`py-2 rounded-xl border ${
+                isLight ? 'bg-zinc-50 border-zinc-150' : 'bg-zinc-900/50 border-zinc-850/80'
+              }`}>
+                <span className="text-[8px] font-black text-zinc-400 block">DONE</span>
+                <span className="text-xs font-black text-zinc-800 dark:text-zinc-100">0</span>
+              </div>
+            </div>
+
+            {/* Currency cards listing */}
+            <div className="space-y-3">
+              {[
+                { pair: 'EUR/USD', bias: 'SELL', type: 'FORMING', grade: 'B+', conf: '80' },
+                { pair: 'GBP/USD', bias: 'SELL', type: 'FORMING', grade: 'B+', conf: '80' },
+                { pair: 'USD/JPY', bias: 'BUY', type: 'FORMING', grade: 'B+', conf: '80' },
+                { pair: 'USD/CAD', bias: 'BUY', type: 'FORMING', grade: 'B+', conf: '80' },
+              ].map((opp) => (
+                <div 
+                  key={opp.pair} 
+                  className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
+                    isLight ? 'bg-zinc-50/50 border-zinc-150' : 'bg-zinc-900/30 border-zinc-850/70'
+                  }`}
+                >
+                  <div>
+                    <h5 className="text-xs font-black text-zinc-850 dark:text-zinc-100">{opp.pair}</h5>
+                    <span className="text-[8.5px] font-bold text-zinc-450 dark:text-zinc-500 uppercase">
+                      Overlap session
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <span className={`text-[9px] font-black block uppercase ${
+                        opp.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : 'text-rose-500'
+                      }`}>
+                        {opp.bias === 'BUY' ? '▲ BUY' : '▼ SELL'}
+                      </span>
+                      <span className="text-[8px] font-bold text-zinc-400">
+                        Grade {opp.grade} · C{opp.conf}
+                      </span>
+                    </div>
+
+                    <span className="px-2 py-0.5 rounded text-[8px] font-black bg-amber-500/10 text-amber-500 uppercase tracking-wider">
+                      {opp.type}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Behavioral Intelligence Card */}
+          <div className={`rounded-3xl p-5 border ${
+            isLight ? 'bg-white border-zinc-150 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
+          }`}>
+            <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-4">
+              Behavioral Intelligence
+            </span>
+
+            <div className="space-y-3">
+              {[
+                { title: 'Overtrading', desc: 'Trade count within healthy range.', status: 'OK' },
+                { title: 'Revenge Trading', desc: 'No revenge pattern detected.', status: 'OK' },
+                { title: 'Impulsive Behaviour', desc: 'No impulse triggers detected.', status: 'OK' },
+                { title: 'Discipline Drift', desc: 'Process adherence stable.', status: 'OK' },
+                { title: 'Emotional Deterioration', desc: 'Coaching engine logs stable.', status: 'OK' }
+              ].map((item) => (
+                <div 
+                  key={item.title}
+                  className={`p-3 rounded-2xl border flex items-center justify-between ${
+                    isLight ? 'bg-zinc-50/20 border-zinc-150/70' : 'bg-zinc-950/15 border-zinc-900/40'
+                  }`}
+                >
+                  <div className="space-y-0.5 pr-2">
+                    <h5 className="text-[10px] font-black text-zinc-800 dark:text-zinc-100">{item.title}</h5>
+                    <p className="text-[8px] text-zinc-450 dark:text-zinc-500 font-bold leading-normal">{item.desc}</p>
+                  </div>
+                  <span className="text-[9px] font-black text-lime-600 dark:text-lime-400 flex items-center gap-1.5 uppercase bg-lime-500/10 px-2 py-0.5 rounded-lg border border-lime-500/10 shadow-sm shadow-lime-500/5">
+                    <CheckCircle size={10} /> {item.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  );
+};
