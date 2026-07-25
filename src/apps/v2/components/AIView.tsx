@@ -450,7 +450,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
             timeframe: '1H',
             bias: bias,
             entryPlan: smcEntry !== '—' ? `$${smcEntry}` : '—',
-            execGrade: getGrade(scoreVal + 3)
+            execGrade: bias === 'NEUTRAL' ? '—' : getGrade(scoreVal + 15)
           },
           {
             name: 'ICT (Inner Circle Trader)',
@@ -458,7 +458,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
             timeframe: '15M',
             bias: bias,
             entryPlan: ictEntry !== '—' ? `$${ictEntry}` : '—',
-            execGrade: getGrade(scoreVal - 2)
+            execGrade: bias === 'NEUTRAL' ? '—' : getGrade(scoreVal - 10)
           },
           {
             name: 'Supply & Demand (SnD)',
@@ -466,7 +466,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
             timeframe: '4H',
             bias: bias,
             entryPlan: sndEntry !== '—' ? `$${sndEntry}` : '—',
-            execGrade: getGrade(scoreVal + 1)
+            execGrade: bias === 'NEUTRAL' ? '—' : getGrade(scoreVal + 8)
           },
           {
             name: 'Volume Profile (VPVR)',
@@ -474,7 +474,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
             timeframe: 'D',
             bias: bias,
             entryPlan: vpvrEntry !== '—' ? `$${vpvrEntry}` : '—',
-            execGrade: getGrade(scoreVal - 5)
+            execGrade: bias === 'NEUTRAL' ? '—' : getGrade(scoreVal - 18)
           }
         ];
 
@@ -936,7 +936,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                     className={`rounded-3xl p-5 border backdrop-blur-xl transition-all duration-300 flex flex-col justify-between relative shadow-lg ${
                       isLight 
                         ? 'bg-white/45 border-white/60 shadow-zinc-150/40 hover:bg-white/60 hover:shadow-zinc-150/60' 
-                        : 'bg-zinc-950/30 border-zinc-900/40 shadow-black/20 hover:bg-zinc-950/40 hover:shadow-black/30'
+                        : 'bg-zinc-900/65 border-zinc-800/80 shadow-black/40 hover:bg-zinc-900/75 hover:border-zinc-700/80 hover:shadow-black/50'
                     }`}
                   >
                     {/* Top Row: Title, Timeframe and Dot Indicator */}
@@ -979,13 +979,13 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                       </div>
 
                       {/* Exec Grade */}
-                      <div className="flex flex-col text-right">
+                      <div className="flex flex-col text-right justify-end">
                         <span className="text-[8px] font-black text-zinc-455 dark:text-zinc-550 uppercase tracking-wider mb-0.5">Exec Grade</span>
-                        <span className={`text-[13px] font-black tracking-tight ${
+                        <span className={`text-2xl md:text-3xl font-black tracking-tighter leading-none ${
                           strat.bias === 'BUY'
-                            ? 'text-lime-650 dark:text-lime-400'
+                            ? 'text-lime-600 dark:text-lime-400 drop-shadow-[0_0_10px_rgba(163,230,53,0.2)]'
                             : strat.bias === 'SELL'
-                              ? 'text-rose-500'
+                              ? 'text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.2)]'
                               : 'text-zinc-450'
                         }`}>{strat.execGrade}</span>
                       </div>
