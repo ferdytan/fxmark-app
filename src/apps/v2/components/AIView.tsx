@@ -4,7 +4,6 @@ import {
   Cpu, 
   Play, 
   Activity, 
-  CheckCircle,
   RefreshCw,
   Zap
 } from 'lucide-react';
@@ -576,39 +575,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
             </div>
           </div>
 
-          {/* Behavioral Intelligence Card */}
-          <div className={`rounded-3xl p-5 border ${
-            isLight ? 'bg-white border-zinc-150 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
-          }`}>
-            <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-4">
-              Behavioral Intelligence
-            </span>
 
-            <div className="space-y-3">
-              {[
-                { title: 'Overtrading', desc: 'Trade count within healthy range.', status: 'OK' },
-                { title: 'Revenge Trading', desc: 'No revenge pattern detected.', status: 'OK' },
-                { title: 'Impulsive Behaviour', desc: 'No impulse triggers detected.', status: 'OK' },
-                { title: 'Discipline Drift', desc: 'Process adherence stable.', status: 'OK' },
-                { title: 'Emotional Deterioration', desc: 'Coaching engine logs stable.', status: 'OK' }
-              ].map((item) => (
-                <div 
-                  key={item.title}
-                  className={`p-3 rounded-2xl border flex items-center justify-between ${
-                    isLight ? 'bg-zinc-50/20 border-zinc-150/70' : 'bg-zinc-950/15 border-zinc-900/40'
-                  }`}
-                >
-                  <div className="space-y-0.5 pr-2">
-                    <h5 className="text-[10px] font-black text-zinc-800 dark:text-zinc-100">{item.title}</h5>
-                    <p className="text-[8px] text-zinc-450 dark:text-zinc-500 font-bold leading-normal">{item.desc}</p>
-                  </div>
-                  <span className="text-[9px] font-black text-lime-600 dark:text-lime-400 flex items-center gap-1.5 uppercase bg-lime-500/10 px-2 py-0.5 rounded-lg border border-lime-500/10 shadow-sm shadow-lime-500/5">
-                    <CheckCircle size={10} /> {item.status}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
 
         </div>
 
