@@ -915,11 +915,11 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
               </div>
             </div>
 
-            {/* Macro Trend & Strategy Confluence Matrix (Added Entry Plan and Exec Grade per Strategy) */}
+            {/* Macro Trend & Strategy Confluence Matrix (Gorgeously rendered as cards) */}
             <div className={`rounded-3xl p-5 border ${
               isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
             }`}>
-              <div className="flex justify-between items-center mb-4 pb-2 border-b border-dashed border-zinc-150 dark:border-zinc-800">
+              <div className="flex justify-between items-center mb-5 pb-2 border-b border-dashed border-zinc-150 dark:border-zinc-800">
                 <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
                   <Activity size={12} className="text-lime-500" /> Multi-Strategy Confluence Matrix
                 </span>
@@ -928,51 +928,73 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                 </span>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-zinc-150 dark:border-zinc-850">
-                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Strategy</th>
-                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Timeframe</th>
-                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Active Pattern / Zone</th>
-                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Plan Entry</th>
-                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Exec Grade</th>
-                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider text-right">Signal Bias</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900/50">
-                    {(activeVerdict.strategies || []).map((strat) => (
-                      <tr key={strat.name} className="hover:bg-zinc-50/10 dark:hover:bg-zinc-950/20 transition-all">
-                        <td className="py-3 text-xs font-black text-zinc-800 dark:text-zinc-200">{strat.name}</td>
-                        <td className="py-3 text-xs font-bold text-zinc-450 dark:text-zinc-500">{strat.timeframe}</td>
-                        <td className="py-3 text-xs font-bold text-zinc-500 dark:text-zinc-400">{strat.pattern}</td>
-                        <td className="py-3 text-xs font-black text-zinc-800 dark:text-zinc-100">{strat.entryPlan}</td>
-                        <td className="py-3 text-xs font-black text-zinc-800 dark:text-zinc-100">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
-                            strat.bias === 'BUY'
-                              ? 'text-lime-600 dark:text-lime-400'
-                              : strat.bias === 'SELL'
-                                ? 'text-rose-500'
-                                : 'text-zinc-400'
-                          }`}>
-                            {strat.execGrade}
-                          </span>
-                        </td>
-                        <td className="py-3 text-xs font-black text-right">
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-black border ${
-                            strat.bias === 'BUY'
-                              ? 'bg-lime-500/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
-                              : strat.bias === 'SELL'
-                                ? 'bg-rose-500/10 border-rose-500/20 text-rose-500'
-                                : 'bg-zinc-500/10 border-zinc-800/20 text-zinc-400'
-                          }`}>
-                            {strat.bias}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              {/* Grid of Strategy Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {(activeVerdict.strategies || []).map((strat) => (
+                  <div 
+                    key={strat.name} 
+                    className={`rounded-2xl p-4 border flex flex-col justify-between transition-all duration-300 relative overflow-hidden ${
+                      isLight 
+                        ? 'bg-zinc-50/50 border-zinc-150/80 shadow-sm' 
+                        : 'bg-zinc-950/40 border-zinc-900/60 shadow-md'
+                    } ${
+                      strat.bias === 'BUY'
+                        ? 'border-t-2 border-t-lime-500 dark:border-t-lime-400'
+                        : strat.bias === 'SELL'
+                          ? 'border-t-2 border-t-rose-500'
+                          : 'border-t-2 border-t-zinc-500 dark:border-t-zinc-700'
+                    }`}
+                  >
+                    {/* Header Info */}
+                    <div className="flex justify-between items-start gap-2 mb-3">
+                      <div>
+                        <h5 className="text-xs font-black text-zinc-850 dark:text-zinc-100 leading-snug">
+                          {strat.name.split(' (')[0]}
+                        </h5>
+                        <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mt-0.5">
+                          {strat.name.split(' (')[1]?.replace(')', '') || strat.timeframe} · {strat.timeframe}
+                        </span>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black border ${
+                        strat.bias === 'BUY'
+                          ? 'bg-lime-500/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
+                          : strat.bias === 'SELL'
+                            ? 'bg-rose-500/10 border-rose-500/20 text-rose-500'
+                            : 'bg-zinc-500/10 border-zinc-800/20 text-zinc-400'
+                      }`}>
+                        {strat.bias}
+                      </span>
+                    </div>
+
+                    {/* Active Pattern / Reason */}
+                    <div className={`p-2.5 rounded-xl text-[10px] font-bold leading-normal mb-3 ${
+                      isLight ? 'bg-zinc-100/50 text-zinc-650' : 'bg-zinc-900/50 text-zinc-400'
+                    }`}>
+                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-550 block uppercase tracking-wider mb-0.5">Active Setup</span>
+                      {strat.pattern}
+                    </div>
+
+                    {/* Footer Row: Entry Plan & Grade */}
+                    <div className="flex items-center justify-between pt-2.5 border-t border-dashed border-zinc-150 dark:border-zinc-900/60 mt-auto">
+                      <div>
+                        <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase block tracking-wider">Plan Entry</span>
+                        <span className="text-xs font-black text-zinc-850 dark:text-zinc-100">{strat.entryPlan}</span>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase block tracking-wider">Exec Grade</span>
+                        <span className={`text-xs font-black ${
+                          strat.bias === 'BUY'
+                            ? 'text-lime-650 dark:text-lime-400'
+                            : strat.bias === 'SELL'
+                              ? 'text-rose-500'
+                              : 'text-zinc-400'
+                        }`}>{strat.execGrade}</span>
+                      </div>
+                    </div>
+
+                  </div>
+                ))}
               </div>
             </div>
 
