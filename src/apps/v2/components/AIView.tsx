@@ -413,68 +413,79 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                 </span>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  
-                  {/* Execution Grade Card */}
-                  <div className={`p-4 rounded-2xl border flex flex-col justify-between ${
-                    isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
+                        {/* Execution Grade Card (Double width highlight, Page 5 PDF replication) */}
+                  <div className={`p-5 rounded-2xl border flex flex-col justify-between relative overflow-hidden lg:col-span-2 ${
+                    isLight 
+                      ? 'bg-zinc-50/50 border-zinc-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)]' 
+                      : 'bg-zinc-950/40 border-zinc-900/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
                   }`}>
-                    <div>
-                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Exec Grade</span>
-                      <h4 className="text-2xl font-black text-rose-500 dark:text-rose-450 mt-1 tracking-tight">
+                    {/* Primary Badge */}
+                    <span className="absolute right-4 top-4 px-2 py-0.5 rounded text-[7px] font-black uppercase bg-lime-500/10 text-lime-650 dark:text-lime-400 border border-lime-500/10">
+                      PRIMARY
+                    </span>
+
+                    <div className="flex items-center gap-5 my-auto">
+                      {/* Giant Grade Letter */}
+                      <div className={`text-6xl md:text-7xl font-extrabold font-sans tracking-tighter select-none ${
+                        activeVerdict.bias === 'BUY'
+                          ? 'text-lime-600 dark:text-lime-400 drop-shadow-[0_0_15px_rgba(163,230,53,0.25)]'
+                          : activeVerdict.bias === 'SELL'
+                            ? 'text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.25)]'
+                            : 'text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.25)]'
+                      }`}>
                         {activeVerdict.execGrade.split(' ')[0]}
-                      </h4>
+                      </div>
+
+                      {/* Grade Details */}
+                      <div>
+                        <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
+                          Execution Grade
+                        </span>
+                        <h4 className="text-sm font-black text-zinc-800 dark:text-zinc-100 tracking-tight mt-0.5">
+                          {activeVerdict.execGrade.split(' (')[1]?.replace(')', '') || 'Trade Quality'}
+                        </h4>
+                        <p className="text-[9px] text-zinc-450 dark:text-zinc-500 font-bold mt-1.5 leading-relaxed max-w-[240px]">
+                          {activeVerdict.bias === 'NEUTRAL'
+                            ? 'Aligned structure does not always imply optimal execution conditions.'
+                            : 'Structure alignment indicates favorable execution readiness and trade survivability.'}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold mt-2">
-                      {activeVerdict.execGrade.split(' (')[1]?.replace(')', '') || 'Trade Quality'}
-                    </p>
                   </div>
 
-                  {/* Readiness */}
-                  <div className={`p-4 rounded-2xl border flex flex-col justify-between ${
+                  {/* Readiness & Confluence Card */}
+                  <div className={`p-5 rounded-2xl border flex flex-col justify-between ${
                     isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
                   }`}>
                     <div>
                       <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Readiness</span>
                       <h4 className={`text-2xl font-black mt-1 tracking-tight ${
-                        activeVerdict.bias === 'NEUTRAL' ? 'text-zinc-400' : 'text-lime-500'
+                        activeVerdict.bias === 'NEUTRAL' ? 'text-zinc-400' : 'text-lime-650 dark:text-lime-400'
                       }`}>
                         {activeVerdict.bias === 'NEUTRAL' ? '0%' : '80%'}
                       </h4>
                     </div>
-                    <p className="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold mt-2">
-                      Directional bias confirmation
+                    <p className="text-[8.5px] text-zinc-450 dark:text-zinc-500 font-bold mt-3 leading-none">
+                      Confluence Level: {activeVerdict.confluence}
                     </p>
                   </div>
 
-                  {/* Confluence */}
-                  <div className={`p-4 rounded-2xl border flex flex-col justify-between ${
-                    isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
-                  }`}>
-                    <div>
-                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Confluence</span>
-                      <h4 className="text-2xl font-black text-zinc-800 dark:text-zinc-100 mt-1 tracking-tight">
-                        {activeVerdict.confluence}
-                      </h4>
-                    </div>
-                    <p className="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold mt-2">
-                      Coherence level metrics
-                    </p>
-                  </div>
-
-                  {/* Action */}
-                  <div className={`p-4 rounded-2xl border flex flex-col justify-between ${
+                  {/* Suggested Action Card */}
+                  <div className={`p-5 rounded-2xl border flex flex-col justify-between ${
                     isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
                   }`}>
                     <div>
                       <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Suggested Action</span>
-                      <h4 className={`text-base font-black mt-2 tracking-tight ${
-                        activeVerdict.bias === 'NEUTRAL' ? 'text-amber-500' : 'text-lime-650 dark:text-lime-400'
+                      <h4 className={`text-xs font-black mt-2 tracking-tight uppercase px-2 py-1 rounded-xl text-center border ${
+                        activeVerdict.bias === 'NEUTRAL' 
+                          ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' 
+                          : 'bg-lime-400/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
                       }`}>
-                        {activeVerdict.bias === 'NEUTRAL' ? 'STAND ASIDE' : 'EXECUTE OPPORTUNITY'}
+                        {activeVerdict.bias === 'NEUTRAL' ? 'STAND ASIDE' : 'EXECUTE'}
                       </h4>
                     </div>
-                    <p className="text-[8px] text-zinc-400 dark:text-zinc-500 font-bold mt-2">
-                      Decision state recommendation
+                    <p className="text-[8.5px] text-zinc-450 dark:text-zinc-500 font-bold mt-3 leading-none">
+                      {activeVerdict.bias === 'NEUTRAL' ? 'Preserve focus' : 'VWAP limit trigger'}
                     </p>
                   </div>
 
