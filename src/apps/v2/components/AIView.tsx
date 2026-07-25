@@ -73,6 +73,19 @@ const getGrade = (score: number): string => {
   return 'F';
 };
 
+const getGradeColorClass = (grade: string): string => {
+  if (grade.startsWith('A') || grade.startsWith('B')) {
+    return 'text-lime-600 dark:text-lime-400 drop-shadow-[0_0_10px_rgba(163,230,53,0.2)]';
+  }
+  if (grade.startsWith('C') || grade.includes('D+')) {
+    return 'text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.2)]';
+  }
+  if (grade.startsWith('D') || grade.startsWith('F')) {
+    return 'text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.2)]';
+  }
+  return 'text-zinc-450';
+};
+
 // Pre-programmed fallback database
 const symbolDatabase: Record<SymbolType, ScanVerdict> = {
   XAUUSD: {
@@ -94,10 +107,10 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     tp: '—',
     macroTrend: 'NEUTRAL',
     strategies: [
-      { name: 'Smart Money Concepts (SMC)', pattern: 'Ranging inside equilibrium', timeframe: '1H', bias: 'NEUTRAL', entryPlan: '—', execGrade: 'D' },
-      { name: 'ICT (Inner Circle Trader)', pattern: 'FVG Mitigated / No Imbalance', timeframe: '15M', bias: 'NEUTRAL', entryPlan: '—', execGrade: 'D' },
-      { name: 'Supply & Demand (SnD)', pattern: 'Trading in middle of range', timeframe: '4H', bias: 'NEUTRAL', entryPlan: '—', execGrade: 'D' },
-      { name: 'Volume Profile (VPVR)', pattern: 'Hovering at Point of Control (POC)', timeframe: 'D', bias: 'NEUTRAL', entryPlan: '—', execGrade: 'D' }
+      { name: 'Smart Money Concepts (SMC)', pattern: 'Ranging inside equilibrium', timeframe: '1H', bias: 'NEUTRAL', entryPlan: '$4053.70', execGrade: 'C' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'FVG Mitigated / No Imbalance', timeframe: '15M', bias: 'NEUTRAL', entryPlan: '$4050.20', execGrade: 'C' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Trading in middle of range', timeframe: '4H', bias: 'NEUTRAL', entryPlan: '$4045.00', execGrade: 'C' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Hovering at Point of Control (POC)', timeframe: 'D', bias: 'NEUTRAL', entryPlan: '$4052.10', execGrade: 'C' }
     ]
   },
   EURUSD: {
@@ -586,32 +599,32 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
         pattern: smcPattern,
         timeframe: '1H',
         bias: smcBias,
-        entryPlan: smcBias === 'NEUTRAL' ? '—' : `$${smcEntry.toFixed(decimalPlaces)}`,
-        execGrade: smcBias === 'NEUTRAL' ? '—' : getGrade(smcScore)
+        entryPlan: `$${smcEntry.toFixed(decimalPlaces)}`,
+        execGrade: getGrade(smcScore)
       },
       {
         name: 'ICT (Inner Circle Trader)',
         pattern: ictPattern,
         timeframe: '15M',
         bias: ictBias,
-        entryPlan: ictBias === 'NEUTRAL' || ictEntry === 0 ? '—' : `$${ictEntry.toFixed(decimalPlaces)}`,
-        execGrade: ictBias === 'NEUTRAL' ? '—' : getGrade(ictScore)
+        entryPlan: `$${(ictEntry || currentPrice).toFixed(decimalPlaces)}`,
+        execGrade: getGrade(ictScore)
       },
       {
         name: 'Supply & Demand (SnD)',
         pattern: sndPattern,
         timeframe: '4H',
         bias: sndBias,
-        entryPlan: sndBias === 'NEUTRAL' || sndEntry === 0 ? '—' : `$${sndEntry.toFixed(decimalPlaces)}`,
-        execGrade: sndBias === 'NEUTRAL' ? '—' : getGrade(sndScore)
+        entryPlan: `$${(sndEntry || demandLevel).toFixed(decimalPlaces)}`,
+        execGrade: getGrade(sndScore)
       },
       {
         name: 'Volume Profile (VPVR)',
         pattern: vpvrPattern,
         timeframe: 'D',
         bias: vpvrBias,
-        entryPlan: vpvrBias === 'NEUTRAL' || vpvrEntry === 0 ? '—' : `$${vpvrEntry.toFixed(decimalPlaces)}`,
-        execGrade: vpvrBias === 'NEUTRAL' ? '—' : getGrade(vpvrScore)
+        entryPlan: `$${(vpvrEntry || pocPrice).toFixed(decimalPlaces)}`,
+        execGrade: getGrade(vpvrScore)
       }
     ];
 
@@ -978,13 +991,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
 
                   <div className="flex items-center gap-5 my-auto">
                     {/* Giant Grade Letter */}
-                    <div className={`text-6xl md:text-7xl font-extrabold font-sans tracking-tighter select-none ${
-                      activeVerdict.bias === 'BUY'
-                        ? 'text-lime-600 dark:text-lime-400 drop-shadow-[0_0_15px_rgba(163,230,53,0.25)]'
-                        : activeVerdict.bias === 'SELL'
-                          ? 'text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.25)]'
-                          : 'text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.25)]'
-                    }`}>
+                    <div className={`text-6xl md:text-7xl font-extrabold font-sans tracking-tighter select-none ${getGradeColorClass(activeVerdict.execGrade.split(' ')[0])}`}>
                       {activeVerdict.execGrade.split(' ')[0]}
                     </div>
 
@@ -1112,13 +1119,9 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                       {/* Exec Grade */}
                       <div className="flex flex-col text-right justify-end">
                         <span className="text-[8px] font-black text-zinc-455 dark:text-zinc-550 uppercase tracking-wider mb-0.5">Exec Grade</span>
-                        <span className={`text-2xl md:text-3xl font-black tracking-tighter leading-none ${
-                          strat.bias === 'BUY'
-                            ? 'text-lime-600 dark:text-lime-400 drop-shadow-[0_0_10px_rgba(163,230,53,0.2)]'
-                            : strat.bias === 'SELL'
-                              ? 'text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.2)]'
-                              : 'text-zinc-450'
-                        }`}>{strat.execGrade}</span>
+                        <span className={`text-2xl md:text-3xl font-black tracking-tighter leading-none ${getGradeColorClass(strat.execGrade)}`}>
+                          {strat.execGrade}
+                        </span>
                       </div>
                     </div>
 
