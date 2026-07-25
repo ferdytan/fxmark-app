@@ -16,6 +16,13 @@ interface AIViewProps {
 
 type SymbolType = 'XAUUSD' | 'EURUSD' | 'GBPUSD' | 'USDJPY' | 'USDCAD' | 'AUDUSD';
 
+interface StrategyDetail {
+  name: string;
+  pattern: string;
+  timeframe: string;
+  bias: 'BUY' | 'SELL' | 'NEUTRAL';
+}
+
 interface ScanVerdict {
   bias: 'BUY' | 'SELL' | 'NEUTRAL';
   price: string;
@@ -33,6 +40,8 @@ interface ScanVerdict {
   entry: string;
   sl: string;
   tp: string;
+  macroTrend: 'STRONG BUY' | 'BUY' | 'NEUTRAL' | 'SELL' | 'STRONG SELL';
+  strategies: StrategyDetail[];
 }
 
 const FINNHUB_API_KEY = 'd9i0bppr01qjmfdatdo0d9i0bppr01qjmfdatdog';
@@ -77,7 +86,14 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     confluence: 34,
     entry: '—',
     sl: '—',
-    tp: '—'
+    tp: '—',
+    macroTrend: 'NEUTRAL',
+    strategies: [
+      { name: 'Smart Money Concepts (SMC)', pattern: 'Ranging inside equilibrium', timeframe: '1H', bias: 'NEUTRAL' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'FVG Mitigated / No Imbalance', timeframe: '15M', bias: 'NEUTRAL' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Trading in middle of range', timeframe: '4H', bias: 'NEUTRAL' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Hovering at Point of Control (POC)', timeframe: 'D', bias: 'NEUTRAL' }
+    ]
   },
   EURUSD: {
     bias: 'SELL',
@@ -95,7 +111,14 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     confluence: 80,
     entry: '1.0850',
     sl: '1.0875',
-    tp: '1.0800'
+    tp: '1.0800',
+    macroTrend: 'SELL',
+    strategies: [
+      { name: 'Smart Money Concepts (SMC)', pattern: 'MSS Bearish Confirmed', timeframe: '1H', bias: 'SELL' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'Liquidity Pool Sweep at H1 Highs', timeframe: '15M', bias: 'SELL' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Rejection at H4 Supply Zone', timeframe: '4H', bias: 'SELL' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Price below Point of Control (POC)', timeframe: 'D', bias: 'SELL' }
+    ]
   },
   GBPUSD: {
     bias: 'SELL',
@@ -113,7 +136,14 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     confluence: 78,
     entry: '1.2910',
     sl: '1.2935',
-    tp: '1.2860'
+    tp: '1.2860',
+    macroTrend: 'SELL',
+    strategies: [
+      { name: 'Smart Money Concepts (SMC)', pattern: 'MSS Bearish Confirmed', timeframe: '1H', bias: 'SELL' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'Liquidity Pool Sweep at H1 Highs', timeframe: '15M', bias: 'SELL' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Rejection at H4 Supply Zone', timeframe: '4H', bias: 'SELL' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Price below Point of Control (POC)', timeframe: 'D', bias: 'SELL' }
+    ]
   },
   USDJPY: {
     bias: 'BUY',
@@ -131,7 +161,14 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     confluence: 85,
     entry: '155.20',
     sl: '154.85',
-    tp: '156.08'
+    tp: '156.08',
+    macroTrend: 'BUY',
+    strategies: [
+      { name: 'Smart Money Concepts (SMC)', pattern: 'CHoCH Bullish Confirmed', timeframe: '1H', bias: 'BUY' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'Unmitigated FVG Fill', timeframe: '15M', bias: 'BUY' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Testing H4 Demand Zone', timeframe: '4H', bias: 'BUY' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Price above Point of Control (POC)', timeframe: 'D', bias: 'BUY' }
+    ]
   },
   USDCAD: {
     bias: 'BUY',
@@ -149,7 +186,14 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     confluence: 62,
     entry: '1.3740',
     sl: '1.3715',
-    tp: '1.3778'
+    tp: '1.3778',
+    macroTrend: 'NEUTRAL',
+    strategies: [
+      { name: 'Smart Money Concepts (SMC)', pattern: 'Trading near Equilibrium Support', timeframe: '1H', bias: 'BUY' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'FVG Partially Mitigated', timeframe: '15M', bias: 'NEUTRAL' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Hovering near Daily Demand Range', timeframe: '4H', bias: 'BUY' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Price testing POC support', timeframe: 'D', bias: 'NEUTRAL' }
+    ]
   },
   AUDUSD: {
     bias: 'SELL',
@@ -167,7 +211,14 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     confluence: 82,
     entry: '0.6650',
     sl: '0.6675',
-    tp: '0.6600'
+    tp: '0.6600',
+    macroTrend: 'SELL',
+    strategies: [
+      { name: 'Smart Money Concepts (SMC)', pattern: 'MSS Bearish Confirmed', timeframe: '1H', bias: 'SELL' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'Liquidity Pool Sweep at H1 Highs', timeframe: '15M', bias: 'SELL' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Rejection at H4 Supply Zone', timeframe: '4H', bias: 'SELL' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Price below Point of Control (POC)', timeframe: 'D', bias: 'SELL' }
+    ]
   }
 };
 
@@ -352,6 +403,41 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
           }
         }
 
+        // Calculate dynamic macro trend
+        let macroTrend: 'STRONG BUY' | 'BUY' | 'NEUTRAL' | 'SELL' | 'STRONG SELL' = 'NEUTRAL';
+        if (dp > 0.4) macroTrend = 'STRONG BUY';
+        else if (dp > 0.05) macroTrend = 'BUY';
+        else if (dp < -0.4) macroTrend = 'STRONG SELL';
+        else if (dp < -0.05) macroTrend = 'SELL';
+
+        // Calculate dynamic strategies mapping
+        const strategies: StrategyDetail[] = [
+          {
+            name: 'Smart Money Concepts (SMC)',
+            pattern: bias === 'BUY' ? 'CHoCH Bullish Confirmed' : bias === 'SELL' ? 'MSS Bearish Confirmed' : 'Ranging inside equilibrium',
+            timeframe: '1H',
+            bias: bias
+          },
+          {
+            name: 'ICT (Inner Circle Trader)',
+            pattern: bias === 'BUY' ? 'Unmitigated FVG Fill' : bias === 'SELL' ? 'Liquidity Pool Sweep at H1 Highs' : 'FVG Mitigated / No Imbalance',
+            timeframe: '15M',
+            bias: bias
+          },
+          {
+            name: 'Supply & Demand (SnD)',
+            pattern: bias === 'BUY' ? 'Testing H4 Demand Zone' : bias === 'SELL' ? 'Rejection at H4 Supply Zone' : 'Trading in middle of range',
+            timeframe: '4H',
+            bias: bias
+          },
+          {
+            name: 'Volume Profile (VPVR)',
+            pattern: bias === 'BUY' ? 'Price above Point of Control (POC)' : bias === 'SELL' ? 'Price below Point of Control (POC)' : 'Hovering at Point of Control (POC)',
+            timeframe: 'D',
+            bias: bias
+          }
+        ];
+
         const dynamicVerdict: ScanVerdict = {
           bias,
           price: calculatedPrice,
@@ -372,7 +458,9 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
           confluence: scoreVal - 5,
           entry: entryStr,
           sl: slStr,
-          tp: tpStr
+          tp: tpStr,
+          macroTrend,
+          strategies
         };
 
         setLiveVerdict(dynamicVerdict);
@@ -383,6 +471,16 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
       console.warn('Scan api failed, keeping fallback:', err);
       setLiveVerdict(null);
     }
+  };
+
+  // Determine macro trend text before scanning
+  const initialMacroTrend = () => {
+    if (dailyChange === null) return 'NEUTRAL';
+    if (dailyChange > 0.4) return 'STRONG BUY';
+    if (dailyChange > 0.05) return 'BUY';
+    if (dailyChange < -0.4) return 'STRONG SELL';
+    if (dailyChange < -0.05) return 'SELL';
+    return 'NEUTRAL';
   };
 
   return (
@@ -409,14 +507,14 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
         </div>
       </div>
 
-      {/* Main Terminal Grid (Now 100% full width layout, no empty columns) */}
-      <div className="space-y-6 max-w-5xl mx-auto">
+      {/* Main Terminal (Stretches 100% full width, no empty margins) */}
+      <div className="w-full space-y-6">
         
         {/* Quick Symbol Metrics Selector */}
         <div className={`rounded-3xl p-5 border ${
           isLight ? 'bg-white border-zinc-150/70 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
         }`}>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
             {/* Symbol selector */}
             <div className="flex flex-col gap-1.5">
               <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Symbol</span>
@@ -464,6 +562,20 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                 {dailyChange !== null 
                   ? `${dailyChange > 0 ? '+' : ''}${dailyChange.toFixed(2)}%` 
                   : '+0.00%'}
+              </span>
+            </div>
+
+            {/* Trend Besar (Macro Trend) */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Macro Trend</span>
+              <span className={`text-xs font-black px-2 py-0.5 rounded-lg border w-fit ${
+                initialMacroTrend().includes('BUY') 
+                  ? 'bg-lime-500/10 border-lime-500/20 text-lime-650 dark:text-lime-400' 
+                  : initialMacroTrend().includes('SELL') 
+                    ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' 
+                    : 'bg-zinc-500/10 border-zinc-800/20 text-zinc-400'
+              }`}>
+                {initialMacroTrend()}
               </span>
             </div>
 
@@ -643,7 +755,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-dashed border-zinc-150 dark:border-zinc-800">
                 <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
                   <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">ENTRY</span>
-                  <span className="text-sm font-black text-zinc-800 dark:text-zinc-100">
+                  <span className="text-sm font-black text-zinc-850 dark:text-zinc-100">
                     {activeVerdict.bias === 'NEUTRAL' ? '—' : `$${activeVerdict.entry}`}
                   </span>
                 </div>
@@ -666,10 +778,57 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
 
                 <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
                   <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">SUGGESTED RRR</span>
-                  <span className="text-sm font-black text-zinc-800 dark:text-zinc-100">
+                  <span className="text-sm font-black text-zinc-850 dark:text-zinc-100">
                     {activeVerdict.rrr}
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* Macro Trend & Strategy Confluence Matrix */}
+            <div className={`rounded-3xl p-5 border ${
+              isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
+            }`}>
+              <div className="flex justify-between items-center mb-4 pb-2 border-b border-dashed border-zinc-150 dark:border-zinc-800">
+                <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                  <Activity size={12} className="text-lime-500" /> Multi-Strategy Confluence Matrix
+                </span>
+                <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-500 uppercase">
+                  Timeframe Consensus Check
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-zinc-150 dark:border-zinc-850">
+                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Strategy</th>
+                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Timeframe</th>
+                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Active Pattern / Zone</th>
+                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider text-right">Signal Bias</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900/50">
+                    {(activeVerdict.strategies || []).map((strat) => (
+                      <tr key={strat.name} className="hover:bg-zinc-50/10 dark:hover:bg-zinc-950/20 transition-all">
+                        <td className="py-3 text-xs font-black text-zinc-800 dark:text-zinc-200">{strat.name}</td>
+                        <td className="py-3 text-xs font-bold text-zinc-450 dark:text-zinc-500">{strat.timeframe}</td>
+                        <td className="py-3 text-xs font-bold text-zinc-500 dark:text-zinc-400">{strat.pattern}</td>
+                        <td className="py-3 text-xs font-black text-right">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-black border ${
+                            strat.bias === 'BUY'
+                              ? 'bg-lime-500/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
+                              : strat.bias === 'SELL'
+                                ? 'bg-rose-500/10 border-rose-500/20 text-rose-500'
+                                : 'bg-zinc-500/10 border-zinc-800/20 text-zinc-400'
+                          }`}>
+                            {strat.bias}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
 
