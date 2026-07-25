@@ -30,6 +30,9 @@ interface ScanVerdict {
   opportunityScore: string;
   execGrade: string;
   confluence: number;
+  entry: string;
+  sl: string;
+  tp: string;
 }
 
 const FINNHUB_API_KEY = 'd9i0bppr01qjmfdatdo0d9i0bppr01qjmfdatdog';
@@ -41,6 +44,19 @@ const ETF_MAP: Record<SymbolType, string> = {
   USDJPY: 'FXY',
   USDCAD: 'FXC',
   AUDUSD: 'FXA'
+};
+
+// Unified grading helper
+const getGrade = (score: number): string => {
+  if (score >= 95) return 'A+';
+  if (score >= 88) return 'A';
+  if (score >= 80) return 'B+';
+  if (score >= 70) return 'B';
+  if (score >= 60) return 'C+';
+  if (score >= 50) return 'C';
+  if (score >= 40) return 'D+';
+  if (score >= 30) return 'D';
+  return 'F';
 };
 
 // Pre-programmed fallback database
@@ -56,9 +72,12 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     volatility: 'Low',
     liquidity: 'Low',
     directionText: 'NEUTRAL',
-    opportunityScore: '1/100 LOW',
-    execGrade: 'D (score 2/100)',
-    confluence: 34
+    opportunityScore: '34/100 LOW',
+    execGrade: 'D (score 34/100)',
+    confluence: 34,
+    entry: '—',
+    sl: '—',
+    tp: '—'
   },
   EURUSD: {
     bias: 'SELL',
@@ -73,7 +92,10 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     directionText: 'SELL',
     opportunityScore: '80/100 HIGH',
     execGrade: 'B+ (score 80/100)',
-    confluence: 80
+    confluence: 80,
+    entry: '1.0850',
+    sl: '1.0875',
+    tp: '1.0800'
   },
   GBPUSD: {
     bias: 'SELL',
@@ -87,8 +109,11 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     liquidity: 'Medium',
     directionText: 'SELL',
     opportunityScore: '78/100 HIGH',
-    execGrade: 'B+ (score 78/100)',
-    confluence: 78
+    execGrade: 'B (score 78/100)',
+    confluence: 78,
+    entry: '1.2910',
+    sl: '1.2935',
+    tp: '1.2860'
   },
   USDJPY: {
     bias: 'BUY',
@@ -102,8 +127,11 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     liquidity: 'High',
     directionText: 'BUY',
     opportunityScore: '85/100 HIGH',
-    execGrade: 'A (score 85/100)',
-    confluence: 85
+    execGrade: 'B+ (score 85/100)',
+    confluence: 85,
+    entry: '155.20',
+    sl: '154.85',
+    tp: '156.08'
   },
   USDCAD: {
     bias: 'BUY',
@@ -116,9 +144,12 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     volatility: 'Low',
     liquidity: 'High',
     directionText: 'BUY',
-    opportunityScore: '60/100 MED',
-    execGrade: 'B (score 60/100)',
-    confluence: 62
+    opportunityScore: '62/100 MED',
+    execGrade: 'C+ (score 62/100)',
+    confluence: 62,
+    entry: '1.3740',
+    sl: '1.3715',
+    tp: '1.3778'
   },
   AUDUSD: {
     bias: 'SELL',
@@ -133,7 +164,10 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     directionText: 'SELL',
     opportunityScore: '82/100 HIGH',
     execGrade: 'B+ (score 82/100)',
-    confluence: 82
+    confluence: 82,
+    entry: '0.6650',
+    sl: '0.6675',
+    tp: '0.6600'
   }
 };
 
@@ -272,7 +306,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
         const scoreVal = Math.round(50 + Math.min(45, Math.abs(dp) * 60));
         const scoreLabel = scoreVal >= 80 ? 'HIGH' : scoreVal >= 60 ? 'MED' : 'LOW';
 
-        const gradeLetter = scoreVal >= 90 ? 'A+' : scoreVal >= 80 ? 'A' : scoreVal >= 70 ? 'B+' : scoreVal >= 60 ? 'B' : 'D';
+        const gradeLetter = getGrade(scoreVal);
 
         let stateText = '';
         let stateDesc = '';
@@ -285,6 +319,37 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
         } else {
           stateText = 'Low Liquidity';
           stateDesc = 'Thin participation — patience until liquidity returns.';
+        }
+
+        const numPrice = parseFloat(calculatedPrice);
+        let entryStr = '—';
+        let slStr = '—';
+        let tpStr = '—';
+
+        if (bias === 'BUY') {
+          entryStr = calculatedPrice;
+          if (activeSymbol === 'XAUUSD') {
+            slStr = (numPrice - 8.50).toFixed(2);
+            tpStr = (numPrice + 21.25).toFixed(2);
+          } else if (activeSymbol === 'USDJPY') {
+            slStr = (numPrice - 0.35).toFixed(2);
+            tpStr = (numPrice + 0.88).toFixed(2);
+          } else {
+            slStr = (numPrice - 0.0025).toFixed(4);
+            tpStr = (numPrice + 0.0063).toFixed(4);
+          }
+        } else if (bias === 'SELL') {
+          entryStr = calculatedPrice;
+          if (activeSymbol === 'XAUUSD') {
+            slStr = (numPrice + 8.50).toFixed(2);
+            tpStr = (numPrice - 17.00).toFixed(2);
+          } else if (activeSymbol === 'USDJPY') {
+            slStr = (numPrice + 0.35).toFixed(2);
+            tpStr = (numPrice - 0.70).toFixed(2);
+          } else {
+            slStr = (numPrice + 0.0025).toFixed(4);
+            tpStr = (numPrice - 0.0050).toFixed(4);
+          }
         }
 
         const dynamicVerdict: ScanVerdict = {
@@ -304,7 +369,10 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
           directionText: bias,
           opportunityScore: `${scoreVal}/100 ${scoreLabel}`,
           execGrade: `${gradeLetter} (score ${scoreVal}/100)`,
-          confluence: scoreVal - 5
+          confluence: scoreVal - 5,
+          entry: entryStr,
+          sl: slStr,
+          tp: tpStr
         };
 
         setLiveVerdict(dynamicVerdict);
@@ -341,412 +409,362 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
         </div>
       </div>
 
-      {/* Main Terminal Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main Terminal Grid (Now 100% full width layout, no empty columns) */}
+      <div className="space-y-6 max-w-5xl mx-auto">
         
-        {/* Left Column: Terminal Controls & Scan Button */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Quick Symbol Metrics Selector */}
-          <div className={`rounded-3xl p-5 border ${
-            isLight ? 'bg-white border-zinc-150/70 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
-          }`}>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {/* Symbol selector */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Symbol</span>
-                <select
-                  value={activeSymbol}
-                  onChange={(e) => {
-                    setActiveSymbol(e.target.value as SymbolType);
-                    setHasScanned(false);
-                    setLiveVerdict(null);
-                  }}
-                  className={`px-3 py-2 rounded-xl text-xs font-black uppercase border cursor-pointer outline-none transition-all ${
-                    isLight 
-                      ? 'bg-zinc-50 border-zinc-200 text-zinc-800 focus:border-zinc-300' 
-                      : 'bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-zinc-700'
-                  }`}
-                >
-                  {(Object.keys(symbolDatabase) as SymbolType[]).map((sym) => (
-                    <option key={sym} value={sym}>{sym}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Live Price */}
-              <div className="flex flex-col gap-1">
-                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Live Price</span>
-                <span className="text-sm font-black text-zinc-800 dark:text-zinc-100 flex items-center gap-1">
-                  {isFetchingPrice ? (
-                    <RefreshCw size={11} className="animate-spin text-zinc-400" />
-                  ) : (
-                    `$${livePrice || activeVerdict.price}`
-                  )}
-                </span>
-              </div>
-
-              {/* Daily Change */}
-              <div className="flex flex-col gap-1">
-                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Daily Change</span>
-                <span className={`text-sm font-black ${
-                  dailyChange !== null && dailyChange > 0 
-                    ? 'text-lime-650 dark:text-lime-400' 
-                    : dailyChange !== null && dailyChange < 0 
-                      ? 'text-rose-500' 
-                      : 'text-zinc-400'
-                }`}>
-                  {dailyChange !== null 
-                    ? `${dailyChange > 0 ? '+' : ''}${dailyChange.toFixed(2)}%` 
-                    : '+0.00%'}
-                </span>
-              </div>
-
-              {/* Confidence */}
-              <div className="flex flex-col gap-1">
-                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider font-bold">Confidence</span>
-                <span className={`text-sm font-black ${
-                  activeVerdict.bias === 'BUY' 
-                    ? 'text-lime-650 dark:text-lime-400' 
-                    : activeVerdict.bias === 'SELL' 
-                      ? 'text-rose-500' 
-                      : 'text-amber-500'
-                }`}>
-                  {activeVerdict.confidence.split(' · ')[1] || activeVerdict.confidence}
-                </span>
-              </div>
-
-              {/* Score */}
-              <div className="flex flex-col gap-1">
-                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Opportunity</span>
-                <span className="text-sm font-black text-zinc-800 dark:text-zinc-100">
-                  {activeVerdict.opportunityScore.split(' ')[0]}
-                </span>
-              </div>
-            </div>
-
-            {/* Sub-row session metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 pt-4 border-t border-dashed border-zinc-150 dark:border-zinc-800/80">
-              <div className="flex flex-col">
-                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Session</span>
-                <span className="text-[11px] font-black text-zinc-750 dark:text-zinc-350">{activeVerdict.session.split(' ')[0]}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Bias Direction</span>
-                <span className={`text-[11px] font-black ${
-                  activeVerdict.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : activeVerdict.bias === 'SELL' ? 'text-rose-500' : 'text-zinc-400'
-                }`}>{activeVerdict.directionText}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Liquidity</span>
-                <span className="text-[11px] font-black text-zinc-750 dark:text-zinc-350">{activeVerdict.liquidity}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Volatility</span>
-                <span className="text-[11px] font-black text-zinc-750 dark:text-zinc-350">{activeVerdict.volatility}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* AI Scan Console Card */}
-          <div className={`rounded-3xl p-6 border relative overflow-hidden transition-all duration-300 ${
-            isLight 
-              ? 'bg-gradient-to-br from-zinc-50 to-zinc-100/50 border-zinc-200 shadow-sm' 
-              : 'bg-gradient-to-br from-[#0e0e0e] to-[#121712] border-zinc-850'
-          }`}>
-            
-            {/* Tech scanner background indicator */}
-            <div className="absolute right-0 top-0 opacity-[0.02] dark:opacity-[0.03] text-zinc-500 dark:text-lime-400 pointer-events-none p-4">
-              <Zap size={250} />
-            </div>
-
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-2 max-w-md">
-                <span className="text-[9px] font-black uppercase text-lime-600 dark:text-lime-400 tracking-widest flex items-center gap-1.5">
-                  <Sparkles size={11} className="animate-pulse" /> AI Co-pilot Read
-                </span>
-                <h3 className="text-lg md:text-xl font-black text-zinc-850 dark:text-zinc-100 tracking-tight">
-                  Run an AI Market Scan
-                </h3>
-                <p className="text-xs text-zinc-450 dark:text-zinc-400 leading-relaxed font-bold">
-                  Institutional intelligence on the active instrument. Bias, liquidity, session volatility & tone — distilled in seconds.
-                </p>
-                <p className="text-[9.5px] font-semibold text-zinc-400 dark:text-zinc-500 italic mt-1">
-                  Last scan: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
-                </p>
-              </div>
-
-              {/* Trigger Button */}
-              <button
-                onClick={handleRunScan}
-                disabled={isScanning}
-                className="py-4 px-6 rounded-2xl bg-gradient-to-r from-lime-400 to-lime-500 hover:from-lime-400 hover:to-emerald-500 text-zinc-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-lime-500/10 hover:shadow-lime-500/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50 min-w-[170px]"
+        {/* Quick Symbol Metrics Selector */}
+        <div className={`rounded-3xl p-5 border ${
+          isLight ? 'bg-white border-zinc-150/70 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
+        }`}>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {/* Symbol selector */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Symbol</span>
+              <select
+                value={activeSymbol}
+                onChange={(e) => {
+                  setActiveSymbol(e.target.value as SymbolType);
+                  setHasScanned(false);
+                  setLiveVerdict(null);
+                }}
+                className={`px-3 py-2 rounded-xl text-xs font-black uppercase border cursor-pointer outline-none transition-all ${
+                  isLight 
+                    ? 'bg-zinc-50 border-zinc-200 text-zinc-800 focus:border-zinc-300' 
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-100 focus:border-zinc-700'
+                }`}
               >
-                {isScanning ? (
-                  <>
-                    <RefreshCw size={14} className="animate-spin" />
-                    <span>Analyzing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Play size={14} fill="currentColor" />
-                    <span>Run AI Market Scan</span>
-                  </>
-                )}
-              </button>
+                {(Object.keys(symbolDatabase) as SymbolType[]).map((sym) => (
+                  <option key={sym} value={sym}>{sym}</option>
+                ))}
+              </select>
             </div>
 
-            {/* Scan Progress Bar (Visible while scanning) */}
-            {isScanning && (
-              <div className="mt-6 pt-5 border-t border-dashed border-zinc-200 dark:border-zinc-800/80 space-y-2 animate-in fade-in duration-300">
-                <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-wider text-lime-600 dark:text-lime-400">
-                  <span className="animate-pulse">{scanSteps[scanStep]}</span>
-                  <span>{Math.round(((scanStep + 1) / scanSteps.length) * 100)}%</span>
-                </div>
-                <div className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-lime-500 transition-all duration-300 rounded-full"
-                    style={{ width: `${((scanStep + 1) / scanSteps.length) * 100}%` }}
-                  />
-                </div>
-              </div>
-            )}
+            {/* Live Price */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Live Price</span>
+              <span className="text-sm font-black text-zinc-800 dark:text-zinc-100 flex items-center gap-1">
+                {isFetchingPrice ? (
+                  <RefreshCw size={11} className="animate-spin text-zinc-400" />
+                ) : (
+                  `$${livePrice || activeVerdict.price}`
+                )}
+              </span>
+            </div>
+
+            {/* Daily Change */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Daily Change</span>
+              <span className={`text-sm font-black ${
+                dailyChange !== null && dailyChange > 0 
+                  ? 'text-lime-650 dark:text-lime-400' 
+                  : dailyChange !== null && dailyChange < 0 
+                    ? 'text-rose-500' 
+                    : 'text-zinc-400'
+              }`}>
+                {dailyChange !== null 
+                  ? `${dailyChange > 0 ? '+' : ''}${dailyChange.toFixed(2)}%` 
+                  : '+0.00%'}
+              </span>
+            </div>
+
+            {/* Confidence */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider font-bold">Confidence</span>
+              <span className={`text-sm font-black ${
+                activeVerdict.bias === 'BUY' 
+                  ? 'text-lime-650 dark:text-lime-400' 
+                  : activeVerdict.bias === 'SELL' 
+                    ? 'text-rose-500' 
+                    : 'text-amber-500'
+              }`}>
+                {activeVerdict.confidence.split(' · ')[1] || activeVerdict.confidence}
+              </span>
+            </div>
+
+            {/* Score */}
+            <div className="flex flex-col gap-1">
+              <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Opportunity</span>
+              <span className="text-sm font-black text-zinc-800 dark:text-zinc-100">
+                {activeVerdict.opportunityScore.split(' ')[0]}
+              </span>
+            </div>
           </div>
 
-          {/* AI Scanner Result Verdict Output */}
-          {hasScanned && !isScanning && (
-            <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
-              
-              {/* Market Verdict Banner */}
-              <div className={`rounded-3xl p-5 border ${
-                isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
-              }`}>
-                <div className="flex justify-between items-center mb-4 pb-3 border-b border-dashed border-zinc-150 dark:border-zinc-800">
-                  <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                    <Activity size={12} className="text-lime-500" /> Market Verdict
-                  </span>
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
-                    activeVerdict.bias === 'BUY'
-                      ? 'bg-lime-500/10 text-lime-650 dark:text-lime-400'
-                      : activeVerdict.bias === 'SELL'
-                        ? 'bg-rose-500/10 text-rose-500'
-                        : 'bg-amber-500/10 text-amber-500'
-                  }`}>
-                    {activeVerdict.bias} BIAS
-                  </span>
-                </div>
+          {/* Sub-row session metrics */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-5 pt-4 border-t border-dashed border-zinc-150 dark:border-zinc-800/80">
+            <div className="flex flex-col">
+              <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Session</span>
+              <span className="text-[11px] font-black text-zinc-750 dark:text-zinc-350">{activeVerdict.session.split(' ')[0]}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Bias Direction</span>
+              <span className={`text-[11px] font-black ${
+                activeVerdict.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : activeVerdict.bias === 'SELL' ? 'text-rose-500' : 'text-zinc-400'
+              }`}>{activeVerdict.directionText}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Liquidity</span>
+              <span className="text-[11px] font-black text-zinc-750 dark:text-zinc-350">{activeVerdict.liquidity}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase">Volatility</span>
+              <span className="text-[11px] font-black text-zinc-750 dark:text-zinc-350">{activeVerdict.volatility}</span>
+            </div>
+          </div>
+        </div>
 
-                {/* Grid of Verdict Details */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Market State */}
-                  <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
-                    <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">Market State</span>
-                    <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-100 leading-snug">
-                      {activeVerdict.marketState.split(' (')[0]}
-                    </h4>
-                    <p className="text-[9.5px] text-zinc-450 dark:text-zinc-500 mt-1 leading-normal font-semibold">
-                      {activeVerdict.marketState.split(' (')[1]?.replace(')', '') || 'Structure unresolved.'}
-                    </p>
-                  </div>
+        {/* AI Scan Console Card */}
+        <div className={`rounded-3xl p-6 border relative overflow-hidden transition-all duration-300 ${
+          isLight 
+            ? 'bg-gradient-to-br from-zinc-50 to-zinc-100/50 border-zinc-200 shadow-sm' 
+            : 'bg-gradient-to-br from-[#0e0e0e] to-[#121712] border-zinc-850'
+        }`}>
+          
+          {/* Tech scanner background indicator */}
+          <div className="absolute right-0 top-0 opacity-[0.02] dark:opacity-[0.03] text-zinc-500 dark:text-lime-400 pointer-events-none p-4">
+            <Zap size={250} />
+          </div>
 
-                  {/* Confidence level */}
-                  <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
-                    <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">Confidence Score</span>
-                    <h4 className={`text-xs font-black leading-snug ${
-                      activeVerdict.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : activeVerdict.bias === 'SELL' ? 'text-rose-500' : 'text-amber-500'
-                    }`}>
-                      {activeVerdict.confidence.split(' · ')[1] || activeVerdict.confidence}
-                    </h4>
-                    <p className="text-[9.5px] text-zinc-450 dark:text-zinc-500 mt-1 leading-normal font-semibold">
-                      Alignment: {activeVerdict.confidence.split(' · ')[0] || 'Statistical'} quality indicators.
-                    </p>
-                  </div>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-xl">
+              <span className="text-[9px] font-black uppercase text-lime-600 dark:text-lime-400 tracking-widest flex items-center gap-1.5">
+                <Sparkles size={11} className="animate-pulse" /> AI Co-pilot Read
+              </span>
+              <h3 className="text-lg md:text-xl font-black text-zinc-850 dark:text-zinc-100 tracking-tight">
+                Run an AI Market Scan
+              </h3>
+              <p className="text-xs text-zinc-450 dark:text-zinc-400 leading-relaxed font-bold">
+                Institutional intelligence on the active instrument. Bias, liquidity, session volatility & tone — distilled in seconds.
+              </p>
+              <p className="text-[9.5px] font-semibold text-zinc-400 dark:text-zinc-500 italic mt-1">
+                Last scan: {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+              </p>
+            </div>
 
-                  {/* Recommendation */}
-                  <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
-                    <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">AI Recommendation</span>
-                    <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-100 leading-snug flex items-center gap-1.5">
-                      <Zap size={11} className="text-amber-400 animate-pulse" /> {activeVerdict.recommendation}
-                    </h4>
-                    <p className="text-[9.5px] text-zinc-450 dark:text-zinc-500 mt-1 leading-normal font-semibold">
-                      Suggested RRR: {activeVerdict.rrr}
-                    </p>
-                  </div>
-                </div>
+            {/* Trigger Button */}
+            <button
+              onClick={handleRunScan}
+              disabled={isScanning}
+              className="py-4 px-6 rounded-2xl bg-gradient-to-r from-lime-400 to-lime-500 hover:from-lime-400 hover:to-emerald-500 text-zinc-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-lime-500/10 hover:shadow-lime-500/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50 min-w-[170px]"
+            >
+              {isScanning ? (
+                <>
+                  <RefreshCw size={14} className="animate-spin" />
+                  <span>Analyzing...</span>
+                </>
+              ) : (
+                <>
+                  <Play size={14} fill="currentColor" />
+                  <span>Run AI Market Scan</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Scan Progress Bar (Visible while scanning) */}
+          {isScanning && (
+            <div className="mt-6 pt-5 border-t border-dashed border-zinc-200 dark:border-zinc-800/80 space-y-2 animate-in fade-in duration-300">
+              <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-wider text-lime-600 dark:text-lime-400">
+                <span className="animate-pulse">{scanSteps[scanStep]}</span>
+                <span>{Math.round(((scanStep + 1) / scanSteps.length) * 100)}%</span>
               </div>
-
-              {/* Execution Intelligence Card */}
-              <div className={`rounded-3xl p-5 border ${
-                isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
-              }`}>
-                <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-4">
-                  Execution Intelligence
-                </span>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {/* Execution Grade Card (Double width highlight, Page 5 PDF replication) */}
-                  <div className={`p-5 rounded-2xl border flex flex-col justify-between relative overflow-hidden lg:col-span-2 ${
-                    isLight 
-                      ? 'bg-zinc-50/50 border-zinc-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)]' 
-                      : 'bg-zinc-950/40 border-zinc-900/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
-                  }`}>
-                    {/* Primary Badge */}
-                    <span className="absolute right-4 top-4 px-2 py-0.5 rounded text-[7px] font-black uppercase bg-lime-500/10 text-lime-650 dark:text-lime-400 border border-lime-500/10">
-                      PRIMARY
-                    </span>
-
-                    <div className="flex items-center gap-5 my-auto">
-                      {/* Giant Grade Letter */}
-                      <div className={`text-6xl md:text-7xl font-extrabold font-sans tracking-tighter select-none ${
-                        activeVerdict.bias === 'BUY'
-                          ? 'text-lime-600 dark:text-lime-400 drop-shadow-[0_0_15px_rgba(163,230,53,0.25)]'
-                          : activeVerdict.bias === 'SELL'
-                            ? 'text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.25)]'
-                            : 'text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.25)]'
-                      }`}>
-                        {activeVerdict.execGrade.split(' ')[0]}
-                      </div>
-
-                      {/* Grade Details */}
-                      <div>
-                        <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
-                          Execution Grade
-                        </span>
-                        <h4 className="text-sm font-black text-zinc-800 dark:text-zinc-100 tracking-tight mt-0.5">
-                          {activeVerdict.execGrade.split(' (')[1]?.replace(')', '') || 'Trade Quality'}
-                        </h4>
-                        <p className="text-[9px] text-zinc-450 dark:text-zinc-500 font-bold mt-1.5 leading-relaxed max-w-[240px]">
-                          {activeVerdict.bias === 'NEUTRAL'
-                            ? 'Aligned structure does not always imply optimal execution conditions.'
-                            : 'Structure alignment indicates favorable execution readiness and trade survivability.'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Readiness & Confluence Card */}
-                  <div className={`p-5 rounded-2xl border flex flex-col justify-between ${
-                    isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
-                  }`}>
-                    <div>
-                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Readiness</span>
-                      <h4 className={`text-2xl font-black mt-1 tracking-tight ${
-                        activeVerdict.bias === 'NEUTRAL' ? 'text-zinc-400' : 'text-lime-650 dark:text-lime-400'
-                      }`}>
-                        {activeVerdict.bias === 'NEUTRAL' ? '0%' : '80%'}
-                      </h4>
-                    </div>
-                    <p className="text-[8.5px] text-zinc-450 dark:text-zinc-500 font-bold mt-3 leading-none">
-                      Confluence Level: {activeVerdict.confluence}
-                    </p>
-                  </div>
-
-                  {/* Suggested Action Card */}
-                  <div className={`p-5 rounded-2xl border flex flex-col justify-between ${
-                    isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
-                  }`}>
-                    <div>
-                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Suggested Action</span>
-                      <h4 className={`text-xs font-black mt-2 tracking-tight uppercase px-2 py-1 rounded-xl text-center border ${
-                        activeVerdict.bias === 'NEUTRAL' 
-                          ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' 
-                          : 'bg-lime-400/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
-                      }`}>
-                        {activeVerdict.bias === 'NEUTRAL' ? 'STAND ASIDE' : 'EXECUTE'}
-                      </h4>
-                    </div>
-                    <p className="text-[8.5px] text-zinc-450 dark:text-zinc-500 font-bold mt-3 leading-none">
-                      {activeVerdict.bias === 'NEUTRAL' ? 'Preserve focus' : 'VWAP limit trigger'}
-                    </p>
-                  </div>
-                </div>
+              <div className="w-full h-1 bg-zinc-200 dark:bg-zinc-900 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-lime-500 transition-all duration-300 rounded-full"
+                  style={{ width: `${((scanStep + 1) / scanSteps.length) * 100}%` }}
+                />
               </div>
-
             </div>
           )}
-
         </div>
 
-        {/* Right Column: Opportunities Board */}
-        <div className="space-y-6">
-          
-          {/* Opportunities Board */}
-          <div className={`rounded-3xl p-5 border ${
-            isLight ? 'bg-white border-zinc-150 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
-          }`}>
-            <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-4">
-              Today's Opportunities
-            </span>
+        {/* AI Scanner Result Verdict Output */}
+        {hasScanned && !isScanning && (
+          <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
+            
+            {/* Market Verdict Banner */}
+            <div className={`rounded-3xl p-5 border ${
+              isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
+            }`}>
+              <div className="flex justify-between items-center mb-4 pb-3 border-b border-dashed border-zinc-150 dark:border-zinc-800">
+                <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                  <Activity size={12} className="text-lime-500" /> Market Verdict
+                </span>
+                <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                  activeVerdict.bias === 'BUY'
+                    ? 'bg-lime-500/10 text-lime-650 dark:text-lime-400'
+                    : activeVerdict.bias === 'SELL'
+                      ? 'bg-rose-500/10 text-rose-500'
+                      : 'bg-amber-500/10 text-amber-500'
+                }`}>
+                  {activeVerdict.bias} BIAS
+                </span>
+              </div>
 
-            {/* Status counts capsules */}
-            <div className="grid grid-cols-4 gap-1.5 mb-5 text-center">
-              <div className={`py-2 rounded-xl border ${
-                isLight ? 'bg-zinc-50 border-zinc-150' : 'bg-zinc-900/50 border-zinc-850/80'
-              }`}>
-                <span className="text-[8px] font-black text-zinc-400 block">READY</span>
-                <span className="text-xs font-black text-zinc-800 dark:text-zinc-100">0</span>
+              {/* Grid of Verdict Details */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Market State */}
+                <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
+                  <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">Market State</span>
+                  <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-100 leading-snug">
+                    {activeVerdict.marketState.split(' (')[0]}
+                  </h4>
+                  <p className="text-[9.5px] text-zinc-450 dark:text-zinc-500 mt-1 leading-normal font-semibold">
+                    {activeVerdict.marketState.split(' (')[1]?.replace(')', '') || 'Structure unresolved.'}
+                  </p>
+                </div>
+
+                {/* Confidence level */}
+                <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
+                  <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">Confidence Score</span>
+                  <h4 className={`text-xs font-black leading-snug ${
+                    activeVerdict.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : activeVerdict.bias === 'SELL' ? 'text-rose-500' : 'text-amber-500'
+                  }`}>
+                    {activeVerdict.confidence.split(' · ')[1] || activeVerdict.confidence}
+                  </h4>
+                  <p className="text-[9.5px] text-zinc-450 dark:text-zinc-500 mt-1 leading-normal font-semibold">
+                    Alignment: {activeVerdict.confidence.split(' · ')[0] || 'Statistical'} quality indicators.
+                  </p>
+                </div>
+
+                {/* Recommendation */}
+                <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
+                  <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">AI Recommendation</span>
+                  <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-100 leading-snug flex items-center gap-1.5">
+                    <Zap size={11} className="text-amber-400 animate-pulse" /> {activeVerdict.recommendation}
+                  </h4>
+                  <p className="text-[9.5px] text-zinc-450 dark:text-zinc-500 mt-1 leading-normal font-semibold font-bold">
+                    Suggested RRR: {activeVerdict.rrr}
+                  </p>
+                </div>
               </div>
-              <div className={`py-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.02] dark:bg-amber-500/[0.01]`}>
-                <span className="text-[8px] font-black text-amber-500 block">FORMING</span>
-                <span className="text-xs font-black text-amber-500">5</span>
-              </div>
-              <div className={`py-2 rounded-xl border ${
-                isLight ? 'bg-zinc-50 border-zinc-150' : 'bg-zinc-900/50 border-zinc-850/80'
-              }`}>
-                <span className="text-[8px] font-black text-zinc-400 block">ACTIVE</span>
-                <span className="text-xs font-black text-zinc-800 dark:text-zinc-100">0</span>
-              </div>
-              <div className={`py-2 rounded-xl border ${
-                isLight ? 'bg-zinc-50 border-zinc-150' : 'bg-zinc-900/50 border-zinc-850/80'
-              }`}>
-                <span className="text-[8px] font-black text-zinc-400 block">DONE</span>
-                <span className="text-xs font-black text-zinc-800 dark:text-zinc-100">0</span>
+
+              {/* Dynamic Target Levels (Page 4 PDF Replication) */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-dashed border-zinc-150 dark:border-zinc-800">
+                <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
+                  <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">ENTRY</span>
+                  <span className="text-sm font-black text-zinc-800 dark:text-zinc-100">
+                    {activeVerdict.bias === 'NEUTRAL' ? '—' : `$${activeVerdict.entry}`}
+                  </span>
+                </div>
+
+                <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
+                  <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">STOP LOSS (SL)</span>
+                  <span className="text-sm font-black text-rose-500">
+                    {activeVerdict.bias === 'NEUTRAL' ? '—' : `$${activeVerdict.sl}`}
+                  </span>
+                </div>
+
+                <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
+                  <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">TAKE PROFIT (TP)</span>
+                  <span className={`text-sm font-black ${
+                    activeVerdict.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : 'text-rose-500'
+                  }`}>
+                    {activeVerdict.bias === 'NEUTRAL' ? '—' : `$${activeVerdict.tp}`}
+                  </span>
+                </div>
+
+                <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
+                  <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">SUGGESTED RRR</span>
+                  <span className="text-sm font-black text-zinc-800 dark:text-zinc-100">
+                    {activeVerdict.rrr}
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Currency cards listing */}
-            <div className="space-y-3">
-              {[
-                { pair: 'EUR/USD', bias: 'SELL', type: 'FORMING', grade: 'B+', conf: '80' },
-                { pair: 'GBP/USD', bias: 'SELL', type: 'FORMING', grade: 'B+', conf: '80' },
-                { pair: 'USD/JPY', bias: 'BUY', type: 'FORMING', grade: 'B+', conf: '80' },
-                { pair: 'USD/CAD', bias: 'BUY', type: 'FORMING', grade: 'B+', conf: '80' },
-              ].map((opp) => (
-                <div 
-                  key={opp.pair} 
-                  className={`p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
-                    isLight ? 'bg-zinc-50/50 border-zinc-150' : 'bg-zinc-900/30 border-zinc-850/70'
-                  }`}
-                >
-                  <div>
-                    <h5 className="text-xs font-black text-zinc-850 dark:text-zinc-100">{opp.pair}</h5>
-                    <span className="text-[8.5px] font-bold text-zinc-450 dark:text-zinc-500 uppercase">
-                      Overlap session
-                    </span>
-                  </div>
+            {/* Execution Intelligence Card */}
+            <div className={`rounded-3xl p-5 border ${
+              isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
+            }`}>
+              <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-4">
+                Execution Intelligence
+              </span>
 
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <span className={`text-[9px] font-black block uppercase ${
-                        opp.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : 'text-rose-500'
-                      }`}>
-                        {opp.bias === 'BUY' ? '▲ BUY' : '▼ SELL'}
-                      </span>
-                      <span className="text-[8px] font-bold text-zinc-400">
-                        Grade {opp.grade} · C{opp.conf}
-                      </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Execution Grade Card (Double width highlight, Page 5 PDF replication) */}
+                <div className={`p-5 rounded-2xl border flex flex-col justify-between relative overflow-hidden lg:col-span-2 ${
+                  isLight 
+                    ? 'bg-zinc-50/50 border-zinc-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)]' 
+                    : 'bg-zinc-950/40 border-zinc-900/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
+                }`}>
+                  {/* Primary Badge */}
+                  <span className="absolute right-4 top-4 px-2 py-0.5 rounded text-[7px] font-black uppercase bg-lime-500/10 text-lime-650 dark:text-lime-400 border border-lime-500/10">
+                    PRIMARY
+                  </span>
+
+                  <div className="flex items-center gap-5 my-auto">
+                    {/* Giant Grade Letter */}
+                    <div className={`text-6xl md:text-7xl font-extrabold font-sans tracking-tighter select-none ${
+                      activeVerdict.bias === 'BUY'
+                        ? 'text-lime-600 dark:text-lime-400 drop-shadow-[0_0_15px_rgba(163,230,53,0.25)]'
+                        : activeVerdict.bias === 'SELL'
+                          ? 'text-rose-500 drop-shadow-[0_0_15px_rgba(244,63,94,0.25)]'
+                          : 'text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.25)]'
+                    }`}>
+                      {activeVerdict.execGrade.split(' ')[0]}
                     </div>
 
-                    <span className="px-2 py-0.5 rounded text-[8px] font-black bg-amber-500/10 text-amber-500 uppercase tracking-wider">
-                      {opp.type}
-                    </span>
+                    {/* Grade Details */}
+                    <div>
+                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
+                        Execution Grade
+                      </span>
+                      <h4 className="text-sm font-black text-zinc-800 dark:text-zinc-100 tracking-tight mt-0.5">
+                        {activeVerdict.execGrade.split(' (')[1]?.replace(')', '') || 'Trade Quality'}
+                      </h4>
+                      <p className="text-[9px] text-zinc-450 dark:text-zinc-500 font-bold mt-1.5 leading-relaxed max-w-[240px]">
+                        {activeVerdict.bias === 'NEUTRAL'
+                          ? 'Aligned structure does not always imply optimal execution conditions.'
+                          : 'Structure alignment indicates favorable execution readiness and trade survivability.'}
+                      </p>
+                      <span className="text-[8px] text-zinc-400 dark:text-zinc-500 font-semibold block mt-1">
+                        Scale: A+ (95+) down to F (&lt;30)
+                      </span>
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-        </div>
+                {/* Readiness & Confluence Card */}
+                <div className={`p-5 rounded-2xl border flex flex-col justify-between ${
+                  isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
+                }`}>
+                  <div>
+                    <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Readiness</span>
+                    <h4 className={`text-2xl font-black mt-1 tracking-tight ${
+                      activeVerdict.bias === 'NEUTRAL' ? 'text-zinc-400' : 'text-lime-650 dark:text-lime-400'
+                    }`}>
+                      {activeVerdict.bias === 'NEUTRAL' ? '0%' : '80%'}
+                    </h4>
+                  </div>
+                  <p className="text-[8.5px] text-zinc-450 dark:text-zinc-500 font-bold mt-3 leading-none">
+                    Confluence Level: {activeVerdict.confluence}
+                  </p>
+                </div>
+
+                {/* Suggested Action Card */}
+                <div className={`p-5 rounded-2xl border flex flex-col justify-between ${
+                  isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
+                }`}>
+                  <div>
+                    <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Suggested Action</span>
+                    <h4 className={`text-xs font-black mt-2 tracking-tight uppercase px-2 py-1 rounded-xl text-center border ${
+                      activeVerdict.bias === 'NEUTRAL' 
+                        ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' 
+                        : 'bg-lime-400/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
+                    }`}>
+                      {activeVerdict.bias === 'NEUTRAL' ? 'STAND ASIDE' : 'EXECUTE'}
+                    </h4>
+                  </div>
+                  <p className="text-[8.5px] text-zinc-450 dark:text-zinc-500 font-bold mt-3 leading-none">
+                    {activeVerdict.bias === 'NEUTRAL' ? 'Preserve focus' : 'VWAP limit trigger'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        )}
 
       </div>
 
