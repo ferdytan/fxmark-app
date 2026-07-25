@@ -928,67 +928,65 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                 </span>
               </div>
 
-              {/* Grid of Strategy Cards */}
+              {/* Grid of Strategy Cards (Clean Modern Glassmorphism Aesthetic) */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {(activeVerdict.strategies || []).map((strat) => (
                   <div 
                     key={strat.name} 
-                    className={`rounded-2xl p-4 border flex flex-col justify-between transition-all duration-300 relative overflow-hidden ${
+                    className={`rounded-3xl p-5 border backdrop-blur-xl transition-all duration-300 flex flex-col justify-between relative shadow-lg ${
                       isLight 
-                        ? 'bg-zinc-50/50 border-zinc-150/80 shadow-sm' 
-                        : 'bg-zinc-950/40 border-zinc-900/60 shadow-md'
-                    } ${
-                      strat.bias === 'BUY'
-                        ? 'border-t-2 border-t-lime-500 dark:border-t-lime-400'
-                        : strat.bias === 'SELL'
-                          ? 'border-t-2 border-t-rose-500'
-                          : 'border-t-2 border-t-zinc-500 dark:border-t-zinc-700'
+                        ? 'bg-white/45 border-white/60 shadow-zinc-150/40 hover:bg-white/60 hover:shadow-zinc-150/60' 
+                        : 'bg-zinc-950/30 border-zinc-900/40 shadow-black/20 hover:bg-zinc-950/40 hover:shadow-black/30'
                     }`}
                   >
-                    {/* Header Info */}
-                    <div className="flex justify-between items-start gap-2 mb-3">
-                      <div>
-                        <h5 className="text-xs font-black text-zinc-850 dark:text-zinc-100 leading-snug">
-                          {strat.name.split(' (')[0]}
-                        </h5>
-                        <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider block mt-0.5">
+                    {/* Top Row: Title, Timeframe and Dot Indicator */}
+                    <div className="flex items-start justify-between gap-3 mb-4">
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            strat.bias === 'BUY'
+                              ? 'bg-lime-500 animate-pulse'
+                              : strat.bias === 'SELL'
+                                ? 'bg-rose-500 animate-pulse'
+                                : 'bg-zinc-400'
+                          }`} />
+                          <h5 className="text-[11.5px] font-black tracking-tight text-zinc-800 dark:text-zinc-200">
+                            {strat.name.split(' (')[0]}
+                          </h5>
+                        </div>
+                        <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-550 uppercase tracking-widest block pl-3">
                           {strat.name.split(' (')[1]?.replace(')', '') || strat.timeframe} · {strat.timeframe}
                         </span>
                       </div>
-                      <span className={`px-2 py-0.5 rounded text-[8px] font-black border ${
-                        strat.bias === 'BUY'
-                          ? 'bg-lime-500/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
-                          : strat.bias === 'SELL'
-                            ? 'bg-rose-500/10 border-rose-500/20 text-rose-500'
-                            : 'bg-zinc-500/10 border-zinc-800/20 text-zinc-400'
-                      }`}>
-                        {strat.bias}
-                      </span>
                     </div>
 
-                    {/* Active Pattern / Reason */}
-                    <div className={`p-2.5 rounded-xl text-[10px] font-bold leading-normal mb-3 ${
-                      isLight ? 'bg-zinc-100/50 text-zinc-650' : 'bg-zinc-900/50 text-zinc-400'
+                    {/* Active Setup Reason / Pattern Block */}
+                    <div className={`p-3 rounded-2xl text-[10px] font-bold leading-relaxed mb-4 transition-all ${
+                      isLight ? 'bg-zinc-50/50 text-zinc-650' : 'bg-zinc-900/30 text-zinc-400'
                     }`}>
-                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-550 block uppercase tracking-wider mb-0.5">Active Setup</span>
+                      <span className="text-[8.5px] font-black text-zinc-400 dark:text-zinc-550 block uppercase tracking-wider mb-1">
+                        Strategy Signal Reason
+                      </span>
                       {strat.pattern}
                     </div>
 
-                    {/* Footer Row: Entry Plan & Grade */}
-                    <div className="flex items-center justify-between pt-2.5 border-t border-dashed border-zinc-150 dark:border-zinc-900/60 mt-auto">
-                      <div>
-                        <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase block tracking-wider">Plan Entry</span>
+                    {/* Bottom Row: Plan Entry & Strategy Exec Grade side-by-side */}
+                    <div className="grid grid-cols-2 gap-2 pt-3.5 border-t border-dashed border-zinc-150 dark:border-zinc-900/50 mt-auto">
+                      {/* Plan Entry */}
+                      <div className="flex flex-col">
+                        <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-550 uppercase tracking-wider mb-0.5">Plan Entry</span>
                         <span className="text-xs font-black text-zinc-850 dark:text-zinc-100">{strat.entryPlan}</span>
                       </div>
 
-                      <div className="text-right">
-                        <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase block tracking-wider">Exec Grade</span>
-                        <span className={`text-xs font-black ${
+                      {/* Exec Grade */}
+                      <div className="flex flex-col text-right">
+                        <span className="text-[8px] font-black text-zinc-455 dark:text-zinc-550 uppercase tracking-wider mb-0.5">Exec Grade</span>
+                        <span className={`text-[13px] font-black tracking-tight ${
                           strat.bias === 'BUY'
                             ? 'text-lime-650 dark:text-lime-400'
                             : strat.bias === 'SELL'
                               ? 'text-rose-500'
-                              : 'text-zinc-400'
+                              : 'text-zinc-450'
                         }`}>{strat.execGrade}</span>
                       </div>
                     </div>
