@@ -32,110 +32,176 @@ interface ScanVerdict {
   confluence: number;
 }
 
+const FINNHUB_API_KEY = 'd9i0bppr01qjmfdatdo0d9i0bppr01qjmfdatdog';
+
+const ETF_MAP: Record<SymbolType, string> = {
+  XAUUSD: 'GLD',
+  EURUSD: 'FXE',
+  GBPUSD: 'FXB',
+  USDJPY: 'FXY',
+  USDCAD: 'FXC',
+  AUDUSD: 'FXA'
+};
+
+// Pre-programmed fallback database
+const symbolDatabase: Record<SymbolType, ScanVerdict> = {
+  XAUUSD: {
+    bias: 'NEUTRAL',
+    price: '4053.70',
+    marketState: 'Low Liquidity (Thin tape — patience until liquidity returns)',
+    confidence: 'Low · 44.1%',
+    recommendation: 'Reduce Size or Stand Aside',
+    rrr: '1 : 1.5',
+    session: 'New York (Outside major hours)',
+    volatility: 'Low',
+    liquidity: 'Low',
+    directionText: 'NEUTRAL',
+    opportunityScore: '1/100 LOW',
+    execGrade: 'D (score 2/100)',
+    confluence: 34
+  },
+  EURUSD: {
+    bias: 'SELL',
+    price: '1.0850',
+    marketState: 'Session Liquidity Sweep (Sweeping daily highs before drop)',
+    confidence: 'High · 80.0%',
+    recommendation: 'Scale Into Sell (Forming Opportunity)',
+    rrr: '1 : 2.0',
+    session: 'London Open',
+    volatility: 'Medium',
+    liquidity: 'High',
+    directionText: 'SELL',
+    opportunityScore: '80/100 HIGH',
+    execGrade: 'B+ (score 80/100)',
+    confluence: 80
+  },
+  GBPUSD: {
+    bias: 'SELL',
+    price: '1.2910',
+    marketState: 'Bearish Breakdown (Break of Session VWAP)',
+    confidence: 'High · 78.0%',
+    recommendation: 'Execute Sell (Active Setup)',
+    rrr: '1 : 2.0',
+    session: 'London open',
+    volatility: 'Medium',
+    liquidity: 'Medium',
+    directionText: 'SELL',
+    opportunityScore: '78/100 HIGH',
+    execGrade: 'B+ (score 78/100)',
+    confluence: 78
+  },
+  USDJPY: {
+    bias: 'BUY',
+    price: '155.20',
+    marketState: 'Bullish Continuation (Above Daily High)',
+    confidence: 'High · 85.0%',
+    recommendation: 'Execute Buy on VWAP Pullback',
+    rrr: '1 : 2.5',
+    session: 'Tokyo Open',
+    volatility: 'High',
+    liquidity: 'High',
+    directionText: 'BUY',
+    opportunityScore: '85/100 HIGH',
+    execGrade: 'A (score 85/100)',
+    confluence: 85
+  },
+  USDCAD: {
+    bias: 'BUY',
+    price: '1.3740',
+    marketState: 'Consolidating near Range Low (Accumulation phase)',
+    confidence: 'Medium · 62.0%',
+    recommendation: 'Wait for Range Breakout',
+    rrr: '1 : 1.5',
+    session: 'New York Open',
+    volatility: 'Low',
+    liquidity: 'High',
+    directionText: 'BUY',
+    opportunityScore: '60/100 MED',
+    execGrade: 'B (score 60/100)',
+    confluence: 62
+  },
+  AUDUSD: {
+    bias: 'SELL',
+    price: '0.6650',
+    marketState: 'Bearish Trend Expansion (Strong selling pressure)',
+    confidence: 'High · 82.0%',
+    recommendation: 'Sell at VWAP Retest',
+    rrr: '1 : 3.0',
+    session: 'Sydney Open',
+    volatility: 'Medium',
+    liquidity: 'Low',
+    directionText: 'SELL',
+    opportunityScore: '82/100 HIGH',
+    execGrade: 'B+ (score 82/100)',
+    confluence: 82
+  }
+};
+
 export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
   const [activeSymbol, setActiveSymbol] = useState<SymbolType>('XAUUSD');
   const [isScanning, setIsScanning] = useState(false);
   const [scanStep, setScanStep] = useState(0);
   const [hasScanned, setHasScanned] = useState(false);
 
-  // Pre-programmed symbol intelligence matching the quant terminal PDF
-  const symbolDatabase: Record<SymbolType, ScanVerdict> = {
-    XAUUSD: {
-      bias: 'NEUTRAL',
-      price: '4053.70',
-      marketState: 'Low Liquidity (Thin tape — patience until liquidity returns)',
-      confidence: 'Low · 44.1%',
-      recommendation: 'Reduce Size or Stand Aside',
-      rrr: '1 : 1.5',
-      session: 'New York (Outside major hours)',
-      volatility: 'Low',
-      liquidity: 'Low',
-      directionText: 'NEUTRAL',
-      opportunityScore: '1/100 LOW',
-      execGrade: 'D (score 2/100)',
-      confluence: 34
-    },
-    EURUSD: {
-      bias: 'SELL',
-      price: '1.0850',
-      marketState: 'Session Liquidity Sweep (Sweeping daily highs before drop)',
-      confidence: 'High · 80.0%',
-      recommendation: 'Scale Into Sell (Forming Opportunity)',
-      rrr: '1 : 2.0',
-      session: 'London Open',
-      volatility: 'Medium',
-      liquidity: 'High',
-      directionText: 'SELL',
-      opportunityScore: '80/100 HIGH',
-      execGrade: 'B+ (score 80/100)',
-      confluence: 80
-    },
-    GBPUSD: {
-      bias: 'SELL',
-      price: '1.2910',
-      marketState: 'Bearish Breakdown (Break of Session VWAP)',
-      confidence: 'High · 78.0%',
-      recommendation: 'Execute Sell (Active Setup)',
-      rrr: '1 : 2.0',
-      session: 'London open',
-      volatility: 'Medium',
-      liquidity: 'Medium',
-      directionText: 'SELL',
-      opportunityScore: '78/100 HIGH',
-      execGrade: 'B+ (score 78/100)',
-      confluence: 78
-    },
-    USDJPY: {
-      bias: 'BUY',
-      price: '155.20',
-      marketState: 'Bullish Continuation (Above Daily High)',
-      confidence: 'High · 85.0%',
-      recommendation: 'Execute Buy on VWAP Pullback',
-      rrr: '1 : 2.5',
-      session: 'Tokyo Open',
-      volatility: 'High',
-      liquidity: 'High',
-      directionText: 'BUY',
-      opportunityScore: '85/100 HIGH',
-      execGrade: 'A (score 85/100)',
-      confluence: 85
-    },
-    USDCAD: {
-      bias: 'BUY',
-      price: '1.3740',
-      marketState: 'Consolidating near Range Low (Accumulation phase)',
-      confidence: 'Medium · 62.0%',
-      recommendation: 'Wait for Range Breakout',
-      rrr: '1 : 1.5',
-      session: 'New York Open',
-      volatility: 'Low',
-      liquidity: 'High',
-      directionText: 'BUY',
-      opportunityScore: '60/100 MED',
-      execGrade: 'B (score 60/100)',
-      confluence: 62
-    },
-    AUDUSD: {
-      bias: 'SELL',
-      price: '0.6650',
-      marketState: 'Bearish Trend Expansion (Strong selling pressure)',
-      confidence: 'High · 82.0%',
-      recommendation: 'Sell at VWAP Retest',
-      rrr: '1 : 3.0',
-      session: 'Sydney Open',
-      volatility: 'Medium',
-      liquidity: 'Low',
-      directionText: 'SELL',
-      opportunityScore: '82/100 HIGH',
-      execGrade: 'B+ (score 82/100)',
-      confluence: 82
-    }
-  };
+  const [livePrice, setLivePrice] = useState<string>('');
+  const [dailyChange, setDailyChange] = useState<number | null>(null);
+  const [liveVerdict, setLiveVerdict] = useState<ScanVerdict | null>(null);
+  const [isFetchingPrice, setIsFetchingPrice] = useState(false);
 
-  const activeVerdict = symbolDatabase[activeSymbol];
+  // Auto-fetch price when activeSymbol changes
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPrice = async () => {
+      setIsFetchingPrice(true);
+      try {
+        const etfSymbol = ETF_MAP[activeSymbol];
+        const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${etfSymbol}&token=${FINNHUB_API_KEY}`);
+        if (!res.ok) throw new Error('API failed');
+        const data = await res.json();
+        
+        if (data.c && isMounted) {
+          const c = data.c;
+          const dp = data.dp || 0;
+          let calculatedPrice = '';
+          
+          if (activeSymbol === 'XAUUSD') {
+            calculatedPrice = (c * 10.95).toFixed(2);
+          } else if (activeSymbol === 'EURUSD') {
+            calculatedPrice = (c / 100).toFixed(4);
+          } else if (activeSymbol === 'GBPUSD') {
+            calculatedPrice = (c / 100).toFixed(4);
+          } else if (activeSymbol === 'USDJPY') {
+            calculatedPrice = (10000 / c).toFixed(2);
+          } else if (activeSymbol === 'USDCAD') {
+            calculatedPrice = (100 / c).toFixed(4);
+          } else if (activeSymbol === 'AUDUSD') {
+            calculatedPrice = (c / 100).toFixed(4);
+          }
+
+          setLivePrice(calculatedPrice);
+          setDailyChange(dp);
+        }
+      } catch (err) {
+        console.warn('Finnhub price fetch error:', err);
+        if (isMounted) {
+          setLivePrice(symbolDatabase[activeSymbol].price);
+          setDailyChange(null);
+        }
+      } finally {
+        if (isMounted) setIsFetchingPrice(false);
+      }
+    };
+
+    fetchPrice();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeSymbol]);
+
+  const activeVerdict = liveVerdict || symbolDatabase[activeSymbol];
 
   const scanSteps = [
-    'Initializing Connection to Quant Feed...',
+    'Initializing Connection to Finnhub Feed...',
     'Sweeping Session Liquidity Maps...',
     'Analyzing Order Flow Confluence...',
     'Computing Volatility & Spread Metrics...',
@@ -155,15 +221,100 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
             return 0;
           }
         });
-      }, 500);
+      }, 300);
     }
     return () => clearInterval(interval);
   }, [isScanning]);
 
-  const handleRunScan = () => {
+  const handleRunScan = async () => {
     setIsScanning(true);
     setScanStep(0);
     setHasScanned(false);
+
+    try {
+      const etfSymbol = ETF_MAP[activeSymbol];
+      const res = await fetch(`https://finnhub.io/api/v1/quote?symbol=${etfSymbol}&token=${FINNHUB_API_KEY}`);
+      if (!res.ok) throw new Error('API failed');
+      const data = await res.json();
+      
+      const c = data.c;
+      const dp = data.dp || 0;
+
+      if (c) {
+        let calculatedPrice = '';
+        let bias: 'BUY' | 'SELL' | 'NEUTRAL' = 'NEUTRAL';
+        
+        if (activeSymbol === 'XAUUSD') {
+          calculatedPrice = (c * 10.95).toFixed(2);
+        } else if (activeSymbol === 'EURUSD') {
+          calculatedPrice = (c / 100).toFixed(4);
+        } else if (activeSymbol === 'GBPUSD') {
+          calculatedPrice = (c / 100).toFixed(4);
+        } else if (activeSymbol === 'USDJPY') {
+          calculatedPrice = (10000 / c).toFixed(2);
+        } else if (activeSymbol === 'USDCAD') {
+          calculatedPrice = (100 / c).toFixed(4);
+        } else if (activeSymbol === 'AUDUSD') {
+          calculatedPrice = (c / 100).toFixed(4);
+        }
+
+        // Calculate dynamic bias based on actual price movement
+        if (dp > 0.05) {
+          bias = 'BUY';
+        } else if (dp < -0.05) {
+          bias = 'SELL';
+        }
+
+        const confidenceValue = 50 + Math.min(45, Math.round(Math.abs(dp) * 50));
+        const confidenceLabel = confidenceValue >= 80 ? 'High' : confidenceValue >= 60 ? 'Medium' : 'Low';
+        
+        const rrrVal = bias === 'BUY' ? '1 : 2.5' : bias === 'SELL' ? '1 : 2.0' : '1 : 1.5';
+        const scoreVal = Math.round(50 + Math.min(45, Math.abs(dp) * 60));
+        const scoreLabel = scoreVal >= 80 ? 'HIGH' : scoreVal >= 60 ? 'MED' : 'LOW';
+
+        const gradeLetter = scoreVal >= 90 ? 'A+' : scoreVal >= 80 ? 'A' : scoreVal >= 70 ? 'B+' : scoreVal >= 60 ? 'B' : 'D';
+
+        let stateText = '';
+        let stateDesc = '';
+        if (bias === 'BUY') {
+          stateText = dp > 0.5 ? 'Strong Bullish Expansion' : 'Bullish Continuation';
+          stateDesc = 'Strong buying momentum. Sweeping session highs.';
+        } else if (bias === 'SELL') {
+          stateText = dp < -0.5 ? 'Aggressive Bearish Expansion' : 'Bearish Breakdown';
+          stateDesc = 'Heavy order flow selling. Sweeping session lows.';
+        } else {
+          stateText = 'Low Liquidity';
+          stateDesc = 'Thin participation — patience until liquidity returns.';
+        }
+
+        const dynamicVerdict: ScanVerdict = {
+          bias,
+          price: calculatedPrice,
+          marketState: `${stateText} (${stateDesc})`,
+          confidence: `${confidenceLabel} · ${confidenceValue.toFixed(1)}%`,
+          recommendation: bias === 'BUY' 
+            ? 'Execute Buy on VWAP Pullback' 
+            : bias === 'SELL' 
+              ? 'Scale Into Sell (Active Setup)' 
+              : 'Reduce Size or Stand Aside',
+          rrr: rrrVal,
+          session: 'London/New York Overlap',
+          volatility: Math.abs(dp) > 0.5 ? 'High' : Math.abs(dp) > 0.2 ? 'Medium' : 'Low',
+          liquidity: Math.abs(dp) > 0.3 ? 'High' : 'Medium',
+          directionText: bias,
+          opportunityScore: `${scoreVal}/100 ${scoreLabel}`,
+          execGrade: `${gradeLetter} (score ${scoreVal}/100)`,
+          confluence: scoreVal - 5
+        };
+
+        setLiveVerdict(dynamicVerdict);
+        setLivePrice(calculatedPrice);
+        setDailyChange(dp);
+      }
+    } catch (err) {
+      console.warn('Scan api failed, keeping fallback:', err);
+      setLiveVerdict(null);
+    }
   };
 
   return (
@@ -177,7 +328,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
             <span>AI Trading Terminal</span>
           </h2>
           <p className="text-xs text-zinc-400 dark:text-zinc-500 font-bold mt-1">
-            XAU/USD Intelligence · AI Co-pilot Active
+            Finnhub Market Intelligence · AI Co-pilot Active
           </p>
         </div>
 
@@ -200,7 +351,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
           <div className={`rounded-3xl p-5 border ${
             isLight ? 'bg-white border-zinc-150/70 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
           }`}>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {/* Symbol selector */}
               <div className="flex flex-col gap-1.5">
                 <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Symbol</span>
@@ -209,6 +360,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                   onChange={(e) => {
                     setActiveSymbol(e.target.value as SymbolType);
                     setHasScanned(false);
+                    setLiveVerdict(null);
                   }}
                   className={`px-3 py-2 rounded-xl text-xs font-black uppercase border cursor-pointer outline-none transition-all ${
                     isLight 
@@ -225,14 +377,34 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
               {/* Live Price */}
               <div className="flex flex-col gap-1">
                 <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Live Price</span>
-                <span className="text-sm font-black text-zinc-800 dark:text-zinc-100">
-                  ${activeVerdict.price}
+                <span className="text-sm font-black text-zinc-800 dark:text-zinc-100 flex items-center gap-1">
+                  {isFetchingPrice ? (
+                    <RefreshCw size={11} className="animate-spin text-zinc-400" />
+                  ) : (
+                    `$${livePrice || activeVerdict.price}`
+                  )}
+                </span>
+              </div>
+
+              {/* Daily Change */}
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Daily Change</span>
+                <span className={`text-sm font-black ${
+                  dailyChange !== null && dailyChange > 0 
+                    ? 'text-lime-650 dark:text-lime-400' 
+                    : dailyChange !== null && dailyChange < 0 
+                      ? 'text-rose-500' 
+                      : 'text-zinc-400'
+                }`}>
+                  {dailyChange !== null 
+                    ? `${dailyChange > 0 ? '+' : ''}${dailyChange.toFixed(2)}%` 
+                    : '+0.00%'}
                 </span>
               </div>
 
               {/* Confidence */}
               <div className="flex flex-col gap-1">
-                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Scan Confidence</span>
+                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider font-bold">Confidence</span>
                 <span className={`text-sm font-black ${
                   activeVerdict.bias === 'BUY' 
                     ? 'text-lime-650 dark:text-lime-400' 
@@ -240,15 +412,15 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                       ? 'text-rose-500' 
                       : 'text-amber-500'
                 }`}>
-                  {activeVerdict.confidence}
+                  {activeVerdict.confidence.split(' · ')[1] || activeVerdict.confidence}
                 </span>
               </div>
 
               {/* Score */}
               <div className="flex flex-col gap-1">
-                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Opportunity Score</span>
+                <span className="text-[9px] font-black uppercase text-zinc-400 dark:text-zinc-500 tracking-wider">Opportunity</span>
                 <span className="text-sm font-black text-zinc-800 dark:text-zinc-100">
-                  {activeVerdict.opportunityScore}
+                  {activeVerdict.opportunityScore.split(' ')[0]}
                 </span>
               </div>
             </div>
@@ -383,10 +555,10 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                     <h4 className={`text-xs font-black leading-snug ${
                       activeVerdict.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : activeVerdict.bias === 'SELL' ? 'text-rose-500' : 'text-amber-500'
                     }`}>
-                      {activeVerdict.confidence.split(' · ')[1]}
+                      {activeVerdict.confidence.split(' · ')[1] || activeVerdict.confidence}
                     </h4>
                     <p className="text-[9.5px] text-zinc-450 dark:text-zinc-500 mt-1 leading-normal font-semibold">
-                      Alignment: {activeVerdict.confidence.split(' · ')[0]} quality indicators.
+                      Alignment: {activeVerdict.confidence.split(' · ')[0] || 'Statistical'} quality indicators.
                     </p>
                   </div>
 
@@ -412,7 +584,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                 </span>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* Execution Grade Card (Double width highlight, Page 5 PDF replication) */}
+                  {/* Execution Grade Card (Double width highlight, Page 5 PDF replication) */}
                   <div className={`p-5 rounded-2xl border flex flex-col justify-between relative overflow-hidden lg:col-span-2 ${
                     isLight 
                       ? 'bg-zinc-50/50 border-zinc-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)]' 
@@ -487,7 +659,6 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                       {activeVerdict.bias === 'NEUTRAL' ? 'Preserve focus' : 'VWAP limit trigger'}
                     </p>
                   </div>
-
                 </div>
               </div>
 
@@ -496,7 +667,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
 
         </div>
 
-        {/* Right Column: Opportunities Board & Behavioral Monitor */}
+        {/* Right Column: Opportunities Board */}
         <div className="space-y-6">
           
           {/* Opportunities Board */}
@@ -574,8 +745,6 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
               ))}
             </div>
           </div>
-
-
 
         </div>
 
