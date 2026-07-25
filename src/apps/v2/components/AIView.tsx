@@ -5,7 +5,8 @@ import {
   Play, 
   Activity, 
   RefreshCw,
-  Zap
+  Zap,
+  Info
 } from 'lucide-react';
 import type { Stats } from '../types';
 
@@ -21,6 +22,8 @@ interface StrategyDetail {
   pattern: string;
   timeframe: string;
   bias: 'BUY' | 'SELL' | 'NEUTRAL';
+  entryPlan: string;
+  execGrade: string;
 }
 
 interface ScanVerdict {
@@ -89,10 +92,10 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     tp: '—',
     macroTrend: 'NEUTRAL',
     strategies: [
-      { name: 'Smart Money Concepts (SMC)', pattern: 'Ranging inside equilibrium', timeframe: '1H', bias: 'NEUTRAL' },
-      { name: 'ICT (Inner Circle Trader)', pattern: 'FVG Mitigated / No Imbalance', timeframe: '15M', bias: 'NEUTRAL' },
-      { name: 'Supply & Demand (SnD)', pattern: 'Trading in middle of range', timeframe: '4H', bias: 'NEUTRAL' },
-      { name: 'Volume Profile (VPVR)', pattern: 'Hovering at Point of Control (POC)', timeframe: 'D', bias: 'NEUTRAL' }
+      { name: 'Smart Money Concepts (SMC)', pattern: 'Ranging inside equilibrium', timeframe: '1H', bias: 'NEUTRAL', entryPlan: '—', execGrade: 'D' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'FVG Mitigated / No Imbalance', timeframe: '15M', bias: 'NEUTRAL', entryPlan: '—', execGrade: 'D' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Trading in middle of range', timeframe: '4H', bias: 'NEUTRAL', entryPlan: '—', execGrade: 'D' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Hovering at Point of Control (POC)', timeframe: 'D', bias: 'NEUTRAL', entryPlan: '—', execGrade: 'D' }
     ]
   },
   EURUSD: {
@@ -114,10 +117,10 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     tp: '1.0800',
     macroTrend: 'SELL',
     strategies: [
-      { name: 'Smart Money Concepts (SMC)', pattern: 'MSS Bearish Confirmed', timeframe: '1H', bias: 'SELL' },
-      { name: 'ICT (Inner Circle Trader)', pattern: 'Liquidity Pool Sweep at H1 Highs', timeframe: '15M', bias: 'SELL' },
-      { name: 'Supply & Demand (SnD)', pattern: 'Rejection at H4 Supply Zone', timeframe: '4H', bias: 'SELL' },
-      { name: 'Volume Profile (VPVR)', pattern: 'Price below Point of Control (POC)', timeframe: 'D', bias: 'SELL' }
+      { name: 'Smart Money Concepts (SMC)', pattern: 'MSS Bearish Confirmed', timeframe: '1H', bias: 'SELL', entryPlan: '1.0855', execGrade: 'A' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'Liquidity Pool Sweep at H1 Highs', timeframe: '15M', bias: 'SELL', entryPlan: '1.0862', execGrade: 'B+' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Rejection at H4 Supply Zone', timeframe: '4H', bias: 'SELL', entryPlan: '1.0872', execGrade: 'B+' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Price below Point of Control (POC)', timeframe: 'D', bias: 'SELL', entryPlan: '1.0858', execGrade: 'B' }
     ]
   },
   GBPUSD: {
@@ -139,10 +142,10 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     tp: '1.2860',
     macroTrend: 'SELL',
     strategies: [
-      { name: 'Smart Money Concepts (SMC)', pattern: 'MSS Bearish Confirmed', timeframe: '1H', bias: 'SELL' },
-      { name: 'ICT (Inner Circle Trader)', pattern: 'Liquidity Pool Sweep at H1 Highs', timeframe: '15M', bias: 'SELL' },
-      { name: 'Supply & Demand (SnD)', pattern: 'Rejection at H4 Supply Zone', timeframe: '4H', bias: 'SELL' },
-      { name: 'Volume Profile (VPVR)', pattern: 'Price below Point of Control (POC)', timeframe: 'D', bias: 'SELL' }
+      { name: 'Smart Money Concepts (SMC)', pattern: 'MSS Bearish Confirmed', timeframe: '1H', bias: 'SELL', entryPlan: '1.2915', execGrade: 'B+' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'Liquidity Pool Sweep at H1 Highs', timeframe: '15M', bias: 'SELL', entryPlan: '1.2922', execGrade: 'B' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Rejection at H4 Supply Zone', timeframe: '4H', bias: 'SELL', entryPlan: '1.2932', execGrade: 'B+' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Price below Point of Control (POC)', timeframe: 'D', bias: 'SELL', entryPlan: '1.2918', execGrade: 'B-' }
     ]
   },
   USDJPY: {
@@ -164,10 +167,10 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     tp: '156.08',
     macroTrend: 'BUY',
     strategies: [
-      { name: 'Smart Money Concepts (SMC)', pattern: 'CHoCH Bullish Confirmed', timeframe: '1H', bias: 'BUY' },
-      { name: 'ICT (Inner Circle Trader)', pattern: 'Unmitigated FVG Fill', timeframe: '15M', bias: 'BUY' },
-      { name: 'Supply & Demand (SnD)', pattern: 'Testing H4 Demand Zone', timeframe: '4H', bias: 'BUY' },
-      { name: 'Volume Profile (VPVR)', pattern: 'Price above Point of Control (POC)', timeframe: 'D', bias: 'BUY' }
+      { name: 'Smart Money Concepts (SMC)', pattern: 'CHoCH Bullish Confirmed', timeframe: '1H', bias: 'BUY', entryPlan: '154.70', execGrade: 'A' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'Unmitigated FVG Fill', timeframe: '15M', bias: 'BUY', entryPlan: '154.00', execGrade: 'B+' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Testing H4 Demand Zone', timeframe: '4H', bias: 'BUY', entryPlan: '153.70', execGrade: 'B+' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Price above Point of Control (POC)', timeframe: 'D', bias: 'BUY', entryPlan: '154.40', execGrade: 'B' }
     ]
   },
   USDCAD: {
@@ -189,10 +192,10 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     tp: '1.3778',
     macroTrend: 'NEUTRAL',
     strategies: [
-      { name: 'Smart Money Concepts (SMC)', pattern: 'Trading near Equilibrium Support', timeframe: '1H', bias: 'BUY' },
-      { name: 'ICT (Inner Circle Trader)', pattern: 'FVG Partially Mitigated', timeframe: '15M', bias: 'NEUTRAL' },
-      { name: 'Supply & Demand (SnD)', pattern: 'Hovering near Daily Demand Range', timeframe: '4H', bias: 'BUY' },
-      { name: 'Volume Profile (VPVR)', pattern: 'Price testing POC support', timeframe: 'D', bias: 'NEUTRAL' }
+      { name: 'Smart Money Concepts (SMC)', pattern: 'Trading near Equilibrium Support', timeframe: '1H', bias: 'BUY', entryPlan: '1.3735', execGrade: 'B' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'FVG Partially Mitigated', timeframe: '15M', bias: 'NEUTRAL', entryPlan: '1.3728', execGrade: 'C+' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Hovering near Daily Demand Range', timeframe: '4H', bias: 'BUY', entryPlan: '1.3718', execGrade: 'B' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Price testing POC support', timeframe: 'D', bias: 'NEUTRAL', entryPlan: '1.3732', execGrade: 'C+' }
     ]
   },
   AUDUSD: {
@@ -214,10 +217,10 @@ const symbolDatabase: Record<SymbolType, ScanVerdict> = {
     tp: '0.6600',
     macroTrend: 'SELL',
     strategies: [
-      { name: 'Smart Money Concepts (SMC)', pattern: 'MSS Bearish Confirmed', timeframe: '1H', bias: 'SELL' },
-      { name: 'ICT (Inner Circle Trader)', pattern: 'Liquidity Pool Sweep at H1 Highs', timeframe: '15M', bias: 'SELL' },
-      { name: 'Supply & Demand (SnD)', pattern: 'Rejection at H4 Supply Zone', timeframe: '4H', bias: 'SELL' },
-      { name: 'Volume Profile (VPVR)', pattern: 'Price below Point of Control (POC)', timeframe: 'D', bias: 'SELL' }
+      { name: 'Smart Money Concepts (SMC)', pattern: 'MSS Bearish Confirmed', timeframe: '1H', bias: 'SELL', entryPlan: '0.6655', execGrade: 'B+' },
+      { name: 'ICT (Inner Circle Trader)', pattern: 'Liquidity Pool Sweep at H1 Highs', timeframe: '15M', bias: 'SELL', entryPlan: '0.6662', execGrade: 'B+' },
+      { name: 'Supply & Demand (SnD)', pattern: 'Rejection at H4 Supply Zone', timeframe: '4H', bias: 'SELL', entryPlan: '0.6672', execGrade: 'B' },
+      { name: 'Volume Profile (VPVR)', pattern: 'Price below Point of Control (POC)', timeframe: 'D', bias: 'SELL', entryPlan: '0.6658', execGrade: 'B-' }
     ]
   }
 };
@@ -377,29 +380,58 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
         let slStr = '—';
         let tpStr = '—';
 
+        let smcEntry = '—';
+        let ictEntry = '—';
+        let sndEntry = '—';
+        let vpvrEntry = '—';
+
         if (bias === 'BUY') {
           entryStr = calculatedPrice;
           if (activeSymbol === 'XAUUSD') {
             slStr = (numPrice - 8.50).toFixed(2);
             tpStr = (numPrice + 21.25).toFixed(2);
+            smcEntry = (numPrice - 1.50).toFixed(2);
+            ictEntry = (numPrice - 4.20).toFixed(2);
+            sndEntry = (numPrice - 7.50).toFixed(2);
+            vpvrEntry = (numPrice - 2.80).toFixed(2);
           } else if (activeSymbol === 'USDJPY') {
             slStr = (numPrice - 0.35).toFixed(2);
             tpStr = (numPrice + 0.88).toFixed(2);
+            smcEntry = (numPrice - 0.15).toFixed(2);
+            ictEntry = (numPrice - 0.40).toFixed(2);
+            sndEntry = (numPrice - 0.65).toFixed(2);
+            vpvrEntry = (numPrice - 0.30).toFixed(2);
           } else {
             slStr = (numPrice - 0.0025).toFixed(4);
             tpStr = (numPrice + 0.0063).toFixed(4);
+            smcEntry = (numPrice - 0.0005).toFixed(4);
+            ictEntry = (numPrice - 0.0012).toFixed(4);
+            sndEntry = (numPrice - 0.0022).toFixed(4);
+            vpvrEntry = (numPrice - 0.0008).toFixed(4);
           }
         } else if (bias === 'SELL') {
           entryStr = calculatedPrice;
           if (activeSymbol === 'XAUUSD') {
             slStr = (numPrice + 8.50).toFixed(2);
             tpStr = (numPrice - 17.00).toFixed(2);
+            smcEntry = (numPrice + 1.50).toFixed(2);
+            ictEntry = (numPrice + 4.20).toFixed(2);
+            sndEntry = (numPrice + 7.50).toFixed(2);
+            vpvrEntry = (numPrice + 2.80).toFixed(2);
           } else if (activeSymbol === 'USDJPY') {
             slStr = (numPrice + 0.35).toFixed(2);
             tpStr = (numPrice - 0.70).toFixed(2);
+            smcEntry = (numPrice + 0.15).toFixed(2);
+            ictEntry = (numPrice + 0.40).toFixed(2);
+            sndEntry = (numPrice + 0.65).toFixed(2);
+            vpvrEntry = (numPrice + 0.30).toFixed(2);
           } else {
             slStr = (numPrice + 0.0025).toFixed(4);
             tpStr = (numPrice - 0.0050).toFixed(4);
+            smcEntry = (numPrice + 0.0005).toFixed(4);
+            ictEntry = (numPrice + 0.0012).toFixed(4);
+            sndEntry = (numPrice + 0.0022).toFixed(4);
+            vpvrEntry = (numPrice + 0.0008).toFixed(4);
           }
         }
 
@@ -416,25 +448,33 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
             name: 'Smart Money Concepts (SMC)',
             pattern: bias === 'BUY' ? 'CHoCH Bullish Confirmed' : bias === 'SELL' ? 'MSS Bearish Confirmed' : 'Ranging inside equilibrium',
             timeframe: '1H',
-            bias: bias
+            bias: bias,
+            entryPlan: smcEntry !== '—' ? `$${smcEntry}` : '—',
+            execGrade: getGrade(scoreVal + 3)
           },
           {
             name: 'ICT (Inner Circle Trader)',
             pattern: bias === 'BUY' ? 'Unmitigated FVG Fill' : bias === 'SELL' ? 'Liquidity Pool Sweep at H1 Highs' : 'FVG Mitigated / No Imbalance',
             timeframe: '15M',
-            bias: bias
+            bias: bias,
+            entryPlan: ictEntry !== '—' ? `$${ictEntry}` : '—',
+            execGrade: getGrade(scoreVal - 2)
           },
           {
             name: 'Supply & Demand (SnD)',
             pattern: bias === 'BUY' ? 'Testing H4 Demand Zone' : bias === 'SELL' ? 'Rejection at H4 Supply Zone' : 'Trading in middle of range',
             timeframe: '4H',
-            bias: bias
+            bias: bias,
+            entryPlan: sndEntry !== '—' ? `$${sndEntry}` : '—',
+            execGrade: getGrade(scoreVal + 1)
           },
           {
             name: 'Volume Profile (VPVR)',
             pattern: bias === 'BUY' ? 'Price above Point of Control (POC)' : bias === 'SELL' ? 'Price below Point of Control (POC)' : 'Hovering at Point of Control (POC)',
             timeframe: 'D',
-            bias: bias
+            bias: bias,
+            entryPlan: vpvrEntry !== '—' ? `$${vpvrEntry}` : '—',
+            execGrade: getGrade(scoreVal - 5)
           }
         ];
 
@@ -507,7 +547,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
         </div>
       </div>
 
-      {/* Main Terminal (Stretches 100% full width, no empty margins) */}
+      {/* Main Terminal (Stretches 100% full width, edge-to-edge) */}
       <div className="w-full space-y-6">
         
         {/* Quick Symbol Metrics Selector */}
@@ -785,59 +825,12 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
               </div>
             </div>
 
-            {/* Macro Trend & Strategy Confluence Matrix */}
+            {/* Execution Intelligence Card (Moved to directly below Market Verdict per user request) */}
             <div className={`rounded-3xl p-5 border ${
               isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
             }`}>
-              <div className="flex justify-between items-center mb-4 pb-2 border-b border-dashed border-zinc-150 dark:border-zinc-800">
-                <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
-                  <Activity size={12} className="text-lime-500" /> Multi-Strategy Confluence Matrix
-                </span>
-                <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-500 uppercase">
-                  Timeframe Consensus Check
-                </span>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-zinc-150 dark:border-zinc-850">
-                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Strategy</th>
-                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Timeframe</th>
-                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Active Pattern / Zone</th>
-                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider text-right">Signal Bias</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900/50">
-                    {(activeVerdict.strategies || []).map((strat) => (
-                      <tr key={strat.name} className="hover:bg-zinc-50/10 dark:hover:bg-zinc-950/20 transition-all">
-                        <td className="py-3 text-xs font-black text-zinc-800 dark:text-zinc-200">{strat.name}</td>
-                        <td className="py-3 text-xs font-bold text-zinc-450 dark:text-zinc-500">{strat.timeframe}</td>
-                        <td className="py-3 text-xs font-bold text-zinc-500 dark:text-zinc-400">{strat.pattern}</td>
-                        <td className="py-3 text-xs font-black text-right">
-                          <span className={`px-2 py-0.5 rounded text-[9px] font-black border ${
-                            strat.bias === 'BUY'
-                              ? 'bg-lime-500/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
-                              : strat.bias === 'SELL'
-                                ? 'bg-rose-500/10 border-rose-500/20 text-rose-500'
-                                : 'bg-zinc-500/10 border-zinc-800/20 text-zinc-400'
-                          }`}>
-                            {strat.bias}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Execution Intelligence Card */}
-            <div className={`rounded-3xl p-5 border ${
-              isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
-            }`}>
-              <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-4">
-                Execution Intelligence
+              <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-4 flex items-center gap-1">
+                <Info size={12} className="text-lime-500" /> Execution Intelligence
               </span>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -877,8 +870,8 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                           ? 'Aligned structure does not always imply optimal execution conditions.'
                           : 'Structure alignment indicates favorable execution readiness and trade survivability.'}
                       </p>
-                      <span className="text-[8px] text-zinc-400 dark:text-zinc-500 font-semibold block mt-1">
-                        Scale: A+ (95+) down to F (&lt;30)
+                      <span className="text-[8px] text-zinc-400 dark:text-zinc-550 font-bold block mt-1.5">
+                        Scale Range: A+ (95+) down to F (&lt;30)
                       </span>
                     </div>
                   </div>
@@ -919,6 +912,67 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                     {activeVerdict.bias === 'NEUTRAL' ? 'Preserve focus' : 'VWAP limit trigger'}
                   </p>
                 </div>
+              </div>
+            </div>
+
+            {/* Macro Trend & Strategy Confluence Matrix (Added Entry Plan and Exec Grade per Strategy) */}
+            <div className={`rounded-3xl p-5 border ${
+              isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
+            }`}>
+              <div className="flex justify-between items-center mb-4 pb-2 border-b border-dashed border-zinc-150 dark:border-zinc-800">
+                <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest flex items-center gap-1.5">
+                  <Activity size={12} className="text-lime-500" /> Multi-Strategy Confluence Matrix
+                </span>
+                <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-500 uppercase">
+                  Timeframe Consensus Check
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-zinc-150 dark:border-zinc-850">
+                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Strategy</th>
+                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Timeframe</th>
+                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Active Pattern / Zone</th>
+                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Plan Entry</th>
+                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider">Exec Grade</th>
+                      <th className="pb-3 text-[9px] font-black uppercase text-zinc-450 tracking-wider text-right">Signal Bias</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-100 dark:divide-zinc-900/50">
+                    {(activeVerdict.strategies || []).map((strat) => (
+                      <tr key={strat.name} className="hover:bg-zinc-50/10 dark:hover:bg-zinc-950/20 transition-all">
+                        <td className="py-3 text-xs font-black text-zinc-800 dark:text-zinc-200">{strat.name}</td>
+                        <td className="py-3 text-xs font-bold text-zinc-450 dark:text-zinc-500">{strat.timeframe}</td>
+                        <td className="py-3 text-xs font-bold text-zinc-500 dark:text-zinc-400">{strat.pattern}</td>
+                        <td className="py-3 text-xs font-black text-zinc-800 dark:text-zinc-100">{strat.entryPlan}</td>
+                        <td className="py-3 text-xs font-black text-zinc-800 dark:text-zinc-100">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-black ${
+                            strat.bias === 'BUY'
+                              ? 'text-lime-600 dark:text-lime-400'
+                              : strat.bias === 'SELL'
+                                ? 'text-rose-500'
+                                : 'text-zinc-400'
+                          }`}>
+                            {strat.execGrade}
+                          </span>
+                        </td>
+                        <td className="py-3 text-xs font-black text-right">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-black border ${
+                            strat.bias === 'BUY'
+                              ? 'bg-lime-500/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
+                              : strat.bias === 'SELL'
+                                ? 'bg-rose-500/10 border-rose-500/20 text-rose-500'
+                                : 'bg-zinc-500/10 border-zinc-800/20 text-zinc-400'
+                          }`}>
+                            {strat.bias}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
 
