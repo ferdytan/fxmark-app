@@ -695,7 +695,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
       <div className="w-full space-y-6">
         
         {/* Quick Symbol Metrics Selector */}
-        <div className={`rounded-3xl p-5 border ${
+        <div className={`rounded-xl p-5 border ${
           isLight ? 'bg-white border-zinc-150/70 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
         }`}>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
@@ -810,7 +810,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
         </div>
 
         {/* AI Scan Console Card */}
-        <div className={`rounded-3xl p-6 border relative overflow-hidden transition-all duration-300 ${
+        <div className={`rounded-xl p-6 border relative overflow-hidden transition-all duration-300 ${
           isLight 
             ? 'bg-gradient-to-br from-zinc-50 to-zinc-100/50 border-zinc-200 shadow-sm' 
             : 'bg-gradient-to-br from-[#0e0e0e] to-[#121712] border-zinc-850'
@@ -841,7 +841,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
             <button
               onClick={handleRunScan}
               disabled={isScanning}
-              className="py-4 px-6 rounded-2xl bg-gradient-to-r from-lime-400 to-lime-500 hover:from-lime-400 hover:to-emerald-500 text-zinc-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-lime-500/10 hover:shadow-lime-500/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50 min-w-[170px]"
+              className="py-4 px-6 rounded-lg bg-gradient-to-r from-lime-400 to-lime-500 hover:from-lime-400 hover:to-emerald-500 text-zinc-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-lime-500/10 hover:shadow-lime-500/20 active:scale-95 transition-all cursor-pointer disabled:opacity-50 min-w-[170px]"
             >
               {isScanning ? (
                 <>
@@ -879,7 +879,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
           <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
             
             {/* Market Verdict Banner */}
-            <div className={`rounded-3xl p-5 border ${
+            <div className={`rounded-xl p-5 border ${
               isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
             }`}>
               <div className="flex justify-between items-center mb-4 pb-3 border-b border-dashed border-zinc-150 dark:border-zinc-800">
@@ -900,7 +900,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
               {/* Grid of Verdict Details */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Market State */}
-                <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
+                <div className={`p-4.5 rounded-lg border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
                   <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">Market State</span>
                   <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-100 leading-snug">
                     {activeVerdict.marketState.split(' (')[0]}
@@ -911,7 +911,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                 </div>
 
                 {/* Confidence level */}
-                <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
+                <div className={`p-4.5 rounded-lg border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
                   <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">Confidence Score</span>
                   <h4 className={`text-xs font-black leading-snug ${
                     activeVerdict.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : activeVerdict.bias === 'SELL' ? 'text-rose-500' : 'text-amber-500'
@@ -924,7 +924,7 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                 </div>
 
                 {/* Recommendation */}
-                <div className={`p-4.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
+                <div className={`p-4.5 rounded-lg border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/30 border-zinc-850/80'}`}>
                   <span className="text-[9px] font-black text-zinc-450 uppercase tracking-wider block mb-1">AI Recommendation</span>
                   <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-100 leading-snug flex items-center gap-1.5">
                     <Zap size={11} className="text-amber-400 animate-pulse" /> {activeVerdict.recommendation}
@@ -937,22 +937,22 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
 
               {/* Dynamic Target Levels (Page 4 PDF Replication) */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-dashed border-zinc-150 dark:border-zinc-800">
-                <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
-                  <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">ENTRY</span>
+                <div className={`p-3.5 rounded-lg border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
+                  <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-555 uppercase tracking-widest block mb-0.5">ENTRY</span>
                   <span className="text-sm font-black text-zinc-850 dark:text-zinc-100">
                     {activeVerdict.bias === 'NEUTRAL' ? '—' : `$${activeVerdict.entry}`}
                   </span>
                 </div>
 
-                <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
-                  <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">STOP LOSS (SL)</span>
+                <div className={`p-3.5 rounded-lg border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
+                  <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-555 uppercase tracking-widest block mb-0.5">STOP LOSS (SL)</span>
                   <span className="text-sm font-black text-rose-500">
                     {activeVerdict.bias === 'NEUTRAL' ? '—' : `$${activeVerdict.sl}`}
                   </span>
                 </div>
 
-                <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
-                  <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">TAKE PROFIT (TP)</span>
+                <div className={`p-3.5 rounded-lg border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
+                  <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-555 uppercase tracking-widest block mb-0.5">TAKE PROFIT (TP)</span>
                   <span className={`text-sm font-black ${
                     activeVerdict.bias === 'BUY' ? 'text-lime-650 dark:text-lime-400' : 'text-rose-500'
                   }`}>
@@ -960,17 +960,15 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                   </span>
                 </div>
 
-                <div className={`p-3.5 rounded-2xl border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
-                  <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-0.5">SUGGESTED RRR</span>
+                <div className={`p-3.5 rounded-lg border ${isLight ? 'bg-zinc-50/50 border-zinc-150/70' : 'bg-zinc-900/20 border-zinc-900/30'}`}>
+                  <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-555 uppercase tracking-widest block mb-0.5">SUGGESTED RRR</span>
                   <span className="text-sm font-black text-zinc-850 dark:text-zinc-100">
                     {activeVerdict.rrr}
                   </span>
                 </div>
-              </div>
-            </div>
-
-            {/* Execution Intelligence Card (Moved to directly below Market Verdict per user request) */}
-            <div className={`rounded-3xl p-5 border ${
+              </div>      </div>
+                    {/* Execution Intelligence Card (Moved to directly below Market Verdict per user request) */}
+            <div className={`rounded-xl p-5 border ${
               isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
             }`}>
               <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block mb-4 flex items-center gap-1">
@@ -979,10 +977,10 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Execution Grade Card (Double width highlight, Page 5 PDF replication) */}
-                <div className={`p-5 rounded-2xl border flex flex-col justify-between relative overflow-hidden lg:col-span-2 ${
+                <div className={`p-5 rounded-lg border flex flex-col justify-between relative overflow-hidden lg:col-span-2 ${
                   isLight 
-                    ? 'bg-zinc-50/50 border-zinc-150 shadow-[0_4px_20px_rgba(0,0,0,0.01)]' 
-                    : 'bg-zinc-950/40 border-zinc-900/50 shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
+                    ? 'bg-zinc-50/50 border-zinc-200 shadow-[0_4px_20px_rgba(0,0,0,0.01)]' 
+                    : 'bg-zinc-950/45 border-zinc-800/80 shadow-[0_4px_20px_rgba(0,0,0,0.2)]'
                 }`}>
                   {/* Primary Badge */}
                   <span className="absolute right-4 top-4 px-2 py-0.5 rounded text-[7px] font-black uppercase bg-lime-500/10 text-lime-650 dark:text-lime-400 border border-lime-500/10">
@@ -996,19 +994,34 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                     </div>
 
                     {/* Grade Details */}
-                    <div>
-                      <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-widest block">
+                    <div className="space-y-1">
+                      <span className="text-[9.5px] font-black text-zinc-450 dark:text-zinc-400 uppercase tracking-widest block">
                         Execution Grade
                       </span>
-                      <h4 className="text-sm font-black text-zinc-800 dark:text-zinc-100 tracking-tight mt-0.5">
-                        {activeVerdict.execGrade.split(' (')[1]?.replace(')', '') || 'Trade Quality'}
-                      </h4>
-                      <p className="text-[9px] text-zinc-450 dark:text-zinc-500 font-bold mt-1.5 leading-relaxed max-w-[240px]">
+                      
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <h4 className="text-xs font-black text-zinc-800 dark:text-zinc-150 tracking-tight">
+                          {activeVerdict.execGrade.split(' (')[1]?.replace(')', '') || 'Trade Quality'}
+                        </h4>
+                        
+                        {/* Dynamic Bias Direction Badge */}
+                        <span className={`px-2 py-0.5 rounded text-[8.5px] font-black uppercase border ${
+                          activeVerdict.bias === 'BUY'
+                            ? 'bg-lime-500/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
+                            : activeVerdict.bias === 'SELL'
+                              ? 'bg-rose-500/10 border-rose-500/20 text-rose-500'
+                              : 'bg-zinc-500/10 border-zinc-850 text-zinc-400'
+                        }`}>
+                          {activeVerdict.bias} Bias
+                        </span>
+                      </div>
+
+                      <p className="text-[10.5px] text-zinc-600 dark:text-zinc-400 leading-relaxed font-semibold max-w-[240px]">
                         {activeVerdict.bias === 'NEUTRAL'
                           ? 'Aligned structure does not always imply optimal execution conditions.'
                           : 'Structure alignment indicates favorable execution readiness and trade survivability.'}
                       </p>
-                      <span className="text-[8px] text-zinc-400 dark:text-zinc-550 font-bold block mt-1.5">
+                      <span className="text-[8.5px] text-zinc-400 dark:text-zinc-550 font-bold block">
                         Scale Range: A+ (95+) down to F (&lt;30)
                       </span>
                     </div>
@@ -1016,29 +1029,29 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                 </div>
 
                 {/* Readiness & Confluence Card */}
-                <div className={`p-5 rounded-2xl border flex flex-col justify-between ${
-                  isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
+                <div className={`p-5 rounded-lg border flex flex-col justify-between ${
+                  isLight ? 'bg-zinc-50/50 border-zinc-200' : 'bg-zinc-900/45 border-zinc-800/80 shadow-md'
                 }`}>
                   <div>
-                    <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Readiness</span>
-                    <h4 className={`text-2xl font-black mt-1 tracking-tight ${
+                    <span className="text-[9.5px] font-black text-zinc-450 dark:text-zinc-400 uppercase tracking-wider block">Readiness</span>
+                    <h4 className={`text-2xl font-black mt-1.5 tracking-tight ${
                       activeVerdict.bias === 'NEUTRAL' ? 'text-zinc-400' : 'text-lime-650 dark:text-lime-400'
                     }`}>
                       {activeVerdict.bias === 'NEUTRAL' ? '0%' : '80%'}
                     </h4>
                   </div>
-                  <p className="text-[8.5px] text-zinc-450 dark:text-zinc-500 font-bold mt-3 leading-none">
+                  <p className="text-[9.5px] text-zinc-650 dark:text-zinc-400 font-bold leading-none mt-4">
                     Confluence Level: {activeVerdict.confluence}
                   </p>
                 </div>
 
                 {/* Suggested Action Card */}
-                <div className={`p-5 rounded-2xl border flex flex-col justify-between ${
-                  isLight ? 'bg-zinc-50/30 border-zinc-150/80' : 'bg-zinc-950/20 border-zinc-900/40'
+                <div className={`p-5 rounded-lg border flex flex-col justify-between ${
+                  isLight ? 'bg-zinc-50/50 border-zinc-200' : 'bg-zinc-900/45 border-zinc-800/80 shadow-md'
                 }`}>
                   <div>
-                    <span className="text-[8px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Suggested Action</span>
-                    <h4 className={`text-xs font-black mt-2 tracking-tight uppercase px-2 py-1 rounded-xl text-center border ${
+                    <span className="text-[9.5px] font-black text-zinc-450 dark:text-zinc-400 uppercase tracking-wider block">Suggested Action</span>
+                    <h4 className={`text-xs font-black mt-2 tracking-tight uppercase px-2.5 py-1 rounded border text-center ${
                       activeVerdict.bias === 'NEUTRAL' 
                         ? 'bg-amber-500/10 border-amber-500/20 text-amber-600' 
                         : 'bg-lime-400/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
@@ -1046,22 +1059,20 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                       {activeVerdict.bias === 'NEUTRAL' ? 'STAND ASIDE' : 'EXECUTE'}
                     </h4>
                   </div>
-                  <p className="text-[8.5px] text-zinc-450 dark:text-zinc-500 font-bold mt-3 leading-none">
+                  <p className="text-[9.5px] text-zinc-650 dark:text-zinc-400 font-bold leading-none mt-4">
                     {activeVerdict.bias === 'NEUTRAL' ? 'Preserve focus' : 'VWAP limit trigger'}
                   </p>
                 </div>
               </div>
-            </div>
-
-            {/* Macro Trend & Strategy Confluence Matrix (Gorgeously rendered as Clean Modern Glass cards) */}
-            <div className={`rounded-3xl p-5 border ${
-              isLight ? 'bg-white border-zinc-150' : 'bg-[#121312]/60 border-zinc-850'
+            </div>              {/* Macro Trend & Strategy Confluence Matrix (Gorgeously rendered as Clean Modern Glass cards) */}
+            <div className={`rounded-xl p-5 border ${
+              isLight ? 'bg-white border-zinc-150 shadow-sm' : 'bg-[#121312]/60 border-zinc-850'
             }`}>
               <div className="flex justify-between items-center mb-5 pb-2 border-b border-dashed border-zinc-150 dark:border-zinc-800">
                 <span className="text-[10px] font-black text-zinc-400 dark:text-zinc-550 uppercase tracking-widest flex items-center gap-1.5">
                   <Activity size={12} className="text-lime-500" /> Multi-Strategy Confluence Matrix
                 </span>
-                <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-500 uppercase">
+                <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-555 uppercase">
                   Timeframe Consensus Check
                 </span>
               </div>
@@ -1071,54 +1082,67 @@ export const AIView: React.FC<AIViewProps> = ({ isLight }) => {
                 {(activeVerdict.strategies || []).map((strat) => (
                   <div 
                     key={strat.name} 
-                    className={`rounded-3xl p-5 border backdrop-blur-xl transition-all duration-300 flex flex-col justify-between relative shadow-lg ${
+                    className={`rounded-xl p-5 border backdrop-blur-xl transition-all duration-300 flex flex-col justify-between relative shadow-lg ${
                       isLight 
-                        ? 'bg-white/45 border-white/60 shadow-zinc-150/40 hover:bg-white/60 hover:shadow-zinc-150/60' 
+                        ? 'bg-white/45 border-zinc-200 shadow-zinc-150/40 hover:bg-white/60 hover:shadow-zinc-150/60' 
                         : 'bg-zinc-900/65 border-zinc-800/80 shadow-black/40 hover:bg-zinc-900/75 hover:border-zinc-700/80 hover:shadow-black/50'
                     }`}
                   >
                     {/* Top Row: Title, Timeframe and Dot Indicator */}
                     <div className="flex items-start justify-between gap-3 mb-4">
-                      <div className="space-y-0.5">
+                      <div className="space-y-1">
                         <div className="flex items-center gap-1.5">
-                          <span className={`w-1.5 h-1.5 rounded-full ${
+                          <span className={`w-2 h-2 rounded-full ${
                             strat.bias === 'BUY'
                               ? 'bg-lime-500 animate-pulse'
                               : strat.bias === 'SELL'
                                 ? 'bg-rose-500 animate-pulse'
                                 : 'bg-zinc-400'
                           }`} />
-                          <h5 className="text-[11.5px] font-black tracking-tight text-zinc-800 dark:text-zinc-200">
+                          <h5 className="text-sm font-black tracking-tight text-zinc-855 dark:text-zinc-100">
                             {strat.name.split(' (')[0]}
                           </h5>
                         </div>
-                        <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-550 uppercase tracking-widest block pl-3">
+                        <span className="text-[9.5px] font-black text-zinc-450 dark:text-zinc-400 uppercase tracking-widest block pl-3.5">
                           {strat.name.split(' (')[1]?.replace(')', '') || strat.timeframe} · {strat.timeframe}
                         </span>
                       </div>
+
+                      {/* Prominent Bias Pill */}
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${
+                        strat.bias === 'BUY'
+                          ? 'bg-lime-500/10 border-lime-500/20 text-lime-650 dark:text-lime-400'
+                          : strat.bias === 'SELL'
+                            ? 'bg-rose-500/10 border-rose-500/20 text-rose-500'
+                            : 'bg-zinc-500/10 border-zinc-850 text-zinc-400'
+                      }`}>
+                        {strat.bias}
+                      </span>
                     </div>
 
                     {/* Active Setup Reason / Pattern Block */}
-                    <div className={`p-3 rounded-2xl text-[10px] font-bold leading-relaxed mb-4 transition-all ${
-                      isLight ? 'bg-zinc-50/50 text-zinc-650' : 'bg-zinc-900/30 text-zinc-400'
+                    <div className={`p-3.5 rounded-lg text-xs leading-relaxed mb-4 transition-all ${
+                      isLight ? 'bg-zinc-100/50 text-zinc-700 border border-zinc-150' : 'bg-zinc-900/30 text-zinc-350 border border-zinc-850/65'
                     }`}>
-                      <span className="text-[8.5px] font-black text-zinc-400 dark:text-zinc-550 block uppercase tracking-wider mb-1">
+                      <span className="text-[9.5px] font-black text-zinc-450 dark:text-zinc-400 block uppercase tracking-wider mb-1">
                         Strategy Signal Reason
                       </span>
-                      {strat.pattern}
+                      <p className="font-bold text-zinc-800 dark:text-zinc-100">
+                        {strat.pattern}
+                      </p>
                     </div>
 
                     {/* Bottom Row: Plan Entry & Strategy Exec Grade side-by-side */}
                     <div className="grid grid-cols-2 gap-2 pt-3.5 border-t border-dashed border-zinc-150 dark:border-zinc-900/50 mt-auto">
                       {/* Plan Entry */}
                       <div className="flex flex-col">
-                        <span className="text-[8px] font-black text-zinc-450 dark:text-zinc-550 uppercase tracking-wider mb-0.5">Plan Entry</span>
-                        <span className="text-xs font-black text-zinc-850 dark:text-zinc-100">{strat.entryPlan}</span>
+                        <span className="text-[9.5px] font-black text-zinc-450 dark:text-zinc-400 uppercase tracking-wider mb-0.5">Plan Entry</span>
+                        <span className="text-sm font-black text-zinc-850 dark:text-zinc-100">{strat.entryPlan}</span>
                       </div>
 
                       {/* Exec Grade */}
                       <div className="flex flex-col text-right justify-end">
-                        <span className="text-[8px] font-black text-zinc-455 dark:text-zinc-550 uppercase tracking-wider mb-0.5">Exec Grade</span>
+                        <span className="text-[9.5px] font-black text-zinc-450 dark:text-zinc-400 uppercase tracking-wider mb-0.5">Exec Grade</span>
                         <span className={`text-2xl md:text-3xl font-black tracking-tighter leading-none ${getGradeColorClass(strat.execGrade)}`}>
                           {strat.execGrade}
                         </span>
