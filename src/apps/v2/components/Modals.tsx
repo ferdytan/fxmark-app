@@ -56,7 +56,7 @@ export const PINModal: React.FC<PINModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl p-6 relative flex flex-col items-center">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl w-full max-w-sm overflow-hidden shadow-2xl p-6 relative flex flex-col items-center">
         
         {/* Close Button */}
         <button 
@@ -194,7 +194,7 @@ export const AddTradeModal: React.FC<AddTradeModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[32px] w-full max-w-md overflow-hidden shadow-2xl p-6 relative">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl w-full max-w-md overflow-hidden shadow-2xl p-6 relative">
         
         {/* Close Button */}
         <button 
@@ -470,7 +470,7 @@ export const CalculatorModal: React.FC<CalculatorModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl p-6 relative">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl w-full max-w-sm overflow-hidden shadow-2xl p-6 relative">
         
         {/* Close Button */}
         <button 
@@ -604,7 +604,7 @@ export const WisdomModal: React.FC<WisdomModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-[32px] w-full max-w-sm overflow-hidden shadow-2xl p-6 relative flex flex-col items-center text-center">
+      <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl w-full max-w-sm overflow-hidden shadow-2xl p-6 relative flex flex-col items-center text-center">
         
         {/* Close Button */}
         <button 

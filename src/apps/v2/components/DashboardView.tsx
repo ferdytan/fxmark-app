@@ -118,7 +118,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
           {/* Smart Wallet / Main Balance Card */}
-          <div className={`md:col-span-3 rounded-[32px] p-6 border transition-all duration-300 relative overflow-hidden ${
+          <div className={`md:col-span-3 rounded-xl p-6 border transition-all duration-300 relative overflow-hidden ${
             isLight 
               ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
               : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'
@@ -140,7 +140,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {/* Add Trade Action Button */}
               <button 
                 onClick={onOpenAddTrade}
-                className="px-5 py-2.5 bg-lime-400 dark:bg-lime-500 hover:bg-lime-500 dark:hover:bg-lime-400 text-black text-xs font-extrabold rounded-2xl flex items-center gap-1.5 transition-all duration-300 active:scale-95 hover:shadow-lg hover:shadow-lime-500/10 cursor-pointer"
+                className="px-5 py-2.5 bg-lime-400 dark:bg-lime-500 hover:bg-lime-500 dark:hover:bg-lime-400 text-black text-xs font-extrabold rounded-lg flex items-center gap-1.5 transition-all duration-300 active:scale-95 hover:shadow-lg hover:shadow-lime-500/10 cursor-pointer"
               >
                 <Plus size={14} strokeWidth={3} /> Add Trade
               </button>
@@ -173,7 +173,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Current Balance / Savings Rate Card */}
-          <div className={`rounded-3xl p-5 border transition-all duration-300 ${
+          <div className={`rounded-xl p-5 border transition-all duration-300 ${
             isLight 
               ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
               : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'
@@ -200,7 +200,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Compounding Level Savings Target Card */}
-          <div className={`rounded-3xl p-5 border transition-all duration-300 ${
+          <div className={`rounded-xl p-5 border transition-all duration-300 ${
             isLight 
               ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
               : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'
@@ -222,7 +222,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Income / Cumulative Profit Card */}
-          <div className={`rounded-3xl p-5 border transition-all duration-300 ${
+          <div className={`rounded-xl p-5 border transition-all duration-300 ${
             isLight 
               ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
               : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'
@@ -250,7 +250,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Weekly Stats Card (Activity tracker resetting every Monday) */}
-        <div className={`rounded-[32px] p-6 border transition-all duration-300 ${
+        <div className={`rounded-xl p-6 border transition-all duration-300 ${
           isLight 
             ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
             : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'
@@ -316,7 +316,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               return (
                 <div
                   key={day.key}
-                  className={`flex flex-col items-center justify-center gap-2 md:gap-2.5 rounded-2xl py-4 px-2 text-center transition-all duration-300 border min-h-[90px] md:min-h-[105px] ${capsuleClass}`}
+                  className={`flex flex-col items-center justify-center gap-2 md:gap-2.5 rounded-lg py-4 px-2 text-center transition-all duration-300 border min-h-[90px] md:min-h-[105px] ${capsuleClass}`}
                 >
                   <span className={`text-[10px] uppercase tracking-wider font-extrabold ${labelClass}`}>
                     {day.label}
@@ -341,7 +341,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Motivational Bottom Banner */}
-          <div className={`w-full py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center border mt-5 transition-all duration-300 ${
+          <div className={`w-full py-3.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-center border mt-5 transition-all duration-300 ${
             stats.weeklySummary.netProfit >= 0 
               ? isLight ? 'bg-lime-50 border-lime-100/80 text-lime-700' : 'bg-lime-500/[0.03] border-lime-500/10 text-lime-400' 
               : isLight ? 'bg-rose-50 border-rose-100/80 text-rose-700' : 'bg-rose-500/[0.03] border-rose-500/10 text-rose-450'
@@ -354,7 +354,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Graphics & Timelines Card (Cash Flow) */}
-        <div className={`rounded-[32px] p-6 border transition-all duration-300 ${
+        <div className={`rounded-xl p-6 border transition-all duration-300 ${
           isLight 
             ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
             : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'
@@ -370,7 +370,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
 
             {/* Toggle tabs */}
-            <div className={`flex rounded-2xl p-1 border self-start ${
+            <div className={`flex rounded-lg p-1 border self-start ${
               isLight ? 'bg-zinc-50 border-zinc-150' : 'bg-zinc-900 border-zinc-800/80'
             }`}>
               <button
@@ -520,7 +520,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="space-y-6">
         
         {/* Trading Account widget representing compounding scale */}
-        <div className={`relative rounded-[32px] p-6 h-56 transition-all duration-300 shadow-xl flex flex-col justify-between overflow-hidden border ${
+        <div className={`relative rounded-xl p-6 h-56 transition-all duration-300 shadow-xl flex flex-col justify-between overflow-hidden border ${
           isLight 
             ? 'bg-gradient-to-br from-lime-400 via-lime-500 to-lime-600 border-lime-300 text-zinc-950' 
             : 'bg-gradient-to-br from-[#0c0d0d] via-[#141d14] to-[#121c08] border-white/10 text-white'
@@ -614,7 +614,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Deposit, Calculator, Sync Quick buttons */}
-        <div className={`rounded-3xl p-5 border transition-all duration-300 ${
+        <div className={`rounded-xl p-5 border transition-all duration-300 ${
           isLight 
             ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
             : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'
@@ -625,7 +625,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={onOpenAddDeposit}
-              className={`py-3 px-4 rounded-2xl flex flex-col items-center justify-center border transition-all active:scale-95 cursor-pointer ${
+              className={`py-3 px-4 rounded-lg flex flex-col items-center justify-center border transition-all active:scale-95 cursor-pointer ${
                 isLight
                   ? 'bg-zinc-50 hover:bg-zinc-100 border-zinc-150 text-zinc-700 font-bold'
                   : 'bg-zinc-900/60 hover:bg-zinc-850 border-zinc-800 text-zinc-300 font-bold'
@@ -636,7 +636,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={onOpenCalc}
-              className={`py-3 px-4 rounded-2xl flex flex-col items-center justify-center border transition-all active:scale-95 cursor-pointer ${
+              className={`py-3 px-4 rounded-lg flex flex-col items-center justify-center border transition-all active:scale-95 cursor-pointer ${
                 isLight
                   ? 'bg-zinc-50 hover:bg-zinc-100 border-zinc-150 text-zinc-700 font-bold'
                   : 'bg-zinc-900/60 hover:bg-zinc-850 border-zinc-800 text-zinc-300 font-bold'
@@ -647,7 +647,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={onForceSync}
-              className={`py-3 px-4 rounded-2xl col-span-2 flex items-center justify-center gap-2 border transition-all active:scale-95 cursor-pointer text-[10px] ${
+              className={`py-3 px-4 rounded-lg col-span-2 flex items-center justify-center gap-2 border transition-all active:scale-95 cursor-pointer text-[10px] ${
                 isLight
                   ? 'bg-zinc-50 hover:bg-zinc-100 border-zinc-150 text-zinc-700 font-bold'
                   : 'bg-zinc-900/60 hover:bg-zinc-850 border-zinc-800 text-zinc-300 font-bold'
@@ -660,7 +660,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Upgrade / Next Level Goal Roadmap Card */}
-        <div className={`rounded-3xl p-5 border transition-all duration-300 relative overflow-hidden ${
+        <div className={`rounded-xl p-5 border transition-all duration-300 relative overflow-hidden ${
           isLight 
             ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
             : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'
@@ -713,7 +713,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {/* Action button redirecting to Compounding Roadmap */}
           <button
             onClick={() => onOpenCompounding?.()}
-            className="w-full mt-5 py-3 px-4 bg-lime-400 dark:bg-lime-500 hover:bg-lime-500 dark:hover:bg-lime-400 text-black text-xs font-extrabold rounded-2xl flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
+            className="w-full mt-5 py-3 px-4 bg-lime-400 dark:bg-lime-500 hover:bg-lime-500 dark:hover:bg-lime-400 text-black text-xs font-extrabold rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer active:scale-95"
           >
             <span>Show Compounding Roadmap</span>
             <ChevronRight size={14} strokeWidth={2.5} />
@@ -721,7 +721,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Monthly Returns Card */}
-        <div className={`rounded-3xl p-5 border transition-all duration-300 ${
+        <div className={`rounded-xl p-5 border transition-all duration-300 ${
           isLight 
             ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
             : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'
@@ -734,7 +734,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {Object.keys(stats.matrix).sort().reverse().map(year => (
                 <div 
                   key={year} 
-                  className={`flex flex-col gap-3 rounded-2xl p-4 w-full border ${
+                  className={`flex flex-col gap-3 rounded-lg p-4 w-full border ${
                     isLight 
                       ? 'bg-zinc-50/50 border-zinc-150 text-zinc-800' 
                       : 'bg-zinc-900/30 border-zinc-800/60 text-white'

@@ -144,7 +144,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
       </div>
 
       {/* Main Journal History Table Card */}
-      <div className={`rounded-[32px] border overflow-hidden transition-all duration-300 ${
+      <div className={`rounded-xl border overflow-hidden transition-all duration-300 ${
         isLight 
           ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
           : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'

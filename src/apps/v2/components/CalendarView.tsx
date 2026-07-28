@@ -163,7 +163,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ stats, isLight }) =>
       </div>
 
       {/* Main Calendar Grid Card */}
-      <div className={`rounded-[24px] md:rounded-[32px] p-3 md:p-6 border transition-all duration-300 ${
+      <div className={`rounded-xl p-3 md:p-6 border transition-all duration-300 ${
         isLight 
           ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
           : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'

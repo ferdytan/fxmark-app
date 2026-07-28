@@ -860,7 +860,7 @@ export const ForexTrackerV2: React.FC<ForexTrackerV2Props> = ({ onToggleV1 }) =>
           />
           
           {/* Modal Container */}
-          <div className={`relative w-full max-w-5xl max-h-[85vh] overflow-y-auto rounded-3xl p-6 md:p-8 border shadow-2xl transition-all duration-300 ${
+          <div className={`relative w-full max-w-5xl max-h-[85vh] overflow-y-auto rounded-xl p-6 md:p-8 border shadow-2xl transition-all duration-300 ${
             isLight 
               ? 'bg-white border-zinc-150 text-zinc-800' 
               : 'bg-[#121312] border-zinc-900/60 text-zinc-100'

@@ -43,7 +43,7 @@ export const CompoundingView: React.FC<CompoundingViewProps> = ({
     <div className="w-full space-y-6 mt-6 animate-in fade-in duration-300">
       
       {/* Top Banner introducing Compounding Progress */}
-      <div className={`rounded-[32px] p-6 border transition-all duration-300 relative overflow-hidden ${
+      <div className={`rounded-xl p-6 border transition-all duration-300 relative overflow-hidden ${
         isLight 
           ? 'bg-white border-zinc-150 shadow-[0_8px_30px_rgb(0,0,0,0.02)]' 
           : 'bg-[#18181b]/80 border-zinc-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.1)]'

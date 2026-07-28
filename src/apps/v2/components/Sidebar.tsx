@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* Navigation Icons Group */}
-        <nav className={`flex flex-col items-center gap-4 px-2.5 py-4 rounded-3xl border transition-all ${
+        <nav className={`flex flex-col items-center gap-4 px-2.5 py-4 rounded-xl border transition-all ${
           isLight ? 'bg-zinc-50 border-zinc-100' : 'bg-zinc-900/60 border-zinc-800/50'
         }`}>
           {menuItems.map((item) => {
@@ -66,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 key={item.id}
                 onClick={() => setActiveView(item.id)}
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center relative transition-all duration-300 group cursor-pointer ${
+                className={`w-12 h-12 rounded-lg flex items-center justify-center relative transition-all duration-300 group cursor-pointer ${
                   isActive
                     ? isLight
                       ? 'bg-zinc-900 text-white shadow-md shadow-zinc-900/10'
@@ -104,7 +104,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
 
           {/* Theme Selector (Light & Dark explicit group) */}
-          <div className={`flex flex-col gap-1 p-1 rounded-2xl border transition-all ${
+          <div className={`flex flex-col gap-1 p-1 rounded-lg border transition-all ${
             isLight ? 'bg-zinc-50 border-zinc-150' : 'bg-zinc-900/60 border-zinc-850/50'
           }`}>
             <button
@@ -210,7 +210,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
 
             {/* Menu Panel */}
-            <div className={`fixed bottom-20 left-4 right-4 z-40 rounded-3xl p-5 shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 border ${
+            <div className={`fixed bottom-20 left-4 right-4 z-40 rounded-xl p-5 shadow-2xl transition-all duration-300 animate-in slide-in-from-bottom-5 border ${
               isLight
                 ? 'bg-white border-zinc-150 text-zinc-800 shadow-[0_10px_35px_rgb(0,0,0,0.06)]'
                 : 'bg-[#18181b] border-zinc-900/60 text-zinc-100 shadow-[0_10px_35px_rgb(0,0,0,0.4)]'
@@ -234,7 +234,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onOpenCalc();
                     setShowMobileMore(false);
                   }}
-                  className={`py-3 px-4 rounded-2xl border flex items-center gap-2.5 transition-all font-bold text-xs ${
+                  className={`py-3 px-4 rounded-lg border flex items-center gap-2.5 transition-all font-bold text-xs ${
                     isLight
                       ? 'bg-zinc-50 border-zinc-150 text-zinc-700 active:bg-zinc-100'
                       : 'bg-zinc-900/60 border-zinc-800 text-zinc-300 active:bg-zinc-850'
@@ -249,7 +249,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onOpenWisdom();
                     setShowMobileMore(false);
                   }}
-                  className={`py-3 px-4 rounded-2xl border flex items-center gap-2.5 transition-all font-bold text-xs ${
+                  className={`py-3 px-4 rounded-lg border flex items-center gap-2.5 transition-all font-bold text-xs ${
                     isLight
                       ? 'bg-zinc-50 border-zinc-150 text-zinc-700 active:bg-zinc-100'
                       : 'bg-zinc-900/60 border-zinc-800 text-zinc-300 active:bg-zinc-850'
@@ -260,7 +260,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </button>
 
                 {/* Explicit Light / Dark Mode selectors */}
-                <div className={`col-span-2 p-1 border rounded-2xl flex items-center ${
+                <div className={`col-span-2 p-1 border rounded-lg flex items-center ${
                   isLight ? 'bg-zinc-50 border-zinc-150' : 'bg-zinc-900 border-zinc-850'
                 }`}>
                   <button
@@ -293,7 +293,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     onToggleV1();
                     setShowMobileMore(false);
                   }}
-                  className="col-span-2 py-3 px-4 rounded-2xl border border-dashed flex items-center justify-center gap-2 text-rose-500 dark:text-rose-400 bg-rose-500/[0.02] border-rose-500/10 hover:bg-rose-500/[0.04] transition-all font-black text-xs"
+                  className="col-span-2 py-3 px-4 rounded-lg border border-dashed flex items-center justify-center gap-2 text-rose-500 dark:text-rose-400 bg-rose-500/[0.02] border-rose-500/10 hover:bg-rose-500/[0.04] transition-all font-black text-xs"
                 >
                   <LogOut size={14} />
                   <span>Switch to Legacy V1 UI</span>
